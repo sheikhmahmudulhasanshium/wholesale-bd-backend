@@ -1,0 +1,52 @@
+﻿Project Map for: F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend
+
+🌳 Intelligent Tree (hiding noise):
+wholesalebd-backend/
+├── 📁 public
+│   ├── 📄 favicon.ico
+│   ├── 📄 index.html
+│   ├── 📄 logo.png
+│   ├── 📄 logo.svg
+│   └── 📄 symbol.svg
+├── 📁 src
+│   ├── 📄 app.controller.spec.ts
+│   ├── 📄 app.controller.ts
+│   ├── 📄 app.module.ts
+│   ├── 📄 app.service.ts
+│   └── 📄 main.ts
+├── 📁 test
+│   ├── 📄 app.e2e-spec.ts
+│   └── 📄 jest-e2e.json
+├── 📄 .env
+├── 📄 .gitignore
+├── 📄 .prettierrc
+├── 📄 eslint.config.mjs
+├── 📄 nest-cli.json
+├── 📄 package.json
+├── 📄 project_map.txt
+├── 📄 README.md
+├── 📄 tsconfig.build.json
+├── 📄 tsconfig.json
+└── 📄 vercel.json
+
+
+--- SCRIPT EXECUTION LOG ---
+[2025-10-11 04:32:29] [START] Script started. Awaiting user input for project path.
+[2025-10-11 04:32:33] [INPUT] User raw input for path: ""F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend""
+[2025-10-11 04:32:33] [PROCESS] Sanitized path: 'F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend'
+[2025-10-11 04:32:33] [SUCCESS] Path validation successful: 'F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend' is a valid directory.
+[2025-10-11 04:32:37] [INPUT] User selected map intensity: '2'
+[2025-10-11 04:32:37] [INFO] Starting user configuration for filters.
+[2025-10-11 04:32:44] [INPUT] User input for directory ignore list confirmation: 'y'
+[2025-10-11 04:32:49] [INPUT] User input for file ignore list confirmation: 'y'
+[2025-10-11 04:32:56] [INPUT] User input for included extensions: '.env'
+[2025-10-11 04:32:56] [CONFIG] Final filter configuration created: IgnoreDirs                           IgnoreFiles                                                  IncludeExtensions
+----------                           -----------                                                  -----------------
+{node_modules, .git, dist, build...} {package-lock.json, yarn.lock, pnpm-lock.yaml, .DS_Store...} .env
+[2025-10-11 04:33:02] [INPUT] User input for max depth: ''
+[2025-10-11 04:33:02] [CONFIG] Max depth for tree traversal set to: 99
+[2025-10-11 04:33:02] [PROCESS] Starting project map generation...
+[2025-10-11 04:33:02] [OUTPUT] Generated 'Tree' output successfully.
+[2025-10-11 04:33:37] [INPUT] User input for save filename: 'project_map.txt'
+[2025-10-11 04:33:41] [INPUT] File exists. User asked to overwrite. Input: 'y'.
+[2025-10-11 04:33:41] [PROCESS] Preparing final output for saving to 'F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend\project_map.txt'.

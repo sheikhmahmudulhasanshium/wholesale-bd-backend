@@ -10,8 +10,8 @@ import {
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Express } from 'express';
+import { join } from 'path';
 
-// cachedServer is a common pattern for optimizing Vercel serverless function cold starts.
 let cachedServer: Express;
 
 function configureCommonAppSettings(
@@ -23,21 +23,6 @@ function configureCommonAppSettings(
       process.env.FRONTEND_URL || 'https://wholesale-bd-web-app.vercel.app',
     credentials: true,
   });
-
-  // --- IMPORTANT NOTE ON SECURITY (HELMET) ---
-  // The 'helmet' dependency is highly recommended for production security but was
-  // omitted to match your provided pnpm list. Using helmet helps set crucial
-  // security headers, including a Content-Security-Policy (CSP).
-  //
-  // Without helmet's CSP, you might see errors in the browser console on your
-  // deployed Swagger UI page because it loads scripts/styles from a CDN.
-  //
-  // To fix this and improve security, run `pnpm install helmet` and add:
-  //
-  // import helmet from 'helmet';
-  // app.use(helmet({ contentSecurityPolicy: false })); // A basic setup
-  //
-  // See the helmet-js documentation for more advanced CSP configurations.
 
   app.setGlobalPrefix('api/v1');
 
@@ -73,7 +58,7 @@ function configureCommonAppSettings(
       .swagger-ui .topbar { background-color: #1e3a8a; }
       .swagger-ui .topbar .link, .swagger-ui .topbar .download-url-wrapper .select-label select { color: #FFFFFF; }
       .swagger-ui .opblock.opblock-get .opblock-summary-method { background: #3b82f6; }
-      .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #16a34a; }
+      .swagger-ui .opblock.opblock-post .opblock-summary-method { background: #16a3a; }
       .swagger-ui .opblock.opblock-put .opblock-summary-method { background: #f97316; }
       .swagger-ui .opblock.opblock-delete .opblock-summary-method { background: #dc2626; }
       .swagger-ui .opblock.opblock-patch .opblock-summary-method { background: #f59e0b; }
@@ -94,7 +79,10 @@ async function bootstrapServerless(): Promise<Express> {
   }
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   configureCommonAppSettings(app);
-  app.useStaticAssets('public');
+
+  // THE DEFINITIVE FIX: Use process.cwd() which points to the deployment root on Vercel.
+  app.useStaticAssets(join(process.cwd(), 'public'));
+
   await app.init();
   cachedServer = app.getHttpAdapter().getInstance();
   return cachedServer;
@@ -103,7 +91,10 @@ async function bootstrapServerless(): Promise<Express> {
 async function bootstrapLocal() {
   const localApp = await NestFactory.create<NestExpressApplication>(AppModule);
   configureCommonAppSettings(localApp, '(Local)');
-  localApp.useStaticAssets('public');
+
+  // THE DEFINITIVE FIX: Also update for local development consistency.
+  localApp.useStaticAssets(join(process.cwd(), 'public'));
+
   const port = process.env.PORT || 3001;
   await localApp.listen(port);
   console.log(
