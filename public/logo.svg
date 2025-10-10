@@ -1,0 +1,83 @@
+<svg 
+  width="168" 
+  height="84" 
+  viewBox="0 0 6 3" 
+  fill="none" 
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <!-- 
+    SECTION 1: DEFINITIONS 
+    These are unchanged.
+  -->
+  <defs>
+    <!-- Linear gradient for the tetragon symbol (FLAG GREEN) -->
+    <linearGradient id="logo-symbol-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22C55E" />    <!-- Lighter Green for top-left sheen -->
+      <stop offset="100%" stop-color="#15803D" />  <!-- Darker Green for bottom-right shadow -->
+    </linearGradient>
+
+    <!-- Text Gradient (FLAG RED) -->
+    <linearGradient id="logo-text-gradient-flag" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#DC2626" />   <!-- Tailwind Red-600 -->
+      <stop offset="100%" stop-color="#B91C1C" /> <!-- Tailwind Red-700 -->
+    </linearGradient>
+
+    <!-- ADVANCED FILTER for DARK MODE -->
+    <filter id="text-effects-dark" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0.02" dy="0.03" stdDeviation="0.025" flood-color="#020617" flood-opacity="0.5" result="drop-shadow" />
+      <feGaussianBlur in="SourceAlpha" stdDeviation="0.05" result="glow-blur" />
+      <feFlood flood-color="#38BDF8" flood-opacity="0.6" result="glow-color" />
+      <feComposite in="glow-color" in2="glow-blur" operator="in" result="colored-glow" />
+      <feMerge>
+        <feMergeNode in="drop-shadow" />
+        <feMergeNode in="colored-glow" />
+        <feMergeNode in="SourceGraphic" /> 
+      </feMerge>
+    </filter>
+
+    <!-- THEME-AWARE STYLES -->
+    <style>
+      .brand-name-text {
+        fill: url(#logo-text-gradient-flag);
+        transition: filter 0.3s ease;
+      }
+      @media (prefers-color-scheme: dark) {
+        .brand-name-text {
+          filter: url(#text-effects-dark);
+        }
+      }
+    </style>
+  </defs>
+
+  <!-- 
+    SECTION 2: LOGO ELEMENTS
+    A new <path> for the handle has been added inside the transformed group.
+  -->
+  <g>
+    <!-- The Symbol (Asymmetric Bag) -->
+    <g transform="translate(0.5, 1.5) scale(0.01)">
+      <!-- The Bag Body -->
+      <path 
+        d="M -50 -45 L 50 -50 L 45 50 L -45 40 Z"
+        fill="url(#logo-symbol-gradient)"
+      />
+      <!-- The Handle (Reverse U Arc) -->
+      <path 
+        d="M -30 -47 A 35 35 0 0 1 30 -48"
+        fill="none"
+        stroke="#16A34A"
+        stroke-width="8"
+        stroke-linecap="round"
+      />
+    </g>
+
+    <!-- The "W" is placed on top of the bag -->
+    <text x="0.5" y="1.5" font-family="Poppins, sans-serif" font-size="0.8" font-weight="700" fill="white" text-anchor="middle" dominant-baseline="middle">
+      W
+    </text>
+  </g>
+  
+  <text x="1.2" y="1.5" class="brand-name-text" font-family="Poppins, sans-serif" font-size="0.65" font-weight="bold" dominant-baseline="middle">
+    Wholesale BD
+  </text>
+</svg>
