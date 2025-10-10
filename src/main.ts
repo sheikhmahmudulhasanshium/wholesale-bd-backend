@@ -30,7 +30,7 @@ async function bootstrap() {
     }),
   );
 
-  // Use the simplest path. The @vercel/nest builder makes this work.
+  // This is the robust path that works with the Vercel build process.
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
@@ -59,12 +59,16 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document, customSwaggerOptions);
 
-  // For local development
+  // This part only runs locally, not on Vercel
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 3001;
     await app.listen(port);
     console.log(`🚀 Local server running on: http://localhost:${port}`);
+    console.log(`🌐 Public index page at: http://localhost:${port}/`);
     console.log(`📚 Swagger docs at: http://localhost:${port}/api`);
+  } else {
+    // This part runs on Vercel
+    await app.init();
   }
 
   return app.getHttpAdapter().getInstance();
