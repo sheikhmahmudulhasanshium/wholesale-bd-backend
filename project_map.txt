@@ -8,8 +8,65 @@ wholesalebd-backend/
 │   ├── 📄 logo.png
 │   ├── 📄 logo.svg
 │   └── 📄 symbol.svg
-├── 📁 src
-│   ├── 📄 app.controller.spec.ts
+├── 📁 src (1 services, 1 controllers, 1 modules)
+│   ├── 📁 auth (1 services, 1 controllers, 1 modules)
+│   │   ├── 📁 decorators (2 decorators)
+│   │   │   ├── 📄 role.decorator.ts
+│   │   │   └── 📄 user.decorator.ts
+│   │   ├── 📁 dto
+│   │   │   └── 📄 auth.dto.ts
+│   │   ├── 📁 enums (1 enums)
+│   │   │   └── 📄 role.enum.ts
+│   │   ├── 📁 guards (3 guards)
+│   │   │   ├── 📄 jwt-auth.guard.ts
+│   │   │   ├── 📄 roles.guard.ts
+│   │   │   └── 📄 seller-approval.guard.ts
+│   │   ├── 📁 strategies (1 strategies)
+│   │   │   └── 📄 jwt.strategy.ts
+│   │   ├── 📄 auth.controller.ts
+│   │   ├── 📄 auth.module.ts
+│   │   └── 📄 auth.service.ts
+│   ├── 📁 common (1 modules, 1 services)
+│   │   ├── 📁 seeds (1 services)
+│   │   │   ├── 📄 categories.seed.ts
+│   │   │   ├── 📄 products.seed.ts
+│   │   │   ├── 📄 seed.service.ts
+│   │   │   ├── 📄 users.seed.ts
+│   │   │   └── 📄 zones.seed.ts
+│   │   ├── 📁 services (1 services)
+│   │   │   └── 📄 r2-upload.service.ts
+│   │   ├── 📄 common.module.ts
+│   │   └── 📄 email.service.ts
+│   ├── 📁 orders (1 services, 1 controllers, 1 modules)
+│   │   ├── 📁 dto
+│   │   │   └── 📄 order.dto.ts
+│   │   ├── 📁 schemas
+│   │   │   └── 📄 order.schema.ts
+│   │   ├── 📄 orders.controller.ts
+│   │   ├── 📄 orders.module.ts
+│   │   └── 📄 orders.service.ts
+│   ├── 📁 products (3 controllers, 1 services, 1 modules)
+│   │   ├── 📁 dto
+│   │   │   ├── 📄 category.dto.ts
+│   │   │   ├── 📄 product.dto.ts
+│   │   │   └── 📄 zone.dto.ts
+│   │   ├── 📁 schemas
+│   │   │   ├── 📄 category.schema.ts
+│   │   │   ├── 📄 product.schema.ts
+│   │   │   └── 📄 zone.schema.ts
+│   │   ├── 📄 categories.controller.ts
+│   │   ├── 📄 products.controller.ts
+│   │   ├── 📄 products.module.ts
+│   │   ├── 📄 products.service.ts
+│   │   └── 📄 zones.controller.ts
+│   ├── 📁 users (1 services, 1 controllers, 1 modules)
+│   │   ├── 📁 dto
+│   │   │   └── 📄 user.dto.ts
+│   │   ├── 📁 schemas
+│   │   │   └── 📄 user.schema.ts
+│   │   ├── 📄 users.controller.ts
+│   │   ├── 📄 users.module.ts
+│   │   └── 📄 users.service.ts
 │   ├── 📄 app.controller.ts
 │   ├── 📄 app.module.ts
 │   ├── 📄 app.service.ts
@@ -29,24 +86,3 @@ wholesalebd-backend/
 ├── 📄 tsconfig.json
 └── 📄 vercel.json
 
-
---- SCRIPT EXECUTION LOG ---
-[2025-10-11 04:32:29] [START] Script started. Awaiting user input for project path.
-[2025-10-11 04:32:33] [INPUT] User raw input for path: ""F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend""
-[2025-10-11 04:32:33] [PROCESS] Sanitized path: 'F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend'
-[2025-10-11 04:32:33] [SUCCESS] Path validation successful: 'F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend' is a valid directory.
-[2025-10-11 04:32:37] [INPUT] User selected map intensity: '2'
-[2025-10-11 04:32:37] [INFO] Starting user configuration for filters.
-[2025-10-11 04:32:44] [INPUT] User input for directory ignore list confirmation: 'y'
-[2025-10-11 04:32:49] [INPUT] User input for file ignore list confirmation: 'y'
-[2025-10-11 04:32:56] [INPUT] User input for included extensions: '.env'
-[2025-10-11 04:32:56] [CONFIG] Final filter configuration created: IgnoreDirs                           IgnoreFiles                                                  IncludeExtensions
-----------                           -----------                                                  -----------------
-{node_modules, .git, dist, build...} {package-lock.json, yarn.lock, pnpm-lock.yaml, .DS_Store...} .env
-[2025-10-11 04:33:02] [INPUT] User input for max depth: ''
-[2025-10-11 04:33:02] [CONFIG] Max depth for tree traversal set to: 99
-[2025-10-11 04:33:02] [PROCESS] Starting project map generation...
-[2025-10-11 04:33:02] [OUTPUT] Generated 'Tree' output successfully.
-[2025-10-11 04:33:37] [INPUT] User input for save filename: 'project_map.txt'
-[2025-10-11 04:33:41] [INPUT] File exists. User asked to overwrite. Input: 'y'.
-[2025-10-11 04:33:41] [PROCESS] Preparing final output for saving to 'F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend\project_map.txt'.
