@@ -11,8 +11,7 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
-// The function is now explicitly exported
-export async function bootstrap() {
+async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors({
@@ -31,7 +30,12 @@ export async function bootstrap() {
     }),
   );
 
-  app.useStaticAssets(join(__dirname, '..', 'public'));
+  // =======================================================================
+  // === THE CRITICAL FIX IS HERE ===
+  // The 'public' folder is copied INSIDE 'dist', so the path is relative
+  // to __dirname without going up one level ('..').
+  // =======================================================================
+  app.useStaticAssets(join(__dirname, 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
     .setTitle(`Backend Api documentation`)
@@ -126,6 +130,10 @@ export async function bootstrap() {
 
   SwaggerModule.setup('api', app, document, customSwaggerOptions);
 
+  // This part is for Vercel. It initializes the app but doesn't listen.
+  await app.init();
+
+  // This part only runs for local development.
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 3001;
     await app.listen(port);
@@ -137,9 +145,5 @@ export async function bootstrap() {
   return app.getHttpAdapter().getInstance();
 }
 
-// THIS IS THE CORRECTED PART
-// This structure is required for local execution but is ignored by the Vercel builder.
-// Using 'void' explicitly tells ESLint that we are intentionally not awaiting this top-level promise.
-if (!process.env.VERCEL) {
-  void bootstrap();
-}
+// Export the bootstrap function as the default export for Vercel
+export default bootstrap;
