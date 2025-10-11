@@ -5,17 +5,20 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Request } from 'express'; // <-- Added for explicit typing
+// We no longer need to import Request from 'express', avoiding the conflict.
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
   constructor(private configService: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<Request>();
+    // FIXED: We explicitly define the type of 'request' with the 'headers' property we need.
+    const request: { headers: { [key: string]: string } } = context
+      .switchToHttp()
+      .getRequest();
+
     const apiKey = request.headers['x-api-key'];
 
-    // FIXED: Use getOrThrow to guarantee a value or fail fast.
     const validApiKey = this.configService.getOrThrow<string>('API_KEY');
 
     if (apiKey !== validApiKey) {
