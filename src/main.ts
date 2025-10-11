@@ -30,11 +30,7 @@ async function bootstrap() {
     }),
   );
 
-  // =======================================================================
-  // === THE CRITICAL FIX IS HERE ===
-  // The 'public' folder is copied INSIDE 'dist', so the path is relative
-  // to __dirname without going up one level ('..').
-  // =======================================================================
+  // This path is now correct because nest-cli.json copies 'public' inside 'dist'
   app.useStaticAssets(join(__dirname, 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
@@ -80,6 +76,7 @@ async function bootstrap() {
         width: 100%;
         gap: 15px;
       }
+      
       .topbar-btn {
         display: inline-flex;
         align-items: center;
@@ -97,6 +94,7 @@ async function bootstrap() {
       }
       .topbar-btn:hover { background-color: rgba(255, 255, 255, 0.25); }
       .topbar-btn:active { transform: translateY(1px); }
+
       #info-section-logo {
         width: 100%;
         max-width: 400px;
@@ -107,12 +105,14 @@ async function bootstrap() {
         background-repeat: no-repeat;
         background-position: left center;
       }
+
       @media (max-width: 768px) {
         #info-section-logo {
           max-width: 300px;
           height: 75px;
         }
       }
+
       #back-to-top-btn {
         position: fixed; bottom: 25px; right: 25px; z-index: 1000;
         opacity: 0; visibility: hidden;
@@ -130,20 +130,18 @@ async function bootstrap() {
 
   SwaggerModule.setup('api', app, document, customSwaggerOptions);
 
-  // This part is for Vercel. It initializes the app but doesn't listen.
-  await app.init();
-
-  // This part only runs for local development.
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 3001;
     await app.listen(port);
     console.log(`🚀 Local server running on: http://localhost:${port}`);
     console.log(`🌐 Public index page at: http://localhost:${port}/`);
     console.log(`📚 Swagger docs at: http://localhost:${port}/api`);
+  } else {
+    // This part runs on Vercel
+    await app.init();
   }
 
   return app.getHttpAdapter().getInstance();
 }
 
-// Export the bootstrap function as the default export for Vercel
 export default bootstrap;
