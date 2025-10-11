@@ -11,7 +11,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
-async function bootstrap() {
+// The function is now explicitly exported
+export async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableCors({
@@ -33,7 +34,6 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
-    // --- THIS LINE HAS BEEN UPDATED ---
     .setTitle(`Backend Api documentation`)
     .setDescription('The official API for the Wholesale BD B2B Platform.')
     .setVersion('1.0')
@@ -56,7 +56,7 @@ async function bootstrap() {
       /* --- Top Bar Styles --- */
       .swagger-ui .topbar { 
         background-color: #1e3a8a; 
-        height: 60px; /* Standard header height */
+        height: 60px;
         padding: 0 20px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         display: flex;
@@ -68,7 +68,7 @@ async function bootstrap() {
          width: 100%;
       }
       .swagger-ui .topbar a.link {
-        display: none; /* Hide default Swagger logo */
+        display: none;
       }
       .custom-btn-container {
         display: flex;
@@ -76,8 +76,6 @@ async function bootstrap() {
         width: 100%;
         gap: 15px;
       }
-      
-      /* Standard styles for our top bar buttons */
       .topbar-btn {
         display: inline-flex;
         align-items: center;
@@ -95,31 +93,22 @@ async function bootstrap() {
       }
       .topbar-btn:hover { background-color: rgba(255, 255, 255, 0.25); }
       .topbar-btn:active { transform: translateY(1px); }
-
-      /* --- Info Section Logo Styles --- */
       #info-section-logo {
         width: 100%;
-        max-width: 400px; /* Prevent it from being huge on very wide screens */
-        height: 100px; /* A nice, tall height for the logo */
-        margin-bottom: 20px; /* Space between logo and the title */
-
-        /* Your full logo SVG, URL-encoded and embedded */
-        background-image: url("data:image/svg+xml,%3csvg width='168' height='84' viewBox='0 0 6 3' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3clinearGradient id='logo-symbol-gradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3e%3cstop offset='0%25' stop-color='%2322C55E'/%3e%3cstop offset='100%25' stop-color='%2315803D'/%3e%3c/linearGradient%3e%3clinearGradient id='logo-text-gradient-flag' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3e%3cstop offset='0%25' stop-color='%23DC2626'/%3e%3cstop offset='100%25' stop-color='%23B91C1C'/%3e%3c/linearGradient%3e%3c/defs%3e%3cg%3e%3cg transform='translate(0.5, 1.5) scale(0.01)'%3e%3cpath d='M -50 -45 L 50 -50 L 45 50 L -45 40 Z' fill='url(%23logo-symbol-gradient)'/%3e%3cpath d='M -30 -47 A 35 35 0 0 1 30 -48' fill='none' stroke='%2316A34A' stroke-width='8' stroke-linecap='round'/%3e%3c/g%3e%3ctext x='0.5' y='1.5' font-family='Poppins, sans-serif' font-size='0.8' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3eW%3c/text%3e%3c/g%3e%3ctext x='1.2' y='1.5' fill='url(%23logo-text-gradient-flag)' font-family='Poppins, sans-serif' font-size='0.65' font-weight='bold' dominant-baseline='middle'%3eWholesale BD%3c/text%3e%3c/svg%3e");
-        
+        max-width: 400px;
+        height: 100px;
+        margin-bottom: 20px;
+        background-image: url("data:image/svg+xml,%3csvg width='168' height='84' viewBox='0 0 6 3' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3clinearGradient id='logo-symbol-gradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3e%3cstop offset='0%25' stop-color='%2322C55E'/%3e%3cstop offset='100%25' stop-color='%2315803D'/%3e%3c/linearGradient%3e%3clinearGradient id='logo-text-gradient-flag' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3e%3cstop offset='0%25' stop-color='%23DC2626'/%3e%3cstop offset='100%25' stop-color='%23B91C1C'/%3e%3c/linearGradient%3e%3c/defs%3e%3cg%3e%3cg transform='translate(0.5, 1.5) scale(0.01)'%3e%3cpath d='M -50 -45 L 50 -50 L 45 50 L -45 40 Z' fill='url(%23logo-symbol-gradient)'/%3e%3cpath d='M -30 -47 A 35 35 0 0 1 30 -48' fill='none' stroke='%2316A3A' stroke-width='8' stroke-linecap='round'/%3e%3c/g%3e%3ctext x='0.5' y='1.5' font-family='Poppins, sans-serif' font-size='0.8' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3eW%3c/text%3e%3c/g%3e%3ctext x='1.2' y='1.5' fill='url(%23logo-text-gradient-flag)' font-family='Poppins, sans-serif' font-size='0.65' font-weight='bold' dominant-baseline='middle'%3eWholesale BD%3c/text%3e%3c/svg%3e");
         background-size: contain;
         background-repeat: no-repeat;
-        background-position: left center; /* Align logo to the left */
+        background-position: left center;
       }
-
-      /* Responsive styles for logo */
       @media (max-width: 768px) {
         #info-section-logo {
           max-width: 300px;
           height: 75px;
         }
       }
-
-      /* "Back to Top" Button Styles (Unchanged) */
       #back-to-top-btn {
         position: fixed; bottom: 25px; right: 25px; z-index: 1000;
         opacity: 0; visibility: hidden;
@@ -143,11 +132,14 @@ async function bootstrap() {
     console.log(`🚀 Local server running on: http://localhost:${port}`);
     console.log(`🌐 Public index page at: http://localhost:${port}/`);
     console.log(`📚 Swagger docs at: http://localhost:${port}/api`);
-  } else {
-    await app.init();
   }
 
   return app.getHttpAdapter().getInstance();
 }
 
-export default bootstrap();
+// THIS IS THE CORRECTED PART
+// This structure is required for local execution but is ignored by the Vercel builder.
+// Using 'void' explicitly tells ESLint that we are intentionally not awaiting this top-level promise.
+if (!process.env.VERCEL) {
+  void bootstrap();
+}
