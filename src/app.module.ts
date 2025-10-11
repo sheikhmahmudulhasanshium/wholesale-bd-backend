@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -29,6 +30,8 @@ import { ThrottlerModule } from '@nestjs/throttler';
         limit: 60,
       },
     ]),
+
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
