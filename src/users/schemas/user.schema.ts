@@ -151,6 +151,9 @@ export class User {
   })
   twoFactorAuth: TwoFactorAuth;
 
+  // =======================================================================
+  @Prop({ default: false, index: true })
+  isSampleData: boolean;
   // --- ADDED FOR TYPESCRIPT AWARENESS ---
   // These are automatically managed by Mongoose via the `timestamps: true` option,
   // but we need to declare them here for TypeScript to know they exist.

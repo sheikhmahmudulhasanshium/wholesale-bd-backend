@@ -11,6 +11,7 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
+import { SeederModule } from './seeder/seeder.module';
 
 @Module({
   imports: [
@@ -44,6 +45,8 @@ import { ZonesModule } from './zones/zones.module';
     CategoriesModule,
 
     ZonesModule,
+
+    SeederModule,
   ],
   controllers: [AppController],
   providers: [AppService],

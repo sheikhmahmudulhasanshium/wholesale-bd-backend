@@ -1,4 +1,4 @@
-﻿Project Map for: F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend
+﻿Project Map for: \AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend
 
 🌳 Intelligent Tree (hiding noise):
 wholesalebd-backend/
@@ -7,6 +7,9 @@ wholesalebd-backend/
 │   ├── 📄 index.html
 │   ├── 📄 logo.png
 │   ├── 📄 logo.svg
+│   ├── 📄 preview-1.png
+│   ├── 📄 preview-2.png
+│   ├── 📄 swagger-custom.js
 │   └── 📄 symbol.svg
 ├── 📁 src (1 services, 1 controllers, 1 modules)
 │   ├── 📁 auth
@@ -36,6 +39,13 @@ wholesalebd-backend/
 │   │   ├── 📄 products.controller.ts
 │   │   ├── 📄 products.module.ts
 │   │   └── 📄 products.service.ts
+│   ├── 📁 seeder (1 services, 1 controllers, 1 modules)
+│   │   ├── 📁 dto
+│   │   │   ├── 📄 clean.dto.ts
+│   │   │   └── 📄 seed.dto.ts
+│   │   ├── 📄 seeder.controller.ts
+│   │   ├── 📄 seeder.module.ts
+│   │   └── 📄 seeder.service.ts
 │   ├── 📁 users (1 services, 1 controllers, 1 modules)
 │   │   ├── 📁 dto
 │   │   │   └── 📄 user-response.dto.ts
@@ -60,6 +70,7 @@ wholesalebd-backend/
 ├── 📄 .gitignore
 ├── 📄 .prettierrc
 ├── 📄 eslint.config.mjs
+├── 📄 merged.txt
 ├── 📄 nest-cli.json
 ├── 📄 package.json
 ├── 📄 project_map.txt

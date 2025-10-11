@@ -1,30 +1,42 @@
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/user-response.dto';
 import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 
 @ApiTags('Users')
 @Controller('users')
-// NOTE: We have removed @UseGuards and @ApiHeader from the controller level
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // --- NEW PUBLIC ENDPOINT ---
   @Get('count')
   @ApiOperation({ summary: 'Get the total number of registered users' })
+  @ApiOkResponse({
+    description: 'Returns the total count of users.',
+    schema: { example: { totalUsers: 125 } },
+  })
   async getUserCount(): Promise<{ totalUsers: number }> {
     const count = await this.usersService.countAll();
     return { totalUsers: count };
   }
 
-  // --- EXISTING PRIVATE ENDPOINT ---
   @Get()
   @ApiOperation({ summary: 'Get a list of all users (Protected)' })
-  // We moved the guard and header here to protect only this specific endpoint
+  @ApiOkResponse({
+    description: 'An array of user records.',
+    type: [UserResponseDto],
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
   @ApiHeader({
     name: 'x-api-key',
     description: 'The secret API key for access',
+    required: true,
   })
   @UseGuards(ApiKeyGuard)
   async findAll(): Promise<UserResponseDto[]> {

@@ -19,7 +19,9 @@ export class Zone {
 
   @Prop({ default: 0 })
   sortOrder: number;
-
+  // Add this inside the Zone class
+  @Prop({ default: false, index: true })
+  isSampleData: boolean;
   // For TypeScript awareness of Mongoose's timestamps
   createdAt: Date;
   updatedAt: Date;
