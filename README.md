@@ -14,8 +14,8 @@
 </p>
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/sheikhmahmudulhasanshium/wholesale-bd-backend/b5a375edda0f33dba2d743c9df40350a6af75c9b/public/preview-1.png" width="48%" /> 
-  <img src="https://raw.githubusercontent.com/sheikhmahmudulhasanshium/wholesale-bd-backend/b5a375edda0f33dba2d743c9df40350a6af75c9b/public/preview-2.png" width="48%" />
+  <img src="https://raw.githubusercontent.com/sheikhmahmudulhasanshium/wholesale-bd-backend/refs/heads/main/public/preview-1.png" width="48%" /> 
+  <img src="https://raw.githubusercontent.com/sheikhmahmudulhasanshium/wholesale-bd-backend/refs/heads/main/public/preview-2.png" width="48%" />
 </p>
 
 > 🔗 **Live Backend (API):** [https://wholesale-bd-backend.vercel.app](https://wholesale-bd-backend.vercel.app)  
