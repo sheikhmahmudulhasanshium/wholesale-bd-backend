@@ -1,5 +1,4 @@
 // src/common/services/r2-upload.service.ts
-
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -14,7 +13,8 @@ import * as path from 'path';
 @Injectable()
 export class R2UploadService {
   private readonly logger = new Logger(R2UploadService.name);
-  private readonly s3Client: S3Client | null = null; // FIX: Initialize as null
+  // FIX: Initialize as null to handle missing config
+  private readonly s3Client: S3Client | null = null;
   private readonly bucketName: string;
   private readonly publicUrl: string;
 
@@ -37,8 +37,9 @@ export class R2UploadService {
       this.logger.error(
         'R2 configuration is incomplete. File uploads will fail.',
       );
-      // Keep s3Client as null
+      // If config is missing, s3Client remains null.
     } else {
+      // Only create the client if config is present.
       this.s3Client = new S3Client({
         region: 'auto',
         endpoint,
@@ -48,7 +49,7 @@ export class R2UploadService {
   }
 
   async uploadFile(file: Express.Multer.File, folder: string): Promise<string> {
-    // FIX: Add a guard clause
+    // FIX: Add a guard clause to check if the client was initialized.
     if (!this.s3Client) {
       throw new BadRequestException('R2 service is not configured.');
     }
@@ -81,7 +82,7 @@ export class R2UploadService {
   }
 
   async deleteFile(fileUrl: string): Promise<void> {
-    // FIX: Add a guard clause
+    // FIX: Add a guard clause.
     if (!this.s3Client) {
       throw new BadRequestException('R2 service is not configured.');
     }
@@ -108,7 +109,7 @@ export class R2UploadService {
   }
 
   async fileExists(fileUrl: string): Promise<boolean> {
-    // FIX: Add a guard clause
+    // FIX: Add a guard clause.
     if (!this.s3Client) return false;
     const key = fileUrl.replace(`${this.publicUrl}/`, '');
     const command = new HeadObjectCommand({

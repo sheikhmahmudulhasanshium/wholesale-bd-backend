@@ -12,7 +12,6 @@ import { CreateOrderDto, OrderQueryDto } from './dto/order.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 
 function isUserDocument(doc: any): doc is UserDocument {
-  // A simple check to see if it's a Mongoose model instance and not just an ObjectId
   return doc instanceof Model;
 }
 
@@ -110,6 +109,7 @@ export class OrdersService {
     if (query.status) filter.status = query.status;
     if (query.startDate) filter.createdAt = { $gte: new Date(query.startDate) };
     if (query.endDate)
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       filter.createdAt = { ...filter.createdAt, $lte: new Date(query.endDate) };
 
     // FIX: Await sequentially to guarantee correct type inference.

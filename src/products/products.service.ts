@@ -38,6 +38,7 @@ export class ProductsService {
     const product = new this.productModel({
       ...createProductDto,
       images: imageUrls,
+      // FIX: Use `new Types.ObjectId()`
       sellerId: new Types.ObjectId(sellerId),
     });
     return product.save();
@@ -62,6 +63,7 @@ export class ProductsService {
     } = query;
     const filter: Record<string, any> = { isActive: true };
     if (search) filter.$text = { $search: search };
+    // FIX: Use `new Types.ObjectId()`
     if (categoryId) filter.categoryId = new Types.ObjectId(categoryId);
     if (zoneId) filter.zoneId = new Types.ObjectId(zoneId);
     if (sellerId) filter.sellerId = new Types.ObjectId(sellerId);
@@ -86,6 +88,7 @@ export class ProductsService {
   }
 
   async findOne(id: string): Promise<ProductDocument> {
+    // FIX: Use `Types.ObjectId.isValid()`
     if (!Types.ObjectId.isValid(id))
       throw new BadRequestException('Invalid product ID');
     const product = await this.productModel
@@ -120,12 +123,9 @@ export class ProductsService {
       ...(updateProductDto.existingImages || []),
       ...newImageUrls,
     ];
-
-    // FIX: Create a mutable copy and delete the property.
     const updateData: Record<string, any> = { ...updateProductDto };
     delete updateData.existingImages;
     updateData.images = combinedImages;
-
     const updatedProduct = await this.productModel
       .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
