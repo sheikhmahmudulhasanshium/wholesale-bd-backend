@@ -38,15 +38,13 @@
         .btn-quaternary { background-image: linear-gradient(45deg, #a78bfa 0%, #8b5cf6 100%); color: var(--text-color-light); }
 
         .analytics-container {
-            max-width: 700px; /* Increased max-width to better fit more stats */
-            width: 90%; margin: 2rem auto 0 auto; padding: 1.5rem;
+            max-width: 700px; width: 90%; margin: 2rem auto 0 auto; padding: 1.5rem;
             background: var(--card-bg-color); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
         }
         .analytics-stat {
             background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; flex-grow: 1;
-            min-width: 180px; /* Adjusted min-width */
-            display: flex; align-items: center; gap: 1rem;
+            min-width: 180px; display: flex; align-items: center; gap: 1rem;
         }
         .stat-icon { flex-shrink: 0; width: 40px; height: 40px; stroke-width: 1.5; color: var(--text-color-light); opacity: 0.8; }
         .stat-text .stat-value { font-size: 1.75rem; font-weight: 700; display: block; line-height: 1.2; }
@@ -75,7 +73,6 @@
     </main>
 
     <section id="analytics-section" class="analytics-container hidden">
-        <!-- Total Users Stat -->
         <div class="analytics-stat">
             <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m-7.5-2.962A3 3 0 0 1 3 18.72v-2.172c0-.923.63-1.724 1.52-1.962a7.5 7.5 0 0 1 1.52-1.962M12 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM12 10.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z" /></svg>
             <div class="stat-text">
@@ -83,7 +80,6 @@
                 <span class="stat-label">Total Users</span>
             </div>
         </div>
-        <!-- Unique Products Stat -->
         <div class="analytics-stat">
             <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
             <div class="stat-text">
@@ -91,7 +87,20 @@
                 <span class="stat-label">Unique Products</span>
             </div>
         </div>
-        <!-- Total Orders Stat -->
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+            <div class="stat-text">
+                <span id="total-categories-count" class="stat-value">...</span>
+                <span class="stat-label">Total Categories</span>
+            </div>
+        </div>
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+            <div class="stat-text">
+                <span id="total-zones-count" class="stat-value">...</span>
+                <span class="stat-label">Total Zones</span>
+            </div>
+        </div>
         <div class="analytics-stat">
             <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 0 1 3.375-3.375h9.75a3.375 3.375 0 0 1 3.375 3.375v1.875" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 11.25l3-3m0 0l3 3m-3-3v7.5" /></svg>
             <div class="stat-text">
@@ -99,20 +108,11 @@
                 <span class="stat-label">Total Orders</span>
             </div>
         </div>
-        <!-- Pending Orders Stat -->
         <div class="analytics-stat">
             <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
             <div class="stat-text">
                 <span id="pending-orders-count" class="stat-value">...</span>
                 <span class="stat-label">Pending Orders</span>
-            </div>
-        </div>
-         <!-- Delivered Orders Stat -->
-        <div class="analytics-stat">
-            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-            <div class="stat-text">
-                <span id="delivered-orders-count" class="stat-value">...</span>
-                <span class="stat-label">Delivered Orders</span>
             </div>
         </div>
     </section>
@@ -124,41 +124,43 @@
             const showAnalyticsBtn = document.getElementById('show-analytics-btn');
             const analyticsSection = document.getElementById('analytics-section');
             
-            // Get all stat spans
             const totalUsersSpan = document.getElementById('total-users-count');
             const totalProductsSpan = document.getElementById('total-products-count');
+            const totalCategoriesSpan = document.getElementById('total-categories-count');
+            const totalZonesSpan = document.getElementById('total-zones-count');
             const totalOrdersSpan = document.getElementById('total-orders-count');
             const pendingOrdersSpan = document.getElementById('pending-orders-count');
-            const deliveredOrdersSpan = document.getElementById('delivered-orders-count');
 
             async function fetchAnalyticsData() {
                 try {
-                    // Fetch all data in parallel using the new, efficient analytics endpoint
-                    const [userResponse, productResponse, orderResponse] = await Promise.all([
+                    const [userResponse, productResponse, categoryResponse, zoneResponse, orderResponse] = await Promise.all([
                         fetch('/api/v1/users/count'),
                         fetch('/api/v1/products/count'),
-                        fetch('/api/v1/orders/analytics') // <-- Using the new efficient endpoint
+                        fetch('/api/v1/categories/count'),
+                        fetch('/api/v1/zones/count'),
+                        fetch('/api/v1/orders/analytics')
                     ]);
 
-                    if (!userResponse.ok || !productResponse.ok || !orderResponse.ok) {
-                        throw new Error('Failed to fetch analytics data');
+                    if (!userResponse.ok || !productResponse.ok || !orderResponse.ok || !categoryResponse.ok || !zoneResponse.ok) {
+                        throw new Error('Failed to fetch one or more analytics endpoints');
                     }
 
                     const userData = await userResponse.json();
                     const productData = await productResponse.json();
+                    const categoryData = await categoryResponse.json();
+                    const zoneData = await zoneResponse.json();
                     const orderData = await orderResponse.json();
 
-                    // Update the DOM with all the fetched data
                     totalUsersSpan.textContent = userData.totalUsers;
                     totalProductsSpan.textContent = productData.totalProducts;
+                    totalCategoriesSpan.textContent = categoryData.totalCategories;
+                    totalZonesSpan.textContent = zoneData.totalZones;
                     totalOrdersSpan.textContent = orderData.total;
                     pendingOrdersSpan.textContent = orderData.pending;
-                    deliveredOrdersSpan.textContent = orderData.delivered;
 
                 } catch (error) {
                     console.error('Error fetching analytics:', error);
-                    // Set all to N/A on error
-                    [totalUsersSpan, totalProductsSpan, totalOrdersSpan, pendingOrdersSpan, deliveredOrdersSpan]
+                    [totalUsersSpan, totalProductsSpan, totalCategoriesSpan, totalZonesSpan, totalOrdersSpan, pendingOrdersSpan]
                         .forEach(span => span.textContent = 'N/A');
                 }
             }
