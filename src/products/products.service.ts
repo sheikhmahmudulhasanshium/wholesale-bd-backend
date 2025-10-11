@@ -1,3 +1,4 @@
+// src/products/products.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -7,8 +8,8 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
-import { Category, CategoryDocument } from './schemas/category.schema';
-import { Zone, ZoneDocument } from './schemas/zone.schema';
+import { Category } from './schemas/category.schema';
+import { Zone } from './schemas/zone.schema';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -20,8 +21,8 @@ import {
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
-    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
-    @InjectModel(Zone.name) private zoneModel: Model<ZoneDocument>,
+    @InjectModel(Category.name) private categoryModel: Model<Category>,
+    @InjectModel(Zone.name) private zoneModel: Model<Zone>,
   ) {}
 
   async create(
@@ -34,13 +35,11 @@ export class ProductsService {
       createProductDto.zoneId,
     );
     this.validatePricingTiers(createProductDto.pricingTiers);
-
     const product = new this.productModel({
       ...createProductDto,
       images: imageUrls,
       sellerId: new Types.ObjectId(sellerId),
     });
-
     return product.save();
   }
 
@@ -61,28 +60,22 @@ export class ProductsService {
       sortBy = 'createdAt',
       sortOrder = 'desc',
     } = query;
-
     const filter: Record<string, any> = { isActive: true };
     if (search) filter.$text = { $search: search };
     if (categoryId) filter.categoryId = new Types.ObjectId(categoryId);
     if (zoneId) filter.zoneId = new Types.ObjectId(zoneId);
     if (sellerId) filter.sellerId = new Types.ObjectId(sellerId);
-
     const sort: Record<string, 1 | -1> = {};
     sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
-
-    const [products, total] = await Promise.all([
-      this.productModel
-        .find(filter)
-        .populate('categoryId', 'name')
-        .populate('zoneId', 'name code')
-        .populate('sellerId', 'businessName')
-        .sort(sort)
-        .skip((page - 1) * limit)
-        .limit(limit),
-      this.productModel.countDocuments(filter),
-    ]);
-
+    const products: ProductDocument[] = await this.productModel
+      .find(filter)
+      .populate('categoryId', 'name')
+      .populate('zoneId', 'name code')
+      .populate('sellerId', 'businessName')
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(limit);
+    const total = await this.productModel.countDocuments(filter);
     return {
       products,
       total,
@@ -114,7 +107,6 @@ export class ProductsService {
     if (product.sellerId.toString() !== sellerId) {
       throw new ForbiddenException('You can only update your own products');
     }
-
     if (updateProductDto.categoryId || updateProductDto.zoneId) {
       await this.validateCategoryAndZone(
         updateProductDto.categoryId || product.categoryId.toString(),
@@ -124,19 +116,14 @@ export class ProductsService {
     if (updateProductDto.pricingTiers) {
       this.validatePricingTiers(updateProductDto.pricingTiers);
     }
-
     const combinedImages = [
       ...(updateProductDto.existingImages || []),
       ...newImageUrls,
     ];
 
-    // FIX: Create a mutable copy of the DTO to work with.
+    // FIX: Create a mutable copy and delete the property.
     const updateData: Record<string, any> = { ...updateProductDto };
-
-    // Now, delete the property from the mutable copy.
     delete updateData.existingImages;
-
-    // Assign the combined images to the new object.
     updateData.images = combinedImages;
 
     const updatedProduct = await this.productModel
@@ -182,9 +169,7 @@ export class ProductsService {
     if (!tiers || tiers.length === 0) {
       throw new BadRequestException('At least one pricing tier is required');
     }
-
     const sortedTiers = tiers.sort((a, b) => a.minQuantity - b.minQuantity);
-
     for (const tier of sortedTiers) {
       if (tier.minQuantity <= 0 || tier.pricePerUnit <= 0) {
         throw new BadRequestException('Quantities and prices must be positive');

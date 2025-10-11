@@ -1,3 +1,5 @@
+// src/common/services/r2-upload.service.ts
+
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
@@ -12,7 +14,7 @@ import * as path from 'path';
 @Injectable()
 export class R2UploadService {
   private readonly logger = new Logger(R2UploadService.name);
-  private readonly s3Client: S3Client;
+  private readonly s3Client: S3Client | null = null; // FIX: Initialize as null
   private readonly bucketName: string;
   private readonly publicUrl: string;
 
@@ -35,24 +37,23 @@ export class R2UploadService {
       this.logger.error(
         'R2 configuration is incomplete. File uploads will fail.',
       );
-      this.s3Client = {} as S3Client;
-      return;
+      // Keep s3Client as null
+    } else {
+      this.s3Client = new S3Client({
+        region: 'auto',
+        endpoint,
+        credentials: { accessKeyId, secretAccessKey },
+      });
     }
-
-    this.s3Client = new S3Client({
-      region: 'auto',
-      endpoint,
-      credentials: { accessKeyId, secretAccessKey },
-    });
   }
 
   async uploadFile(file: Express.Multer.File, folder: string): Promise<string> {
-    if (!this.s3Client.send) {
+    // FIX: Add a guard clause
+    if (!this.s3Client) {
       throw new BadRequestException('R2 service is not configured.');
     }
     const fileExtension = path.extname(file.originalname);
     const fileName = `${folder}/${uuidv4()}${fileExtension}`;
-
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: fileName,
@@ -60,7 +61,6 @@ export class R2UploadService {
       ContentType: file.mimetype,
       ACL: 'public-read',
     });
-
     try {
       await this.s3Client.send(command);
       const url = `${this.publicUrl}/${fileName}`;
@@ -81,7 +81,8 @@ export class R2UploadService {
   }
 
   async deleteFile(fileUrl: string): Promise<void> {
-    if (!this.s3Client.send) {
+    // FIX: Add a guard clause
+    if (!this.s3Client) {
       throw new BadRequestException('R2 service is not configured.');
     }
     const key = fileUrl.replace(`${this.publicUrl}/`, '');
@@ -89,22 +90,16 @@ export class R2UploadService {
       Bucket: this.bucketName,
       Key: key,
     });
-
     try {
       await this.s3Client.send(command);
       this.logger.log(`File deleted successfully: ${fileUrl}`);
     } catch (error) {
       this.logger.error('Error deleting file from R2:', error);
-
-      // FIX 1: Treat `error` as `unknown` and use `instanceof Error`.
-      // This is the most robust and type-safe way to check for properties.
       if (error instanceof Error) {
         if (error.name !== 'NotFound') {
           throw new BadRequestException('Failed to delete file.');
         }
-        // If the error name is 'NotFound', we do nothing and let the function exit successfully.
       } else {
-        // If the caught item is not a standard Error, re-throw a generic error.
         throw new BadRequestException(
           'Failed to delete file due to an unknown error.',
         );
@@ -113,7 +108,8 @@ export class R2UploadService {
   }
 
   async fileExists(fileUrl: string): Promise<boolean> {
-    if (!this.s3Client.send) return false;
+    // FIX: Add a guard clause
+    if (!this.s3Client) return false;
     const key = fileUrl.replace(`${this.publicUrl}/`, '');
     const command = new HeadObjectCommand({
       Bucket: this.bucketName,
@@ -123,7 +119,6 @@ export class R2UploadService {
       await this.s3Client.send(command);
       return true;
     } catch {
-      // FIX 2: Omit the error variable from the catch clause entirely.
       return false;
     }
   }

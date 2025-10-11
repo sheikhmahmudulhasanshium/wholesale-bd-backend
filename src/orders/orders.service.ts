@@ -12,6 +12,7 @@ import { CreateOrderDto, OrderQueryDto } from './dto/order.dto';
 import { UserDocument } from '../users/schemas/user.schema';
 
 function isUserDocument(doc: any): doc is UserDocument {
+  // A simple check to see if it's a Mongoose model instance and not just an ObjectId
   return doc instanceof Model;
 }
 
@@ -111,8 +112,7 @@ export class OrdersService {
     if (query.endDate)
       filter.createdAt = { ...filter.createdAt, $lte: new Date(query.endDate) };
 
-    // FIX: Await the queries sequentially. This is the most robust way to ensure
-    // TypeScript correctly infers the type of `orders`.
+    // FIX: Await sequentially to guarantee correct type inference.
     const orders: OrderDocument[] = await this.orderModel
       .find(filter)
       .populate('customerId', 'firstName lastName')

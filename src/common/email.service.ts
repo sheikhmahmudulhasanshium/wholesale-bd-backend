@@ -1,14 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
-import { SentMessageInfo } from 'nodemailer'; // Import the type
 
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
-  // FIX: Explicitly type the transporter with a generic.
-  // This tells TypeScript that all methods on this transporter will use `SentMessageInfo`.
-  private transporter: nodemailer.Transporter<SentMessageInfo>;
+  private transporter: nodemailer.Transporter;
 
   constructor(private configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
@@ -26,9 +23,19 @@ export class EmailService {
     mailOptions: nodemailer.SendMailOptions,
   ): Promise<void> {
     try {
-      // Now, because the transporter is strongly typed, the return value of `sendMail`
-      // is correctly inferred as `SentMessageInfo`, not `any`.
-      const info = await this.transporter.sendMail(mailOptions);
+      // FIX: Manually wrap the callback in a strongly-typed Promise.
+      // This is the most robust way to defeat type ambiguity from the library.
+      const info = await new Promise<nodemailer.SentMessageInfo>(
+        (resolve, reject) => {
+          this.transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              return reject(error);
+            }
+            resolve(info);
+          });
+        },
+      );
+
       this.logger.log(`Email sent: ${info.messageId}`);
     } catch (error) {
       this.logger.error('Failed to send email', error);

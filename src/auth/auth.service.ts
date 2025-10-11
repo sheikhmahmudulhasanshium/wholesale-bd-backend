@@ -1,3 +1,4 @@
+// src/auth/auth.service.ts
 import {
   Injectable,
   UnauthorizedException,
@@ -6,6 +7,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+// FIX: Remove unused 'Types' import
 import { Model } from 'mongoose';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -48,7 +50,6 @@ export class AuthService {
 
   private initializeFirebase() {
     if (admin.apps.length > 0) return;
-
     try {
       const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(
         /\\n/g,
@@ -88,9 +89,7 @@ export class AuthService {
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
-
     const user = await this.usersService.createUser(registerDto, Role.CUSTOMER);
-
     if (user.emailVerificationOtp) {
       await this.emailService.sendEmailVerification(
         user.email,
@@ -98,7 +97,6 @@ export class AuthService {
         user.firstName,
       );
     }
-
     return this.generateAuthResponse(user);
   }
 
@@ -111,9 +109,7 @@ export class AuthService {
     if (existingUser) {
       throw new ConflictException('User with this email already exists');
     }
-
     const seller = await this.usersService.createSeller(sellerDto);
-
     if (seller.emailVerificationOtp) {
       await this.emailService.sendEmailVerification(
         seller.email,
@@ -121,7 +117,6 @@ export class AuthService {
         seller.firstName,
       );
     }
-
     return this.generateAuthResponse(seller);
   }
 
@@ -137,14 +132,12 @@ export class AuthService {
     if (!decodedToken.email) {
       throw new BadRequestException('Email is required from social provider.');
     }
-
     const existingUser = await this.userModel.findOne({
       email: decodedToken.email,
     });
     if (existingUser) {
       throw new ConflictException('A user with this email already exists.');
     }
-
     const seller = await this.usersService.createSellerWithSocial(
       decodedToken,
       sellerSocialDto,
@@ -157,7 +150,6 @@ export class AuthService {
     if (!user || !user.password) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
       user.password,
@@ -165,13 +157,11 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
-
     if (!user.emailVerified) {
       throw new UnauthorizedException(
         'Please verify your email before logging in.',
       );
     }
-
     user.lastLogin = new Date();
     await user.save();
     return this.generateAuthResponse(user);
@@ -185,7 +175,6 @@ export class AuthService {
       .auth()
       .verifyIdToken(idToken);
     const user = await this.usersService.findOrCreateSocialUser(decodedToken);
-
     user.lastLogin = new Date();
     await user.save();
     return this.generateAuthResponse(user);
@@ -216,14 +205,11 @@ export class AuthService {
       resetPasswordOtp: resetDto.otp,
       resetPasswordOtpExpires: { $gt: new Date() },
     });
-
     if (!user) throw new BadRequestException('Invalid or expired OTP');
-
     user.password = await bcrypt.hash(resetDto.newPassword, 12);
     user.resetPasswordOtp = undefined;
     user.resetPasswordOtpExpires = undefined;
     await user.save();
-
     return { message: 'Password has been reset successfully.' };
   }
 
@@ -233,13 +219,11 @@ export class AuthService {
   ): Promise<{ message: string }> {
     const user = await this.userModel.findById(userId);
     if (!user || !user.password) throw new NotFoundException('User not found.');
-
     const isMatch = await bcrypt.compare(
       changeDto.currentPassword,
       user.password,
     );
     if (!isMatch) throw new BadRequestException('Incorrect current password.');
-
     user.password = await bcrypt.hash(changeDto.newPassword, 12);
     await user.save();
     return { message: 'Password changed successfully.' };
@@ -251,9 +235,7 @@ export class AuthService {
       emailVerificationOtp: verifyDto.otp,
       emailVerificationOtpExpires: { $gt: new Date() },
     });
-
     if (!user) throw new BadRequestException('Invalid or expired OTP');
-
     user.emailVerified = true;
     user.emailVerificationOtp = undefined;
     user.emailVerificationOtpExpires = undefined;
@@ -285,7 +267,6 @@ export class AuthService {
   async validateOtp(validateDto: ValidateOtpDto): Promise<{ valid: boolean }> {
     const user = await this.userModel.findOne({ email: validateDto.email });
     if (!user) return { valid: false };
-
     if (validateDto.type === 'email_verification') {
       return {
         valid: !!(
@@ -309,15 +290,12 @@ export class AuthService {
 
   private generateAuthResponse(user: UserDocument): AuthResponseDto {
     const payload: JwtPayload = {
-      sub: user._id.toHexString(),
+      sub: user._id.toString(),
       email: user.email,
       role: user.role,
     };
-
     const userProfile = user.toObject<User>();
-
     delete userProfile.password;
-
     return {
       access_token: this.jwtService.sign(payload),
       user: userProfile,
