@@ -8,12 +8,18 @@
     <style>
         :root {
             --primary-color: #2563eb;
+            --secondary-color: #10b981;
+            --tertiary-color: #f97316;
+            --quaternary-color: #8b5cf6; /* New color for the new button */
             --success-color: #22c55e;
             --error-color: #ef4444;
             --text-color-light: #f9fafb;
-            --card-bg-color: rgba(255, 255, 255, 0.2);
+            --card-bg-color: rgba(255, 255, 255, 0.1); /* Slightly less transparent */
             --border-radius: 12px;
             --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        html {
+            scroll-behavior: smooth;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -24,7 +30,9 @@
             color: var(--text-color-light);
             display: flex;
             flex-direction: column;
+            align-items: center; /* Center content vertically and horizontally */
             justify-content: center;
+            padding: 2rem 0; /* Add some padding for scroll space */
         }
         .container {
             max-width: 600px;
@@ -52,19 +60,65 @@
         .btn-tertiary { background-color: rgba(255, 255, 255, 0.1); color: var(--text-color-light); border: 2px solid transparent; background-clip: padding-box; position: relative; }
         .btn-tertiary::before { content: ''; position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; background: linear-gradient(45deg, #fb923c 0%, #f97316 100%); border-radius: var(--border-radius); z-index: -1; }
         .btn-tertiary:hover:not(:disabled) { background-color: rgba(249, 115, 22, 0.5); }
+        
+        /* NEW BUTTON STYLE */
+        .btn-quaternary { background-image: linear-gradient(45deg, #a78bfa 0%, #8b5cf6 100%); color: var(--text-color-light); }
+
         .status-container { position: fixed; top: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 1000; }
         #status-indicator { padding: 10px 22px; border-radius: 50px; font-weight: 600; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25); opacity: 0; visibility: hidden; transition: opacity 0.4s ease, transform 0.4s ease; transform: translateY(-20px); }
         #status-indicator.show { opacity: 1; visibility: visible; transform: translateY(0); }
         #status-indicator.success { background-color: var(--success-color); }
         #status-indicator.error { background-color: var(--error-color); }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); z-index: 2000; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
-        .modal-overlay.show { opacity: 1; visibility: visible; }
-        .modal-content { background: var(--card-bg-color); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: var(--border-radius); padding: 2rem; width: 90%; max-width: 400px; text-align: left; position: relative; }
-        .modal-content h2 { margin-top: 0; text-align: center; }
-        .modal-content ul { list-style: none; padding: 0; }
-        .modal-content li { background: rgba(0,0,0,0.2); padding: 10px 15px; border-radius: 8px; margin-bottom: 0.75rem; }
-        .modal-close { position: absolute; top: 15px; right: 15px; background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; opacity: 0.7; transition: opacity 0.2s; }
-        .modal-close:hover { opacity: 1; }
+
+        /* --- NEW ANALYTICS CARD STYLES --- */
+        .analytics-container {
+            max-width: 600px;
+            width: 90%;
+            margin: 2rem auto 0 auto; /* Margin top to space it from the main card */
+            padding: 1.5rem;
+            background: var(--card-bg-color);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .analytics-stat {
+            background: rgba(0,0,0,0.15);
+            padding: 1rem;
+            border-radius: 8px;
+            flex-grow: 1;
+            min-width: 200px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-icon {
+            flex-shrink: 0;
+            width: 40px;
+            height: 40px;
+            stroke-width: 1.5;
+            color: var(--text-color-light);
+            opacity: 0.8;
+        }
+        .stat-text .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            display: block;
+            line-height: 1.2;
+        }
+        .stat-text .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            display: block;
+        }
+        .hidden {
+            display: none;
+        }
+        
         footer { width: 100%; text-align: center; font-size: 0.9rem; opacity: 0.8; padding: 2rem 1rem; margin-top: auto; }
         @media (min-width: 600px) { .actions { flex-direction: row; flex-wrap: wrap; } }
     </style>
@@ -81,63 +135,84 @@
         <div class="actions">
             <a href="https://wholesale-bd-web-app.vercel.app" class="btn btn-primary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-4.5 4.5L21 3m0 0h-5.25M21 3v5.25" /></svg>Visit Website</a>
             <a href="/api" class="btn btn-secondary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 12" /></svg>API Docs</a>
-            <button id="health-check-btn" class="btn btn-tertiary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>Check API Health</button>
+            
+            <!-- NEW BUTTON -->
+            <button id="show-analytics-btn" class="btn btn-quaternary">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /></svg>
+                Show Highlights
+            </button>
         </div>
     </main>
 
-    <footer><p>&copy; 2024 Wholesale BD &bull; All Rights Reserved</p></footer>
-
-    <div id="tech-modal" class="modal-overlay">
-        <div class="modal-content">
-            <button id="modal-close-btn" class="modal-close">&times;</button>
-            <h2>Core Technologies</h2>
-            <ul>
-                <li><strong>Framework:</strong> Nest.js & Express</li>
-                <li><strong>Language:</strong> TypeScript</li>
-                <li><strong>Database:</strong> MongoDB with Mongoose</li>
-                <li><strong>API Docs:</strong> Swagger (OpenAPI)</li>
-                <li><strong>Deployment:</strong> Vercel Serverless</li>
-            </ul>
+    <!-- NEW ANALYTICS SECTION -->
+    <section id="analytics-section" class="analytics-container hidden">
+        <!-- Total Users Stat -->
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m-7.5-2.962A3 3 0 0 1 3 18.72v-2.172c0-.923.63-1.724 1.52-1.962a7.5 7.5 0 0 1 1.52-1.962M12 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM12 10.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z" /></svg>
+            <div class="stat-text">
+                <span id="total-users-count" class="stat-value">...</span>
+                <span class="stat-label">Total Users</span>
+            </div>
         </div>
-    </div>
+        <!-- Unique Products Stat -->
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+            <div class="stat-text">
+                <span id="total-products-count" class="stat-value">...</span>
+                <span class="stat-label">Unique Products</span>
+            </div>
+        </div>
+    </section>
 
+    <footer><p>&copy; 2024 Wholesale BD &bull; All Rights Reserved</p></footer>
+    
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const statusIndicator = document.getElementById('status-indicator');
-            const healthCheckBtn = document.getElementById('health-check-btn');
+            const showAnalyticsBtn = document.getElementById('show-analytics-btn');
+            const analyticsSection = document.getElementById('analytics-section');
+            const totalUsersSpan = document.getElementById('total-users-count');
+            const totalProductsSpan = document.getElementById('total-products-count');
 
-            async function checkApiHealth() {
-                healthCheckBtn.disabled = true;
-                healthCheckBtn.innerHTML = `Checking...`;
-                statusIndicator.classList.remove('success', 'error', 'show');
-
+            // Function to fetch all analytics data
+            async function fetchAnalyticsData() {
                 try {
-                    const response = await fetch('/api/v1/status');
-                    
-                    // response.ok is true for statuses in the range 200-299
-                    if (response.ok) {
-                        statusIndicator.textContent = 'API & DB Status: OK';
-                        statusIndicator.classList.add('success', 'show');
-                    } else {
-                        // This will catch the 503 Service Unavailable error
-                        throw new Error('Database connection failed');
+                    // Fetch data in parallel for efficiency
+                    const [userResponse, productResponse] = await Promise.all([
+                        fetch('/api/v1/users/count'),
+                        fetch('/api/v1/products/count')
+                    ]);
+
+                    if (!userResponse.ok || !productResponse.ok) {
+                        throw new Error('Failed to fetch analytics data');
                     }
+
+                    const userData = await userResponse.json();
+                    const productData = await productResponse.json();
+
+                    // Update the DOM with the fetched data
+                    totalUsersSpan.textContent = userData.totalUsers;
+                    totalProductsSpan.textContent = productData.totalProducts;
+
                 } catch (error) {
-                    console.error('Health check failed:', error);
-                    statusIndicator.textContent = 'Error: DB Disconnected';
-                    statusIndicator.classList.add('error', 'show');
-                } finally {
-                    setTimeout(() => {
-                        healthCheckBtn.disabled = false;
-                        healthCheckBtn.innerHTML = `<svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z" /></svg>Check API Health`;
-                        statusIndicator.classList.remove('show');
-                    }, 3000);
+                    console.error('Error fetching analytics:', error);
+                    totalUsersSpan.textContent = 'N/A';
+                    totalProductsSpan.textContent = 'N/A';
                 }
             }
 
-            healthCheckBtn.addEventListener('click', checkApiHealth);
-
-            // You can re-add the tech stack button and its logic here if you want both
+            // --- Event Listener for the "Show Highlights" button ---
+            showAnalyticsBtn.addEventListener('click', () => {
+                // Show the analytics card
+                if (analyticsSection.classList.contains('hidden')) {
+                    analyticsSection.classList.remove('hidden');
+                }
+                
+                // Scroll to the analytics card
+                analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            
+            // --- Fetch initial data on page load ---
+            fetchAnalyticsData();
         });
     </script>
 </body>
