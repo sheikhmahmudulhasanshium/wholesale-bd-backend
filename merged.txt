@@ -184,6 +184,95 @@
 </html>
 
 --------------------------------------------------------------------------------
+--- FILE: public/swagger-custom.js ---
+--------------------------------------------------------------------------------
+
+// public/swagger-custom.js
+
+function initializeSwaggerCustomizations() {
+  try {
+    const topbar = document.querySelector('.swagger-ui .topbar .topbar-wrapper');
+    const infoContainer = document.querySelector('.swagger-ui .info');
+
+    // Exit if the essential elements aren't ready yet
+    if (!topbar || !infoContainer) {
+      return;
+    }
+
+    // --- 1. SETUP TOP BAR BUTTONS ---
+    if (!document.querySelector('.custom-btn-container')) {
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'custom-btn-container';
+
+      // Re-introduce the "Home" button with text/emoji
+      const homeButton = document.createElement('a');
+      homeButton.href = '/';
+      homeButton.target = '_self';
+      homeButton.className = 'topbar-btn';
+      homeButton.innerHTML = 'ðŸ  Home';
+      buttonContainer.appendChild(homeButton);
+
+      const backButton = document.createElement('button');
+      backButton.className = 'topbar-btn';
+      backButton.innerHTML = 'âª Back';
+      backButton.onclick = () => history.back();
+      buttonContainer.appendChild(backButton);
+
+      const schemasButton = document.createElement('button');
+      schemasButton.className = 'topbar-btn';
+      schemasButton.innerHTML = 'ðŸ“œ Schemas';
+      schemasButton.onclick = () => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      };
+      buttonContainer.appendChild(schemasButton);
+
+      topbar.prepend(buttonContainer);
+    }
+    
+    // --- 2. INJECT LOGO INTO INFO SECTION ---
+    if (!document.getElementById('info-section-logo')) {
+      const logoDiv = document.createElement('div');
+      logoDiv.id = 'info-section-logo';
+      // The div is empty; CSS will handle the background image.
+      infoContainer.prepend(logoDiv);
+    }
+
+    // --- 3. "BACK TO TOP" BUTTON (Unchanged) ---
+    if (!document.getElementById('back-to-top-btn')) {
+      const backToTopButton = document.createElement('button');
+      backToTopButton.id = 'back-to-top-btn';
+      backToTopButton.innerHTML = 'â†‘';
+      document.body.appendChild(backToTopButton);
+      backToTopButton.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+          backToTopButton.classList.add('show');
+        } else {
+          backToTopButton.classList.remove('show');
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error("Swagger custom script failed:", error);
+  }
+}
+
+const observer = new MutationObserver((mutations, obs) => {
+  const swaggerUI = document.getElementById('swagger-ui');
+  if (swaggerUI && swaggerUI.children.length > 0) {
+    initializeSwaggerCustomizations();
+  }
+});
+
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
+
+--------------------------------------------------------------------------------
 --- FILE: src/app.controller.ts ---
 --------------------------------------------------------------------------------
 
@@ -244,6 +333,7 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
+//import { SeederModule } from './seeder/seeder.module';
 
 @Module({
   imports: [
@@ -362,11 +452,11 @@ async function bootstrap() {
     }),
   );
 
-  // This is the robust path that works with the Vercel build process.
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
-    .setTitle(`ðŸ“¦ Wholesale BD Backend`)
+    // --- THIS LINE HAS BEEN UPDATED ---
+    .setTitle(`Backend Api documentation`)
     .setDescription('The official API for the Wholesale BD B2B Platform.')
     .setVersion('1.0')
     .addTag('API Endpoints')
@@ -382,16 +472,93 @@ async function bootstrap() {
     customJs: [
       'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
       'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
+      '/swagger-custom.js',
     ],
     customCss: `
-      .swagger-ui .topbar { background-color: #1e3a8a; }
-      .swagger-ui .topbar .link { color: #FFFFFF; }
+      /* --- Top Bar Styles --- */
+      .swagger-ui .topbar { 
+        background-color: #1e3a8a; 
+        height: 60px; /* Standard header height */
+        padding: 0 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+      }
+      .swagger-ui .topbar .topbar-wrapper {
+         display: flex;
+         align-items: center;
+         width: 100%;
+      }
+      .swagger-ui .topbar a.link {
+        display: none; /* Hide default Swagger logo */
+      }
+      .custom-btn-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 15px;
+      }
+      
+      /* Standard styles for our top bar buttons */
+      .topbar-btn {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+      }
+      .topbar-btn:hover { background-color: rgba(255, 255, 255, 0.25); }
+      .topbar-btn:active { transform: translateY(1px); }
+
+      /* --- Info Section Logo Styles --- */
+      #info-section-logo {
+        width: 100%;
+        max-width: 400px; /* Prevent it from being huge on very wide screens */
+        height: 100px; /* A nice, tall height for the logo */
+        margin-bottom: 20px; /* Space between logo and the title */
+
+        /* Your full logo SVG, URL-encoded and embedded */
+        background-image: url("data:image/svg+xml,%3csvg width='168' height='84' viewBox='0 0 6 3' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3clinearGradient id='logo-symbol-gradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3e%3cstop offset='0%25' stop-color='%2322C55E'/%3e%3cstop offset='100%25' stop-color='%2315803D'/%3e%3c/linearGradient%3e%3clinearGradient id='logo-text-gradient-flag' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3e%3cstop offset='0%25' stop-color='%23DC2626'/%3e%3cstop offset='100%25' stop-color='%23B91C1C'/%3e%3c/linearGradient%3e%3c/defs%3e%3cg%3e%3cg transform='translate(0.5, 1.5) scale(0.01)'%3e%3cpath d='M -50 -45 L 50 -50 L 45 50 L -45 40 Z' fill='url(%23logo-symbol-gradient)'/%3e%3cpath d='M -30 -47 A 35 35 0 0 1 30 -48' fill='none' stroke='%2316A34A' stroke-width='8' stroke-linecap='round'/%3e%3c/g%3e%3ctext x='0.5' y='1.5' font-family='Poppins, sans-serif' font-size='0.8' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3eW%3c/text%3e%3c/g%3e%3ctext x='1.2' y='1.5' fill='url(%23logo-text-gradient-flag)' font-family='Poppins, sans-serif' font-size='0.65' font-weight='bold' dominant-baseline='middle'%3eWholesale BD%3c/text%3e%3c/svg%3e");
+        
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: left center; /* Align logo to the left */
+      }
+
+      /* Responsive styles for logo */
+      @media (max-width: 768px) {
+        #info-section-logo {
+          max-width: 300px;
+          height: 75px;
+        }
+      }
+
+      /* "Back to Top" Button Styles (Unchanged) */
+      #back-to-top-btn {
+        position: fixed; bottom: 25px; right: 25px; z-index: 1000;
+        opacity: 0; visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.2s ease;
+        width: 45px; height: 45px; border-radius: 50%;
+        background-image: linear-gradient(45deg, #3b82f6 0%, #2563eb 100%);
+        color: white; border: none; cursor: pointer; font-size: 24px;
+        line-height: 45px; text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+      #back-to-top-btn.show { opacity: 1; visibility: visible; }
+      #back-to-top-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35); }
     `,
   };
 
   SwaggerModule.setup('api', app, document, customSwaggerOptions);
 
-  // This part only runs locally, not on Vercel
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 3001;
     await app.listen(port);
@@ -399,7 +566,6 @@ async function bootstrap() {
     console.log(`ðŸŒ Public index page at: http://localhost:${port}/`);
     console.log(`ðŸ“š Swagger docs at: http://localhost:${port}/api`);
   } else {
-    // This part runs on Vercel
     await app.init();
   }
 
@@ -450,7 +616,7 @@ export class ApiKeyGuard implements CanActivate {
 --------------------------------------------------------------------------------
 
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { CategoryResponseDto } from './dto/category-response.dto';
 
@@ -459,9 +625,12 @@ import { CategoryResponseDto } from './dto/category-response.dto';
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
-  // --- ADD THIS NEW ENDPOINT ---
   @Get('count')
   @ApiOperation({ summary: 'Get the total number of categories' })
+  @ApiOkResponse({
+    description: 'Returns the total count of categories.',
+    schema: { example: { totalCategories: 15 } },
+  })
   async getCategoryCount(): Promise<{ totalCategories: number }> {
     const count = await this.categoriesService.countAll();
     return { totalCategories: count };
@@ -469,6 +638,10 @@ export class CategoriesController {
 
   @Get()
   @ApiOperation({ summary: 'Get a list of all categories' })
+  @ApiOkResponse({
+    description: 'An array of category records, sorted by sortOrder.',
+    type: [CategoryResponseDto],
+  })
   async findAll(): Promise<CategoryResponseDto[]> {
     const categories = await this.categoriesService.findAll();
     return categories.map((cat) =>
@@ -530,13 +703,39 @@ export class CategoriesService {
 --- FILE: src/categories/dto/category-response.dto.ts ---
 --------------------------------------------------------------------------------
 
+import { ApiProperty } from '@nestjs/swagger';
 import { CategoryDocument } from '../schemas/category.schema';
 
 export class CategoryResponseDto {
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a47',
+    description: 'Unique identifier for the category.',
+  })
   _id: string;
+
+  @ApiProperty({
+    example: 'Electronics',
+    description: 'The name of the category.',
+  })
   name: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Gadgets and electronic devices.',
+    description: 'A brief description of the category.',
+  })
   description?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the category is currently active and visible.',
+  })
   isActive: boolean;
+
+  @ApiProperty({
+    example: 1,
+    description: 'The order in which the category should be displayed.',
+  })
   sortOrder: number;
 
   static fromCategoryDocument(
@@ -575,7 +774,7 @@ export class Category {
 
   @Prop({ default: 0 })
   sortOrder: number;
-
+  // Add this inside the Category class
   // For TypeScript awareness of Mongoose's timestamps
   createdAt: Date;
   updatedAt: Date;
@@ -589,7 +788,7 @@ export const CategorySchema = SchemaFactory.createForClass(Category);
 --------------------------------------------------------------------------------
 
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { OrderResponseDto } from './dto/order-response.dto';
 
@@ -598,9 +797,18 @@ import { OrderResponseDto } from './dto/order-response.dto';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
-  // --- NEW ANALYTICS ENDPOINT ---
   @Get('analytics')
   @ApiOperation({ summary: 'Get aggregated order statistics' })
+  @ApiOkResponse({
+    description: 'Returns a summary of order counts by status.',
+    schema: {
+      example: {
+        total: 1500,
+        pending: 75,
+        delivered: 1200,
+      },
+    },
+  })
   async getOrderAnalytics(): Promise<{
     total: number;
     pending: number;
@@ -611,6 +819,10 @@ export class OrdersController {
 
   @Get('count')
   @ApiOperation({ summary: 'Get the total number of orders' })
+  @ApiOkResponse({
+    description: 'Returns the total count of all orders.',
+    schema: { example: { totalOrders: 1500 } },
+  })
   async getOrderCount(): Promise<{ totalOrders: number }> {
     const count = await this.ordersService.countAll();
     return { totalOrders: count };
@@ -618,6 +830,10 @@ export class OrdersController {
 
   @Get()
   @ApiOperation({ summary: 'Get a list of all orders' })
+  @ApiOkResponse({
+    description: 'An array of order records.',
+    type: [OrderResponseDto],
+  })
   async findAll(): Promise<OrderResponseDto[]> {
     const orders = await this.ordersService.findAll();
     return orders.map((order) => OrderResponseDto.fromOrderDocument(order));
@@ -694,29 +910,70 @@ export class OrdersService {
 --- FILE: src/orders/dto/order-response.dto.ts ---
 --------------------------------------------------------------------------------
 
-import { OrderDocument } from '../schemas/order.schema';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  OrderDocument,
+  OrderStatus,
+  PaymentStatus,
+} from '../schemas/order.schema';
 
-// This DTO defines the shape of an order object when sent in an API response.
+class OrderItemDto {
+  @ApiProperty({ example: '65f1c5a0ef3e2bde5f269b58' })
+  productId: string;
+
+  @ApiProperty({ example: 'High-Quality T-Shirt' })
+  productName: string;
+
+  @ApiProperty({ example: 10 })
+  quantity: number;
+
+  @ApiProperty({ example: 150.5 })
+  pricePerUnit: number;
+
+  @ApiProperty({ example: 1505.0 })
+  totalPrice: number;
+}
+
+class ShippingAddressDto {
+  @ApiProperty({ example: 'Jane Doe' })
+  fullName: string;
+
+  @ApiProperty({ example: 'Dhaka' })
+  city: string;
+
+  @ApiProperty({ example: 'Dhaka Division' })
+  zone: string;
+}
+
 export class OrderResponseDto {
+  @ApiProperty({ example: '65f1d8a0ef3e2bde5f269c12' })
   _id: string;
+
+  @ApiProperty({ example: 'WBD-20240315-0001' })
   orderNumber: string;
+
+  @ApiProperty({ example: '65f1c4a0ef3e2bde5f269a47' })
   customerId: string;
+
+  @ApiProperty({ example: '65f1c4a0ef3e2bde5f269a49' })
   sellerId: string;
-  items: {
-    productId: string;
-    productName: string;
-    quantity: number;
-    pricePerUnit: number;
-    totalPrice: number;
-  }[];
+
+  @ApiProperty({ type: [OrderItemDto] })
+  items: OrderItemDto[];
+
+  @ApiProperty({ example: 1655.0 })
   totalAmount: number;
-  shippingAddress: {
-    fullName: string;
-    city: string;
-    zone: string;
-  };
+
+  @ApiProperty()
+  shippingAddress: ShippingAddressDto;
+
+  @ApiProperty({ example: OrderStatus.PENDING, enum: OrderStatus })
   status: string;
+
+  @ApiProperty({ example: PaymentStatus.PENDING, enum: PaymentStatus })
   paymentStatus: string;
+
+  @ApiProperty()
   createdAt: Date;
 
   static fromOrderDocument(orderDoc: OrderDocument): OrderResponseDto {
@@ -883,7 +1140,7 @@ export class Order {
 
   @Prop({ type: Date })
   cancelledAt?: Date;
-
+  // Add this inside the Order class
   createdAt: Date;
   updatedAt: Date;
 }
@@ -896,29 +1153,34 @@ export const OrderSchema = SchemaFactory.createForClass(Order);
 --------------------------------------------------------------------------------
 
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
-import { ProductResponseDto } from './dto/product-response.dto'; // <-- Import DTO
+import { ProductResponseDto } from './dto/product-response.dto';
 
 @ApiTags('Products')
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
-  // --- NEW PUBLIC COUNTER ENDPOINT ---
   @Get('count')
   @ApiOperation({ summary: 'Get the total number of products' })
+  @ApiOkResponse({
+    description: 'Returns the total count of products.',
+    schema: { example: { totalProducts: 542 } },
+  })
   async getProductCount(): Promise<{ totalProducts: number }> {
     const count = await this.productsService.countAll();
     return { totalProducts: count };
   }
 
-  // --- EXISTING PUBLIC ENDPOINT (NOW TYPED) ---
   @Get()
   @ApiOperation({ summary: 'Get a list of all products' })
+  @ApiOkResponse({
+    description: 'An array of product records.',
+    type: [ProductResponseDto],
+  })
   async findAll(): Promise<ProductResponseDto[]> {
     const products = await this.productsService.findAll();
-    // Map the database documents to our safe DTO before sending
     return products.map((product) =>
       ProductResponseDto.fromProductDocument(product),
     );
@@ -977,30 +1239,135 @@ export class ProductsService {
 --- FILE: src/products/dto/product-response.dto.ts ---
 --------------------------------------------------------------------------------
 
-import { ProductDocument } from '../schemas/product.schema';
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  ProductDocument,
+  ProductStatus,
+  ProductUnit,
+} from '../schemas/product.schema';
 
-// Defines the data structure for a product when sent in an API response.
+class PricingTierDto {
+  @ApiProperty({
+    example: 1,
+    description: 'Minimum quantity for this price tier.',
+  })
+  minQuantity: number;
+
+  @ApiProperty({
+    required: false,
+    example: 10,
+    description:
+      'Maximum quantity for this price tier (optional for the last tier).',
+  })
+  maxQuantity?: number;
+
+  @ApiProperty({
+    example: 99.99,
+    description: 'Price per unit within this quantity range.',
+  })
+  pricePerUnit: number;
+}
+
 export class ProductResponseDto {
+  @ApiProperty({
+    example: '65f1c5a0ef3e2bde5f269b58',
+    description: 'Unique identifier for the product.',
+  })
   _id: string;
+
+  @ApiProperty({
+    example: 'High-Quality T-Shirt',
+    description: 'Name of the product.',
+  })
   name: string;
+
+  @ApiProperty({
+    example: 'A comfortable and durable t-shirt made from 100% cotton.',
+    description: 'Detailed description of the product.',
+  })
   description: string;
+
+  @ApiProperty({
+    type: [String],
+    example: ['/images/tshirt1.jpg', '/images/tshirt2.jpg'],
+    description: 'Array of URLs for product images.',
+  })
   images: string[];
+
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a47',
+    description: 'ID of the product category.',
+  })
   categoryId: string;
+
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a48',
+    description: 'ID of the zone where the product is available.',
+  })
   zoneId: string;
+
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a49',
+    description: 'ID of the seller who listed the product.',
+  })
   sellerId: string;
-  pricingTiers: {
-    minQuantity: number;
-    maxQuantity?: number;
-    pricePerUnit: number;
-  }[];
+
+  @ApiProperty({
+    type: [PricingTierDto],
+    description: 'Defines different prices for different quantities.',
+  })
+  pricingTiers: PricingTierDto[];
+
+  @ApiProperty({
+    example: 10,
+    description:
+      'The minimum quantity required to place an order for this product.',
+  })
   minimumOrderQuantity: number;
+
+  @ApiProperty({
+    example: 500,
+    description: 'Current available stock quantity.',
+  })
   stockQuantity: number;
+
+  @ApiProperty({
+    example: ProductUnit.PIECE,
+    enum: ProductUnit,
+    description: 'The unit of measurement for the product (e.g., piece, kg).',
+  })
   unit: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'BrandX',
+    description: 'The brand name of the product.',
+  })
   brand?: string;
+
+  @ApiProperty({
+    example: ProductStatus.ACTIVE,
+    enum: ProductStatus,
+    description: 'The current status of the product listing.',
+  })
   status: string;
+
+  @ApiProperty({
+    example: 4.5,
+    description: 'The average user rating of the product (0-5).',
+  })
   rating: number;
+
+  @ApiProperty({
+    example: 25,
+    description: 'The total number of reviews for the product.',
+  })
   reviewCount: number;
+
+  @ApiProperty({ description: 'Timestamp of product creation.' })
   createdAt: Date;
+
+  @ApiProperty({ description: 'Timestamp of last product update.' })
   updatedAt: Date;
 
   static fromProductDocument(productDoc: ProductDocument): ProductResponseDto {
@@ -1141,7 +1508,7 @@ export class Product {
 
   @Prop({ default: 0 })
   reviewCount: number;
-
+  // Add this inside the Product class
   // --- Timestamps (For TypeScript) ---
   createdAt: Date;
   updatedAt: Date;
@@ -1155,32 +1522,44 @@ export const ProductSchema = SchemaFactory.createForClass(Product);
 --------------------------------------------------------------------------------
 
 import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/user-response.dto';
 import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 
 @ApiTags('Users')
 @Controller('users')
-// NOTE: We have removed @UseGuards and @ApiHeader from the controller level
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  // --- NEW PUBLIC ENDPOINT ---
   @Get('count')
   @ApiOperation({ summary: 'Get the total number of registered users' })
+  @ApiOkResponse({
+    description: 'Returns the total count of users.',
+    schema: { example: { totalUsers: 125 } },
+  })
   async getUserCount(): Promise<{ totalUsers: number }> {
     const count = await this.usersService.countAll();
     return { totalUsers: count };
   }
 
-  // --- EXISTING PRIVATE ENDPOINT ---
   @Get()
   @ApiOperation({ summary: 'Get a list of all users (Protected)' })
-  // We moved the guard and header here to protect only this specific endpoint
+  @ApiOkResponse({
+    description: 'An array of user records.',
+    type: [UserResponseDto],
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
   @ApiHeader({
     name: 'x-api-key',
     description: 'The secret API key for access',
+    required: true,
   })
   @UseGuards(ApiKeyGuard)
   async findAll(): Promise<UserResponseDto[]> {
@@ -1244,38 +1623,114 @@ export class UsersService {
 --- FILE: src/users/dto/user-response.dto.ts ---
 --------------------------------------------------------------------------------
 
-import { UserDocument } from '../schemas/user.schema'; // <-- 1. IMPORT the UserDocument type
+import { ApiProperty } from '@nestjs/swagger';
+import { UserDocument } from '../schemas/user.schema';
 
-// This class defines the shape of the User object we send back to the client.
-// Notice it does NOT include the password.
 export class UserResponseDto {
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a47',
+    description: 'The unique identifier of the user',
+  })
   _id: string;
+
+  @ApiProperty({
+    example: 'test@example.com',
+    description: 'The email address of the user',
+  })
   email: string;
+
+  @ApiProperty({ example: 'John', description: "User's first name" })
   firstName: string;
+
+  @ApiProperty({ example: 'Doe', description: "User's last name" })
   lastName: string;
+
+  @ApiProperty({
+    required: false,
+    example: '+8801712345678',
+    description: "User's phone number",
+  })
   phone?: string;
+
+  @ApiProperty({
+    required: false,
+    description: "URL to the user's profile picture",
+  })
   profilePicture?: string;
+
+  @ApiProperty({ required: false, description: "User's physical address" })
   address?: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Dhaka',
+    description: "User's business zone",
+  })
   zone?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the user account is active',
+  })
   isActive: boolean;
+
+  @ApiProperty({
+    example: false,
+    description: "Indicates if the user's email has been verified",
+  })
   emailVerified: boolean;
-  role: string; // e.g., 'admin', 'seller'
+
+  @ApiProperty({
+    example: 'seller',
+    description: 'The role of the user (e.g., admin, seller, customer)',
+  })
+  role: string;
+
+  @ApiProperty({
+    example: 'pending',
+    description: 'KYC (Know Your Customer) verification status',
+  })
   kycStatus: string;
+
+  @ApiProperty({
+    example: 'approved',
+    description: 'Seller application status',
+  })
   sellerStatus: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Doe Electronics',
+    description: "User's business name",
+  })
   businessName?: string;
+
+  @ApiProperty({
+    example: 85,
+    description: 'A calculated score representing user trustworthiness',
+  })
   trustScore: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the user is a trusted seller',
+  })
   isTrustedUser: boolean;
+
+  @ApiProperty({ description: 'Timestamp of user creation' })
   createdAt: Date;
+
+  @ApiProperty({ description: 'Timestamp of last user update' })
   updatedAt: Date;
+
+  @ApiProperty({
+    required: false,
+    description: "Timestamp of the user's last login",
+  })
   lastLogin?: Date;
 
-  // This is a helper function to easily convert a database document to a DTO
-  // FIXED: We specify the correct type for userDoc instead of `any`
   static fromUserDocument(userDoc: UserDocument): UserResponseDto {
-    // <-- 2. SPECIFY the correct type here
     const dto = new UserResponseDto();
-
-    // Now TypeScript knows the exact shape of userDoc, and all these assignments are safe!
     dto._id = userDoc._id.toString();
     dto.email = userDoc.email;
     dto.firstName = userDoc.firstName;
@@ -1295,7 +1750,6 @@ export class UserResponseDto {
     dto.createdAt = userDoc.createdAt;
     dto.updatedAt = userDoc.updatedAt;
     dto.lastLogin = userDoc.lastLogin;
-
     return dto;
   }
 }
@@ -1458,6 +1912,7 @@ export class User {
   })
   twoFactorAuth: TwoFactorAuth;
 
+  // =======================================================================
   // --- ADDED FOR TYPESCRIPT AWARENESS ---
   // These are automatically managed by Mongoose via the `timestamps: true` option,
   // but we need to declare them here for TypeScript to know they exist.
@@ -1473,7 +1928,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 --------------------------------------------------------------------------------
 
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ZonesService } from './zones.service';
 import { ZoneResponseDto } from './dto/zone-response.dto';
 
@@ -1482,9 +1937,12 @@ import { ZoneResponseDto } from './dto/zone-response.dto';
 export class ZonesController {
   constructor(private readonly zonesService: ZonesService) {}
 
-  // --- ADD THIS NEW ENDPOINT ---
   @Get('count')
   @ApiOperation({ summary: 'Get the total number of zones' })
+  @ApiOkResponse({
+    description: 'Returns the total count of zones.',
+    schema: { example: { totalZones: 8 } },
+  })
   async getZoneCount(): Promise<{ totalZones: number }> {
     const count = await this.zonesService.countAll();
     return { totalZones: count };
@@ -1492,6 +1950,10 @@ export class ZonesController {
 
   @Get()
   @ApiOperation({ summary: 'Get a list of all zones' })
+  @ApiOkResponse({
+    description: 'An array of zone records, sorted by sortOrder.',
+    type: [ZoneResponseDto],
+  })
   async findAll(): Promise<ZoneResponseDto[]> {
     const zones = await this.zonesService.findAll();
     return zones.map((zone) => ZoneResponseDto.fromZoneDocument(zone));
@@ -1547,14 +2009,45 @@ export class ZonesService {
 --- FILE: src/zones/dto/zone-response.dto.ts ---
 --------------------------------------------------------------------------------
 
+import { ApiProperty } from '@nestjs/swagger';
 import { ZoneDocument } from '../schemas/zone.schema';
 
 export class ZoneResponseDto {
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a48',
+    description: 'Unique identifier for the zone.',
+  })
   _id: string;
+
+  @ApiProperty({
+    example: 'Dhaka Division',
+    description: 'The name of the zone.',
+  })
   name: string;
+
+  @ApiProperty({
+    example: 'DHK',
+    description: 'A short, unique code for the zone.',
+  })
   code: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Central business and administrative region.',
+    description: 'A brief description of the zone.',
+  })
   description?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the zone is currently active.',
+  })
   isActive: boolean;
+
+  @ApiProperty({
+    example: 1,
+    description: 'The order in which the zone should be displayed.',
+  })
   sortOrder: number;
 
   static fromZoneDocument(zoneDoc: ZoneDocument): ZoneResponseDto {
@@ -1595,7 +2088,7 @@ export class Zone {
 
   @Prop({ default: 0 })
   sortOrder: number;
-
+  // Add this inside the Zone class
   // For TypeScript awareness of Mongoose's timestamps
   createdAt: Date;
   updatedAt: Date;

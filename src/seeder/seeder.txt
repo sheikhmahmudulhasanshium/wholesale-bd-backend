@@ -1,5 +1,7 @@
 removed seeder
 diagnois seeder was crashing serverless vercel deployment
+added custom header. so it was indeed the reason for crashing
+//decision: do not make anything that can crash the whole system.must ensure the delicate balance no matter what.
 ===================================================
  Seeder Module Documentation & Usage Guide
 ===================================================
@@ -85,3 +87,4 @@ DO'S AND DON'TS
 - **DON'T** expose your `API_KEY` publicly.
 - **DON'T** run `DELETE /clean` on a production database unless you are 100% certain you want to delete all flagged data.
 - **DON'T** add the `isSampleData` field to your Mongoose schemas in your `.ts` files. The seeder is designed to work without it.
+- **DON'T** add admin account for seed users(if admin exists)
