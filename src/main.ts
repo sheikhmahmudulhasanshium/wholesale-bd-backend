@@ -10,6 +10,7 @@ import {
 import { ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+import { json, urlencoded } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -20,6 +21,8 @@ async function bootstrap() {
     credentials: true,
   });
 
+  app.use(json({ limit: '50mb' }));
+  app.use(urlencoded({ extended: true, limit: '50mb' }));
   app.setGlobalPrefix('api/v1');
 
   app.useGlobalPipes(
@@ -33,11 +36,15 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
-    // --- THIS LINE HAS BEEN UPDATED ---
     .setTitle(`Backend Api documentation`)
     .setDescription('The official API for the Wholesale BD B2B Platform.')
     .setVersion('1.0')
     .addTag('API Endpoints')
+    // --- THIS IS THE MINIMAL CHANGE ---
+    .addApiKey(
+      { type: 'apiKey', in: 'header', name: 'x-api-key' },
+      'api_key', // This is the reference name we will use
+    )
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, swaggerDocConfig);

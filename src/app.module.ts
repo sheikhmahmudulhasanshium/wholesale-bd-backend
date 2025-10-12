@@ -12,6 +12,10 @@ import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
 //import { SeederModule } from './seeder/seeder.module';
+import { MetadataModule } from './metadata/metadata.module';
+import { StorageModule } from './storage/storage.module';
+import { UploadsController } from './uploads/uploads.controller';
+import { ValidationConfigService } from './uploads/validation-config.service';
 
 @Module({
   imports: [
@@ -45,8 +49,12 @@ import { ZonesModule } from './zones/zones.module';
     CategoriesModule,
 
     ZonesModule,
+
+    MetadataModule,
+
+    StorageModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, UploadsController],
+  providers: [AppService, ValidationConfigService],
 })
 export class AppModule {}

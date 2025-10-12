@@ -75,23 +75,3 @@ wholesalebd-backend/
 └── 📄 vercel.json
 
 
---- SCRIPT EXECUTION LOG ---
-[2025-10-12 07:08:13] [START] Script started. Awaiting user input for project path.
-[2025-10-12 07:08:18] [INPUT] User raw input for path: "F:\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend"
-[2025-10-12 07:08:18] [PROCESS] Sanitized path: '\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend'
-[2025-10-12 07:08:18] [SUCCESS] Path validation successful: '\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend' is a valid directory.
-[2025-10-12 07:08:20] [INPUT] User selected map intensity: '2'
-[2025-10-12 07:08:20] [INFO] Starting user configuration for filters.
-[2025-10-12 07:08:22] [INPUT] User input for directory ignore list confirmation: 'y'
-[2025-10-12 07:08:26] [INPUT] User input for file ignore list confirmation: 'y'
-[2025-10-12 07:08:47] [INPUT] User input for included extensions: '.ts,.html,.tsx'
-[2025-10-12 07:08:47] [CONFIG] Final filter configuration created: IgnoreDirs                           IgnoreFiles              
-----------                           -----------              
-{node_modules, .git, dist, build...} {package-lock.json, ya...
-[2025-10-12 07:08:49] [INPUT] User input for max depth: ''
-[2025-10-12 07:08:49] [CONFIG] Max depth for tree traversal set to: 99
-[2025-10-12 07:08:49] [PROCESS] Starting project map generation...
-[2025-10-12 07:08:49] [OUTPUT] Generated 'Tree' output successfully.
-[2025-10-12 07:09:05] [INPUT] User input for save filename: 'project_map.txt'
-[2025-10-12 07:09:07] [INPUT] File exists. User asked to overwrite. Input: 'y'.
-[2025-10-12 07:09:07] [PROCESS] Preparing final output for saving to '\AIUB\Personal_project\Mirza's\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend\project_map.txt'.
