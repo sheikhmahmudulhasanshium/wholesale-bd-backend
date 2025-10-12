@@ -132,8 +132,6 @@ export class Order {
   @Prop({ type: Date })
   cancelledAt?: Date;
   // Add this inside the Order class
-  @Prop({ default: false, index: true })
-  isSampleData: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

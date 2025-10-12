@@ -109,8 +109,6 @@ export class Product {
   @Prop({ default: 0 })
   reviewCount: number;
   // Add this inside the Product class
-  @Prop({ default: false, index: true })
-  isSampleData: boolean;
   // --- Timestamps (For TypeScript) ---
   createdAt: Date;
   updatedAt: Date;

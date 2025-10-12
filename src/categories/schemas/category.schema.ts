@@ -17,8 +17,6 @@ export class Category {
   @Prop({ default: 0 })
   sortOrder: number;
   // Add this inside the Category class
-  @Prop({ default: false, index: true })
-  isSampleData: boolean;
   // For TypeScript awareness of Mongoose's timestamps
   createdAt: Date;
   updatedAt: Date;
