@@ -9,35 +9,72 @@ import {
   IsUrl,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger'; // <-- IMPORT THIS
 
-// A flexible object for multi-language strings
 export class I18nStringDto {
   [key: string]: string;
 }
 
-// Represents a file asset (image, logo, etc.)
-// The 'url' would come from our upload system
 export class AssetDto {
-  @IsString() @IsNotEmpty() name: string;
-  @IsUrl() @IsNotEmpty() url: string;
-  @IsString() @IsNotEmpty() type: string;
-  @IsNumber() width: number;
-  @IsNumber() height: number;
+  @ApiProperty({ example: 'Brand Logo Dark' }) // <-- ADD ALL ApiProperty
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiProperty({ example: 'https://cdn.example.com/logo-dark.svg' })
+  @IsUrl()
+  @IsNotEmpty()
+  url: string;
+
+  @ApiProperty({ example: 'image/svg+xml' })
+  @IsString()
+  @IsNotEmpty()
+  type: string;
+
+  @ApiProperty({ example: 1200 })
+  @IsNumber()
+  width: number;
+
+  @ApiProperty({ example: 630 })
+  @IsNumber()
+  height: number;
+
+  @ApiProperty({
+    type: I18nStringDto,
+    required: false,
+    example: { 'en-US': 'The dark version of the brand logo.' },
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => I18nStringDto)
   alt?: I18nStringDto;
 }
 
-// Represents a hyperlink in navigation
 export class LinkDto {
-  @ValidateNested() @Type(() => I18nStringDto) label: I18nStringDto;
-  @IsUrl() @IsNotEmpty() url: string;
-  @IsString() @IsOptional() icon?: string;
+  @ApiProperty({ type: I18nStringDto, example: { 'en-US': 'About Us' } })
+  @ValidateNested()
+  @Type(() => I18nStringDto)
+  label: I18nStringDto;
+
+  @ApiProperty({ example: '/about' })
+  @IsUrl()
+  @IsNotEmpty()
+  url: string;
+
+  @ApiProperty({ required: false, example: 'mdi-information' })
+  @IsString()
+  @IsOptional()
+  icon?: string;
 }
 
-// Represents a special button, extending a link
 export class CustomButtonDto extends LinkDto {
-  @IsString() @IsNotEmpty() id: string;
-  @IsString() @IsOptional() variant?: string;
+  @ApiProperty({ example: 'cta-header' })
+  @IsString()
+  @IsNotEmpty()
+  id: string;
+
+  @ApiProperty({ required: false, example: 'primary' })
+  @IsString()
+  @IsOptional()
+  variant?: string;
 }

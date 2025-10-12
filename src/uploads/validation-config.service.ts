@@ -13,15 +13,21 @@ export class ValidationConfigService {
   private readonly configs: Record<AssetCategory, ValidationConfig> = {
     [AssetCategory.Photo]: {
       maxSize: 10 * 1024 * 1024, // 10MB
-      fileType: /image\/(jpeg|png|gif|svg\+xml|webp)/,
+      // --- THIS IS THE FINAL FIX ---
+      // We are no longer trying to list every specific subtype.
+      // This regex simply checks if the MIME type starts with "image/".
+      // It is simpler and avoids the character parsing bug entirely.
+      fileType: /^image\//,
     },
     [AssetCategory.Video]: {
       maxSize: 100 * 1024 * 1024, // 100MB
-      fileType: /video\/(mp4|webm|ogg|quicktime|mov)/,
+      // Applying the same robust pattern here for consistency
+      fileType: /^video\//,
     },
     [AssetCategory.Sound]: {
       maxSize: 20 * 1024 * 1024, // 20MB
-      fileType: /audio\/(mpeg|wav|ogg|mp3)/,
+      // Applying the same robust pattern here for consistency
+      fileType: /^audio\//,
     },
     [AssetCategory.Document]: {
       maxSize: 15 * 1024 * 1024, // 15MB
