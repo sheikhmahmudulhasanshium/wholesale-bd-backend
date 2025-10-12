@@ -1,0 +1,3277 @@
+﻿
+--------------------------------------------------------------------------------
+--- FILE: nest-cli.json ---
+--------------------------------------------------------------------------------
+
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true, 
+    "tsConfigPath": "tsconfig.build.json"
+  },
+  "entryFile": "main" 
+}
+
+--------------------------------------------------------------------------------
+--- FILE: package.json ---
+--------------------------------------------------------------------------------
+
+{
+  "name": "wholesalebd-backend",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.908.0",
+    "@aws-sdk/s3-request-presigner": "^3.908.0",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.1",
+    "@nestjs/mongoose": "^11.0.3",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.2.0",
+    "@nestjs/throttler": "^6.4.0",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/nodemailer": "^7.0.2",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/qrcode": "^1.5.5",
+    "@types/speakeasy": "^2.0.10",
+    "@types/uuid": "^11.0.0",
+    "bcryptjs": "^3.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.5.0",
+    "handlebars": "^4.7.8",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.9",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "qrcode": "^1.5.4",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "serverless-express": "^2.0.12",
+    "speakeasy": "^2.0.0",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@swc/cli": "^0.6.0",
+    "@swc/core": "^1.10.7",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^22.10.7",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.4.2",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: tsconfig.build.json ---
+--------------------------------------------------------------------------------
+
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: tsconfig.json ---
+--------------------------------------------------------------------------------
+
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: vercel.json ---
+--------------------------------------------------------------------------------
+
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/main.ts",
+      "use": "@vercel/node",
+      "config": {
+        "maxDuration": 60
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/main.ts"
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
+--- FILE: public/index.html ---
+--------------------------------------------------------------------------------
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to the Wholesale BD API</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <style>
+        :root {
+            --primary-color: #2563eb; --secondary-color: #10b981; --tertiary-color: #f97316;
+            --quaternary-color: #8b5cf6; --success-color: #22c55e; --error-color: #ef4444;
+            --text-color-light: #f9fafb; --card-bg-color: rgba(255, 255, 255, 0.1);
+            --border-radius: 12px; --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; min-height: 100vh; background-image: linear-gradient(135deg, #1e3a8a, #312e81);
+            background-attachment: fixed; color: var(--text-color-light); display: flex; flex-direction: column;
+            align-items: center; justify-content: center; padding: 2rem 0;
+        }
+        .container {
+            max-width: 600px; width: 90%; margin: auto; padding: 2rem 1.5rem; background: var(--card-bg-color);
+            backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: var(--border-radius);
+            box-shadow: var(--shadow); text-align: center;
+        }
+        .logo { margin: 0 auto 2rem auto; max-width: 250px; }
+        .logo img { width: 100%; height: auto; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
+        h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); margin-top: 0; margin-bottom: 1rem; }
+        p { font-size: clamp(1rem, 2.5vw, 1.15rem); line-height: 1.6; margin-bottom: 2.5rem; opacity: 0.95; max-width: 500px; margin-left: auto; margin-right: auto; }
+        .actions { display: flex; gap: 1rem; justify-content: center; flex-direction: column; }
+        .btn { display: flex; align-items: center; justify-content: center; gap: 0.75rem; padding: 14px 28px; border-radius: var(--border-radius); text-decoration: none; font-size: 1rem; font-weight: 600; border: none; cursor: pointer; transition: all 0.3s ease; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn .icon { width: 20px; height: 20px; }
+        .btn-primary { background-image: linear-gradient(45deg, #3b82f6 0%, #2563eb 100%); color: var(--text-color-light); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 7px 20px rgba(59, 130, 246, 0.4); }
+        .btn-secondary { background-image: linear-gradient(45deg, #10b981 0%, #22c55e 100%); color: var(--text-color-light); }
+        .btn-quaternary { background-image: linear-gradient(45deg, #a78bfa 0%, #8b5cf6 100%); color: var(--text-color-light); }
+
+        .analytics-container {
+            max-width: 700px; width: 90%; margin: 2rem auto 0 auto; padding: 1.5rem;
+            background: var(--card-bg-color); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
+        }
+        .analytics-stat {
+            background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; flex-grow: 1;
+            min-width: 180px; display: flex; align-items: center; gap: 1rem;
+        }
+        .stat-icon { flex-shrink: 0; width: 40px; height: 40px; stroke-width: 1.5; color: var(--text-color-light); opacity: 0.8; }
+        .stat-text .stat-value { font-size: 1.75rem; font-weight: 700; display: block; line-height: 1.2; }
+        .stat-text .stat-label { font-size: 0.9rem; opacity: 0.8; display: block; }
+        .hidden { display: none; }
+        
+        footer { width: 100%; text-align: center; font-size: 0.9rem; opacity: 0.8; padding: 2rem 1rem; margin-top: auto; }
+        @media (min-width: 600px) { .actions { flex-direction: row; flex-wrap: wrap; } }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <a href="https://wholesale-bd-web-app.vercel.app" class="logo" title="Visit Wholesale BD Website">
+            <img src="/logo.svg" alt="Wholesale BD Logo">
+        </a>
+        <h1>Welcome to the Wholesale BD Backend API</h1>
+        <p>This is the engine powering Wholesale BD, Bangladesh's premier B2B wholesale platform. Explore our website or dive into the API documentation.</p>
+        <div class="actions">
+            <a href="https://wholesale-bd-web-app.vercel.app" class="btn btn-primary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-4.5 4.5L21 3m0 0h-5.25M21 3v5.25" /></svg>Visit Website</a>
+            <a href="/api" class="btn btn-secondary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 12" /></svg>API Docs</a>
+            <button id="show-analytics-btn" class="btn btn-quaternary">
+                <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /></svg>
+                Show Highlights
+            </button>
+        </div>
+    </main>
+
+    <section id="analytics-section" class="analytics-container hidden">
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m-7.5-2.962A3 3 0 0 1 3 18.72v-2.172c0-.923.63-1.724 1.52-1.962a7.5 7.5 0 0 1 1.52-1.962M12 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM12 10.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0Z" /></svg>
+            <div class="stat-text">
+                <span id="total-users-count" class="stat-value">...</span>
+                <span class="stat-label">Total Users</span>
+            </div>
+        </div>
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>
+            <div class="stat-text">
+                <span id="total-products-count" class="stat-value">...</span>
+                <span class="stat-label">Unique Products</span>
+            </div>
+        </div>
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+            <div class="stat-text">
+                <span id="total-categories-count" class="stat-value">...</span>
+                <span class="stat-label">Total Categories</span>
+            </div>
+        </div>
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+            <div class="stat-text">
+                <span id="total-zones-count" class="stat-value">...</span>
+                <span class="stat-label">Total Zones</span>
+            </div>
+        </div>
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5v-1.875a3.375 3.375 0 0 1 3.375-3.375h9.75a3.375 3.375 0 0 1 3.375 3.375v1.875" /><path stroke-linecap="round" stroke-linejoin="round" d="M9 11.25l3-3m0 0l3 3m-3-3v7.5" /></svg>
+            <div class="stat-text">
+                <span id="total-orders-count" class="stat-value">...</span>
+                <span class="stat-label">Total Orders</span>
+            </div>
+        </div>
+        <div class="analytics-stat">
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+            <div class="stat-text">
+                <span id="pending-orders-count" class="stat-value">...</span>
+                <span class="stat-label">Pending Orders</span>
+            </div>
+        </div>
+    </section>
+
+    <footer><p>&copy; 2024 Wholesale BD &bull; All Rights Reserved</p></footer>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const showAnalyticsBtn = document.getElementById('show-analytics-btn');
+            const analyticsSection = document.getElementById('analytics-section');
+            
+            const totalUsersSpan = document.getElementById('total-users-count');
+            const totalProductsSpan = document.getElementById('total-products-count');
+            const totalCategoriesSpan = document.getElementById('total-categories-count');
+            const totalZonesSpan = document.getElementById('total-zones-count');
+            const totalOrdersSpan = document.getElementById('total-orders-count');
+            const pendingOrdersSpan = document.getElementById('pending-orders-count');
+
+            async function fetchAnalyticsData() {
+                try {
+                    const [userResponse, productResponse, categoryResponse, zoneResponse, orderResponse] = await Promise.all([
+                        fetch('/api/v1/users/count'),
+                        fetch('/api/v1/products/count'),
+                        fetch('/api/v1/categories/count'),
+                        fetch('/api/v1/zones/count'),
+                        fetch('/api/v1/orders/analytics')
+                    ]);
+
+                    if (!userResponse.ok || !productResponse.ok || !orderResponse.ok || !categoryResponse.ok || !zoneResponse.ok) {
+                        throw new Error('Failed to fetch one or more analytics endpoints');
+                    }
+
+                    const userData = await userResponse.json();
+                    const productData = await productResponse.json();
+                    const categoryData = await categoryResponse.json();
+                    const zoneData = await zoneResponse.json();
+                    const orderData = await orderResponse.json();
+
+                    totalUsersSpan.textContent = userData.totalUsers;
+                    totalProductsSpan.textContent = productData.totalProducts;
+                    totalCategoriesSpan.textContent = categoryData.totalCategories;
+                    totalZonesSpan.textContent = zoneData.totalZones;
+                    totalOrdersSpan.textContent = orderData.total;
+                    pendingOrdersSpan.textContent = orderData.pending;
+
+                } catch (error) {
+                    console.error('Error fetching analytics:', error);
+                    [totalUsersSpan, totalProductsSpan, totalCategoriesSpan, totalZonesSpan, totalOrdersSpan, pendingOrdersSpan]
+                        .forEach(span => span.textContent = 'N/A');
+                }
+            }
+
+            showAnalyticsBtn.addEventListener('click', () => {
+                if (analyticsSection.classList.contains('hidden')) {
+                    analyticsSection.classList.remove('hidden');
+                }
+                analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+            
+            fetchAnalyticsData();
+        });
+    </script>
+</body>
+</html>
+
+--------------------------------------------------------------------------------
+--- FILE: public/swagger-custom.js ---
+--------------------------------------------------------------------------------
+
+// public/swagger-custom.js
+
+function initializeSwaggerCustomizations() {
+  try {
+    const topbar = document.querySelector('.swagger-ui .topbar .topbar-wrapper');
+    const infoContainer = document.querySelector('.swagger-ui .info');
+
+    // Exit if the essential elements aren't ready yet
+    if (!topbar || !infoContainer) {
+      return;
+    }
+
+    // --- 1. SETUP TOP BAR BUTTONS ---
+    if (!document.querySelector('.custom-btn-container')) {
+      const buttonContainer = document.createElement('div');
+      buttonContainer.className = 'custom-btn-container';
+
+      // Re-introduce the "Home" button with text/emoji
+      const homeButton = document.createElement('a');
+      homeButton.href = '/';
+      homeButton.target = '_self';
+      homeButton.className = 'topbar-btn';
+      homeButton.innerHTML = 'ðŸ  Home';
+      buttonContainer.appendChild(homeButton);
+
+      const backButton = document.createElement('button');
+      backButton.className = 'topbar-btn';
+      backButton.innerHTML = 'âª Back';
+      backButton.onclick = () => history.back();
+      buttonContainer.appendChild(backButton);
+
+      const schemasButton = document.createElement('button');
+      schemasButton.className = 'topbar-btn';
+      schemasButton.innerHTML = 'ðŸ“œ Schemas';
+      schemasButton.onclick = () => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      };
+      buttonContainer.appendChild(schemasButton);
+
+      topbar.prepend(buttonContainer);
+    }
+    
+    // --- 2. INJECT LOGO INTO INFO SECTION ---
+    if (!document.getElementById('info-section-logo')) {
+      const logoDiv = document.createElement('div');
+      logoDiv.id = 'info-section-logo';
+      // The div is empty; CSS will handle the background image.
+      infoContainer.prepend(logoDiv);
+    }
+
+    // --- 3. "BACK TO TOP" BUTTON (Unchanged) ---
+    if (!document.getElementById('back-to-top-btn')) {
+      const backToTopButton = document.createElement('button');
+      backToTopButton.id = 'back-to-top-btn';
+      backToTopButton.innerHTML = 'â†‘';
+      document.body.appendChild(backToTopButton);
+      backToTopButton.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+          backToTopButton.classList.add('show');
+        } else {
+          backToTopButton.classList.remove('show');
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error("Swagger custom script failed:", error);
+  }
+}
+
+const observer = new MutationObserver((mutations, obs) => {
+  const swaggerUI = document.getElementById('swagger-ui');
+  if (swaggerUI && swaggerUI.children.length > 0) {
+    initializeSwaggerCustomizations();
+  }
+});
+
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
+
+--------------------------------------------------------------------------------
+--- FILE: src/app.controller.ts ---
+--------------------------------------------------------------------------------
+
+// src/app.controller.ts
+
+import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { AppService, HealthStatus } from './app.service';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+
+@ApiTags('Health Check')
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Default welcome endpoint for the API' })
+  getHello(): string {
+    return this.appService.getHello();
+  }
+
+  @Get('status')
+  @ApiOperation({ summary: 'Get the health status of the API and Database' })
+  @ApiResponse({ status: 200, description: 'API and database are healthy.' })
+  @ApiResponse({
+    status: 503,
+    description: 'Service is unavailable (e.g., database is down).',
+  })
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  // FIXED: Removed 'async' and 'Promise' to match the service method
+  getStatus(): HealthStatus {
+    // FIXED: Removed 'await'
+    const healthStatus = this.appService.getStatus();
+
+    if (healthStatus.dbStatus !== 'connected') {
+      throw new ServiceUnavailableException(healthStatus);
+    }
+
+    return healthStatus;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/app.module.ts ---
+--------------------------------------------------------------------------------
+
+// src/app.module.ts
+
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { UsersModule } from './users/users.module';
+import { ProductsModule } from './products/products.module';
+import { OrdersModule } from './orders/orders.module';
+import { CategoriesModule } from './categories/categories.module';
+import { ZonesModule } from './zones/zones.module';
+//import { SeederModule } from './seeder/seeder.module';
+import { MetadataModule } from './metadata/metadata.module';
+import { StorageModule } from './storage/storage.module';
+import { UploadsController } from './uploads/uploads.controller';
+import { ValidationConfigService } from './uploads/validation-config.service';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      // FIXED: Removed 'async' as it's not needed here
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+      }),
+      inject: [ConfigService],
+    }),
+
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 60,
+      },
+    ]),
+
+    UsersModule,
+
+    ProductsModule,
+
+    OrdersModule,
+
+    CategoriesModule,
+
+    ZonesModule,
+
+    MetadataModule,
+
+    StorageModule,
+  ],
+  controllers: [AppController, UploadsController],
+  providers: [AppService, ValidationConfigService],
+})
+export class AppModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/app.service.ts ---
+--------------------------------------------------------------------------------
+
+// src/app.service.ts
+
+import { Injectable } from '@nestjs/common';
+import { InjectConnection } from '@nestjs/mongoose';
+import { Connection } from 'mongoose';
+
+export interface HealthStatus {
+  apiStatus: 'ok';
+  dbStatus: 'connected' | 'disconnected';
+  timestamp: string;
+}
+
+@Injectable()
+export class AppService {
+  constructor(@InjectConnection() private readonly connection: Connection) {}
+
+  getHello(): string {
+    return 'Welcome to the Wholesale BD API!';
+  }
+
+  // FIXED: Removed 'async' and 'Promise' as the operation is synchronous
+  getStatus(): HealthStatus {
+    // FIXED: Added type assertion '(this.connection.readyState as number)'
+    // to fix the unsafe-enum-comparison lint error.
+    const dbStatus =
+      (this.connection.readyState as number) === 1
+        ? 'connected'
+        : 'disconnected';
+
+    return {
+      apiStatus: 'ok',
+      dbStatus,
+      timestamp: new Date().toISOString(),
+    };
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/main.ts ---
+--------------------------------------------------------------------------------
+
+// src/main.ts
+
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
+import {
+  SwaggerModule,
+  DocumentBuilder,
+  SwaggerCustomOptions,
+} from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
+import { json, urlencoded } from 'express';
+
+async function bootstrap() {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.enableCors({
+    origin:
+      process.env.FRONTEND_URL || 'https://wholesale-bd-web-app.vercel.app',
+    credentials: true,
+  });
+
+  app.use(json({ limit: '5mb' }));
+  app.use(urlencoded({ extended: true, limit: '5mb' }));
+  app.setGlobalPrefix('api/v1');
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
+  app.useStaticAssets(join(__dirname, '..', 'public'));
+
+  const swaggerDocConfig = new DocumentBuilder()
+    .setTitle(`Backend Api documentation`)
+    .setDescription('The official API for the Wholesale BD B2B Platform.')
+    .setVersion('1.0')
+    .addTag('API Endpoints')
+    // --- THIS IS THE MINIMAL CHANGE ---
+    .addApiKey(
+      { type: 'apiKey', in: 'header', name: 'x-api-key' },
+      'api_key', // This is the reference name we will use
+    )
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerDocConfig);
+
+  const customSwaggerOptions: SwaggerCustomOptions = {
+    customSiteTitle: `Wholesale BD API Docs`,
+    customfavIcon: '/favicon.ico',
+    customCssUrl:
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui.min.css',
+    customJs: [
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-bundle.js',
+      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.11.0/swagger-ui-standalone-preset.js',
+      '/swagger-custom.js',
+    ],
+    customCss: `
+      /* --- Top Bar Styles --- */
+      .swagger-ui .topbar { 
+        background-color: #1e3a8a; 
+        height: 60px; /* Standard header height */
+        padding: 0 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        display: flex;
+        align-items: center;
+      }
+      .swagger-ui .topbar .topbar-wrapper {
+         display: flex;
+         align-items: center;
+         width: 100%;
+      }
+      .swagger-ui .topbar a.link {
+        display: none; /* Hide default Swagger logo */
+      }
+      .custom-btn-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 15px;
+      }
+      
+      /* Standard styles for our top bar buttons */
+      .topbar-btn {
+        display: inline-flex;
+        align-items: center;
+        text-decoration: none;
+        color: white;
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 8px 14px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-weight: 600;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        cursor: pointer;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+      }
+      .topbar-btn:hover { background-color: rgba(255, 255, 255, 0.25); }
+      .topbar-btn:active { transform: translateY(1px); }
+
+      /* --- Info Section Logo Styles --- */
+      #info-section-logo {
+        width: 100%;
+        max-width: 400px; /* Prevent it from being huge on very wide screens */
+        height: 100px; /* A nice, tall height for the logo */
+        margin-bottom: 20px; /* Space between logo and the title */
+
+        /* Your full logo SVG, URL-encoded and embedded */
+        background-image: url("data:image/svg+xml,%3csvg width='168' height='84' viewBox='0 0 6 3' fill='none' xmlns='http://www.w3.org/2000/svg'%3e%3cdefs%3e%3clinearGradient id='logo-symbol-gradient' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3e%3cstop offset='0%25' stop-color='%2322C55E'/%3e%3cstop offset='100%25' stop-color='%2315803D'/%3e%3c/linearGradient%3e%3clinearGradient id='logo-text-gradient-flag' x1='0%25' y1='0%25' x2='100%25' y2='0%25'%3e%3cstop offset='0%25' stop-color='%23DC2626'/%3e%3cstop offset='100%25' stop-color='%23B91C1C'/%3e%3c/linearGradient%3e%3c/defs%3e%3cg%3e%3cg transform='translate(0.5, 1.5) scale(0.01)'%3e%3cpath d='M -50 -45 L 50 -50 L 45 50 L -45 40 Z' fill='url(%23logo-symbol-gradient)'/%3e%3cpath d='M -30 -47 A 35 35 0 0 1 30 -48' fill='none' stroke='%2316A34A' stroke-width='8' stroke-linecap='round'/%3e%3c/g%3e%3ctext x='0.5' y='1.5' font-family='Poppins, sans-serif' font-size='0.8' font-weight='700' fill='white' text-anchor='middle' dominant-baseline='middle'%3eW%3c/text%3e%3c/g%3e%3ctext x='1.2' y='1.5' fill='url(%23logo-text-gradient-flag)' font-family='Poppins, sans-serif' font-size='0.65' font-weight='bold' dominant-baseline='middle'%3eWholesale BD%3c/text%3e%3c/svg%3e");
+        
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: left center; /* Align logo to the left */
+      }
+
+      /* Responsive styles for logo */
+      @media (max-width: 768px) {
+        #info-section-logo {
+          max-width: 300px;
+          height: 75px;
+        }
+      }
+
+      /* "Back to Top" Button Styles (Unchanged) */
+      #back-to-top-btn {
+        position: fixed; bottom: 25px; right: 25px; z-index: 1000;
+        opacity: 0; visibility: hidden;
+        transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out, transform 0.2s ease;
+        width: 45px; height: 45px; border-radius: 50%;
+        background-image: linear-gradient(45deg, #3b82f6 0%, #2563eb 100%);
+        color: white; border: none; cursor: pointer; font-size: 24px;
+        line-height: 45px; text-align: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+      #back-to-top-btn.show { opacity: 1; visibility: visible; }
+      #back-to-top-btn:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35); }
+    `,
+  };
+
+  SwaggerModule.setup('api', app, document, customSwaggerOptions);
+
+  if (!process.env.VERCEL) {
+    const port = process.env.PORT || 3001;
+    await app.listen(port);
+    console.log(`ðŸš€ Local server running on: http://localhost:${port}`);
+    console.log(`ðŸŒ Public index page at: http://localhost:${port}/`);
+    console.log(`ðŸ“š Swagger docs at: http://localhost:${port}/api`);
+  } else {
+    await app.init();
+  }
+
+  return app.getHttpAdapter().getInstance();
+}
+
+export default bootstrap();
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/auth/guards/api-key.guard.ts ---
+--------------------------------------------------------------------------------
+
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+// We no longer need to import Request from 'express', avoiding the conflict.
+
+@Injectable()
+export class ApiKeyGuard implements CanActivate {
+  constructor(private configService: ConfigService) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    // FIXED: We explicitly define the type of 'request' with the 'headers' property we need.
+    const request: { headers: { [key: string]: string } } = context
+      .switchToHttp()
+      .getRequest();
+
+    const apiKey = request.headers['x-api-key'];
+
+    const validApiKey = this.configService.getOrThrow<string>('API_KEY');
+
+    if (apiKey !== validApiKey) {
+      throw new UnauthorizedException('Invalid or missing API Key');
+    }
+
+    return true;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/categories/categories.controller.ts ---
+--------------------------------------------------------------------------------
+
+import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { CategoriesService } from './categories.service';
+import { CategoryResponseDto } from './dto/category-response.dto';
+
+@ApiTags('Categories')
+@Controller('categories')
+export class CategoriesController {
+  constructor(private readonly categoriesService: CategoriesService) {}
+
+  @Get('count')
+  @ApiOperation({ summary: 'Get the total number of categories' })
+  @ApiOkResponse({
+    description: 'Returns the total count of categories.',
+    schema: { example: { totalCategories: 15 } },
+  })
+  async getCategoryCount(): Promise<{ totalCategories: number }> {
+    const count = await this.categoriesService.countAll();
+    return { totalCategories: count };
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get a list of all categories' })
+  @ApiOkResponse({
+    description: 'An array of category records, sorted by sortOrder.',
+    type: [CategoryResponseDto],
+  })
+  async findAll(): Promise<CategoryResponseDto[]> {
+    const categories = await this.categoriesService.findAll();
+    return categories.map((cat) =>
+      CategoryResponseDto.fromCategoryDocument(cat),
+    );
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/categories/categories.module.ts ---
+--------------------------------------------------------------------------------
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { CategoriesController } from './categories.controller';
+import { CategoriesService } from './categories.service';
+import { Category, CategorySchema } from './schemas/category.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Category.name, schema: CategorySchema },
+    ]),
+  ],
+  controllers: [CategoriesController],
+  providers: [CategoriesService],
+})
+export class CategoriesModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/categories/categories.service.ts ---
+--------------------------------------------------------------------------------
+
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Category, CategoryDocument } from './schemas/category.schema';
+
+@Injectable()
+export class CategoriesService {
+  constructor(
+    @InjectModel(Category.name) private categoryModel: Model<CategoryDocument>,
+  ) {}
+
+  async findAll(): Promise<CategoryDocument[]> {
+    return this.categoryModel.find().sort({ sortOrder: 1 }).exec();
+  }
+
+  // --- ADD THIS NEW METHOD ---
+  async countAll(): Promise<number> {
+    return this.categoryModel.countDocuments().exec();
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/categories/dto/category-response.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import { CategoryDocument } from '../schemas/category.schema';
+
+export class CategoryResponseDto {
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a47',
+    description: 'Unique identifier for the category.',
+  })
+  _id: string;
+
+  @ApiProperty({
+    example: 'Electronics',
+    description: 'The name of the category.',
+  })
+  name: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Gadgets and electronic devices.',
+    description: 'A brief description of the category.',
+  })
+  description?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the category is currently active and visible.',
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    example: 1,
+    description: 'The order in which the category should be displayed.',
+  })
+  sortOrder: number;
+
+  static fromCategoryDocument(
+    categoryDoc: CategoryDocument,
+  ): CategoryResponseDto {
+    const dto = new CategoryResponseDto();
+    dto._id = categoryDoc._id.toString();
+    dto.name = categoryDoc.name;
+    dto.description = categoryDoc.description;
+    dto.isActive = categoryDoc.isActive;
+    dto.sortOrder = categoryDoc.sortOrder;
+    return dto;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/categories/schemas/category.schema.ts ---
+--------------------------------------------------------------------------------
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
+
+export type CategoryDocument = HydratedDocument<Category>;
+
+@Schema({ timestamps: true })
+export class Category {
+  @Prop({ required: true, unique: true, trim: true })
+  name: string;
+
+  @Prop({ trim: true })
+  description?: string;
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: 0 })
+  sortOrder: number;
+  // Add this inside the Category class
+  // For TypeScript awareness of Mongoose's timestamps
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const CategorySchema = SchemaFactory.createForClass(Category);
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/metadata.controller.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/metadata.controller.ts
+
+import {
+  Controller,
+  Get,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  ValidationPipe,
+} from '@nestjs/common';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
+import { MetadataService, MetadataModuleKey } from './metadata.service';
+import {
+  ApiBody,
+  ApiExtraModels, // <-- 1. Import ApiExtraModels
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiSecurity,
+  ApiTags,
+  getSchemaPath, // <-- 2. Import getSchemaPath
+} from '@nestjs/swagger';
+// 3. Import the DTOs you want to reference
+import { UpdateBrandDto } from './dto/update-brand.dto';
+import { UpdatePagesDto } from './dto/update-pages.dto';
+
+const sampleLanguageCodes = ['en-US', 'de-DE', 'es-ES', 'fr-FR', 'bn-BD'];
+
+@ApiTags('Metadata')
+@Controller('metadata')
+// 4. Register the DTOs with the controller so Swagger can discover them
+@ApiExtraModels(UpdateBrandDto, UpdatePagesDto)
+export class MetadataController {
+  constructor(private readonly metadataService: MetadataService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Get the entire public metadata configuration' })
+  @ApiQuery({
+    name: 'lang',
+    required: false,
+    type: String,
+    enum: sampleLanguageCodes,
+    description:
+      'Select a language to receive transformed, language-specific data. If omitted, you get the full multi-language objects.',
+  })
+  @ApiOkResponse({
+    description:
+      'Returns the full metadata object, optionally transformed by language.',
+  })
+  async getPublicMetadata(@Query('lang') lang?: string): Promise<any> {
+    return this.metadataService.getMetadata(lang);
+  }
+
+  @Get('admin')
+  @ApiOperation({
+    summary: 'Get the entire raw metadata configuration for admin panels',
+  })
+  @ApiOkResponse({
+    description:
+      'Returns the full, untransformed metadata object with all languages.',
+  })
+  @ApiSecurity('api_key')
+  @UseGuards(ApiKeyGuard)
+  async getAdminMetadata(): Promise<any> {
+    return this.metadataService.getMetadata();
+  }
+
+  @Get(':module')
+  @ApiOperation({
+    summary: 'Get a specific module from the metadata configuration',
+  })
+  @ApiParam({
+    name: 'module',
+    required: true,
+    type: String,
+    enum: [
+      'brand',
+      'i18n',
+      'theme',
+      'social',
+      'legal',
+      'pages',
+      'reusableContent',
+      'seo',
+    ],
+    description: 'The specific slice of metadata to retrieve.',
+  })
+  @ApiQuery({
+    name: 'lang',
+    required: false,
+    type: String,
+    enum: sampleLanguageCodes,
+    description:
+      'Select a language to see how I18nString objects are transformed into simple strings.',
+  })
+  @ApiOkResponse({
+    description: `
+    Returns the data for the specified module. If the 'lang' query parameter is selected, any I18nString objects will be transformed into simple strings.
+    An **I18nString** is a key-value object for storing translations.
+    ... (description content) ...
+    `,
+  })
+  async getMetadataModule(
+    @Param('module') module: MetadataModuleKey,
+    @Query('lang') lang?: string,
+  ): Promise<any> {
+    return this.metadataService.getMetadata(lang, module);
+  }
+
+  @Patch(':module')
+  @ApiOperation({
+    summary:
+      'Update a specific module in the metadata configuration (Admin Only)',
+  })
+  @ApiParam({
+    name: 'module',
+    required: true,
+    type: String,
+    enum: [
+      'brand',
+      'i18n',
+      'theme',
+      'social',
+      'legal',
+      'pages',
+      'reusableContent',
+      'seo',
+    ],
+    description: 'The specific slice of metadata to update.',
+  })
+  @ApiBody({
+    description:
+      'The data to update the module with. The shape of this object depends on the :module parameter. Select a schema from the dropdown below to see an example.',
+    schema: {
+      oneOf: [
+        // 5. Use getSchemaPath to create a valid reference to the now-registered models
+        { $ref: getSchemaPath(UpdateBrandDto) },
+        { $ref: getSchemaPath(UpdatePagesDto) },
+      ],
+    },
+  })
+  @ApiSecurity('api_key')
+  @UseGuards(ApiKeyGuard)
+  async updateMetadataModule(
+    @Param('module') module: MetadataModuleKey,
+    @Body(
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    )
+    body: any,
+  ): Promise<any> {
+    return this.metadataService.updateModule(module, body);
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/metadata.module.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/metadata.module.ts
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MetadataController } from './metadata.controller';
+import { MetadataService } from './metadata.service';
+import { Metadata, MetadataSchema } from './schemas/metadata.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Metadata.name, schema: MetadataSchema },
+    ]),
+  ],
+  controllers: [MetadataController],
+  providers: [MetadataService],
+})
+export class MetadataModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/metadata.service.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/metadata.service.ts
+
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Metadata } from './schemas/metadata.schema';
+import { IMetadata } from './metadata.types';
+
+export type MetadataModuleKey =
+  | 'brand'
+  | 'i18n'
+  | 'theme'
+  | 'social'
+  | 'legal'
+  | 'pages'
+  | 'reusableContent'
+  | 'seo';
+
+@Injectable()
+export class MetadataService implements OnModuleInit {
+  private readonly logger = new Logger(MetadataService.name);
+
+  constructor(
+    @InjectModel(Metadata.name) private readonly metadataModel: Model<Metadata>,
+  ) {}
+
+  async onModuleInit(): Promise<void> {
+    const existing = await this.metadataModel.findOne().exec();
+    if (!existing) {
+      this.logger.log(
+        'No metadata document found. Creating one with default values.',
+      );
+      await this.metadataModel.create({});
+    }
+  }
+
+  async getMetadata(
+    lang?: string,
+    module?: MetadataModuleKey,
+  ): Promise<unknown> {
+    const metadataDoc = (await this.metadataModel
+      .findOne()
+      .lean()
+      .exec()) as IMetadata | null;
+
+    if (!metadataDoc) {
+      throw new NotFoundException('Metadata configuration not found.');
+    }
+
+    const result: unknown = module ? metadataDoc[module] : metadataDoc;
+
+    if (result === undefined) {
+      throw new NotFoundException(`Metadata module '${module}' not found.`);
+    }
+
+    if (lang) {
+      return this.transformI18n(
+        result,
+        lang,
+        metadataDoc.i18n?.defaultLanguage || 'en-US',
+      );
+    }
+
+    return result;
+  }
+
+  async updateModule(
+    module: MetadataModuleKey,
+    data: unknown,
+  ): Promise<Metadata | null> {
+    const update = { $set: { [module]: data } };
+    const updatedDoc: Metadata | null = await this.metadataModel
+      .findOneAndUpdate({}, update, { new: true })
+      .exec();
+    return updatedDoc;
+  }
+
+  private transformI18n<T>(obj: T, lang: string, defaultLang: string): T {
+    if (Array.isArray(obj)) {
+      return obj.map((item: unknown) =>
+        this.transformI18n(item, lang, defaultLang),
+      ) as T;
+    }
+
+    if (obj !== null && typeof obj === 'object') {
+      const keys = Object.keys(obj);
+      const isI18nString = keys.some((k) => k.includes('-'));
+
+      if (isI18nString && !('status' in obj)) {
+        // --- THIS IS THE FIX ---
+        // We cast `obj` to a type with a string index signature.
+        // This explicitly tells the linter that indexing with a variable is safe and intended here.
+        const indexedObj = obj as { [key: string]: unknown };
+        return (indexedObj[lang] || indexedObj[defaultLang] || '') as T;
+      }
+
+      const newObj: { [key: string]: unknown } = {};
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          newObj[key] = this.transformI18n(
+            obj[key as keyof T],
+            lang,
+            defaultLang,
+          );
+        }
+      }
+      return newObj as T;
+    }
+
+    return obj;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/metadata.types.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/metadata.types.ts
+
+// These interfaces define the shape of our data, providing a strong type contract.
+
+interface I18nString {
+  [key: string]: string;
+}
+
+interface IAsset {
+  name: string;
+  url: string;
+  type: string;
+  width: number;
+  height: number;
+  alt?: I18nString;
+}
+
+interface ILink {
+  label: I18nString;
+  url: string;
+  icon?: string;
+}
+
+interface ICustomButton extends ILink {
+  id: string;
+  variant?: string;
+}
+
+interface IPageNavigation {
+  headerLinks?: ILink[];
+  footerLinks?: ILink[];
+  sidebarLinks?: ILink[];
+  customButtons?: ICustomButton[];
+}
+
+interface IPageMeta {
+  title: I18nString;
+  description: I18nString;
+}
+
+interface IPageItem {
+  id: string;
+  name: string;
+  path: string;
+  accessType: 'public' | 'protected' | 'private' | 'admin';
+  meta: IPageMeta;
+  navigation: IPageNavigation;
+}
+
+// Top-level module interfaces
+interface IBrand {
+  status: 'configured' | 'pending';
+  brandName?: string;
+  brandSlogan?: I18nString;
+  brandSymbol?: IAsset[];
+  brandLogo?: IAsset[];
+  favicon?: IAsset[];
+}
+
+interface II18nConfig {
+  status: 'configured' | 'pending';
+  availableLanguages?: { code: string; name: string }[];
+  defaultLanguage?: string;
+}
+
+interface IPages {
+  status: 'configured' | 'pending';
+  items: IPageItem[];
+}
+
+// The main interface for the entire metadata document
+export interface IMetadata {
+  brand: IBrand;
+  i18n: II18nConfig;
+  pages: IPages;
+  // Add other modules like theme, social, etc., as you define them
+  [key: string]: any; // Allows for other dynamic modules
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/dto/common.dto.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/dto/common.dto.ts
+
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  ValidateNested,
+  IsUrl,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+// A flexible object for multi-language strings
+export class I18nStringDto {
+  [key: string]: string;
+}
+
+// Represents a file asset (image, logo, etc.)
+// The 'url' would come from our upload system
+export class AssetDto {
+  @IsString() @IsNotEmpty() name: string;
+  @IsUrl() @IsNotEmpty() url: string;
+  @IsString() @IsNotEmpty() type: string;
+  @IsNumber() width: number;
+  @IsNumber() height: number;
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => I18nStringDto)
+  alt?: I18nStringDto;
+}
+
+// Represents a hyperlink in navigation
+export class LinkDto {
+  @ValidateNested() @Type(() => I18nStringDto) label: I18nStringDto;
+  @IsUrl() @IsNotEmpty() url: string;
+  @IsString() @IsOptional() icon?: string;
+}
+
+// Represents a special button, extending a link
+export class CustomButtonDto extends LinkDto {
+  @IsString() @IsNotEmpty() id: string;
+  @IsString() @IsOptional() variant?: string;
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/dto/update-brand.dto.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/dto/update-brand.dto.ts
+
+import {
+  IsEnum,
+  ValidateNested,
+  IsArray,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { AssetDto, I18nStringDto } from './common.dto';
+
+export class UpdateBrandDto {
+  @IsEnum(['configured', 'pending']) status: 'configured' | 'pending';
+  @IsString() @IsOptional() brandName?: string;
+  @ValidateNested()
+  @Type(() => I18nStringDto)
+  @IsOptional()
+  brandSlogan?: I18nStringDto;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AssetDto)
+  @IsOptional()
+  brandSymbol?: AssetDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AssetDto)
+  @IsOptional()
+  brandLogo?: AssetDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AssetDto)
+  @IsOptional()
+  favicon?: AssetDto[];
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/dto/update-pages.dto.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/dto/update-pages.dto.ts
+
+import {
+  IsString,
+  IsNotEmpty,
+  IsEnum,
+  ValidateNested,
+  IsArray,
+  IsOptional,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { I18nStringDto, LinkDto, CustomButtonDto } from './common.dto';
+
+class PageNavigationDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LinkDto)
+  @IsOptional()
+  headerLinks?: LinkDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LinkDto)
+  @IsOptional()
+  footerLinks?: LinkDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LinkDto)
+  @IsOptional()
+  sidebarLinks?: LinkDto[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CustomButtonDto)
+  @IsOptional()
+  customButtons?: CustomButtonDto[];
+}
+
+class PageMetaDto {
+  @ValidateNested() @Type(() => I18nStringDto) title: I18nStringDto;
+  @ValidateNested() @Type(() => I18nStringDto) description: I18nStringDto;
+  // In a real app, you could add more OpenGraph fields here
+}
+
+export class PageItemDto {
+  @IsString() @IsNotEmpty() id: string;
+  @IsString() @IsNotEmpty() name: string;
+  @IsString() @IsNotEmpty() path: string;
+  @IsEnum(['public', 'protected', 'private', 'admin']) accessType:
+    | 'public'
+    | 'protected'
+    | 'private'
+    | 'admin';
+  @ValidateNested() @Type(() => PageMetaDto) meta: PageMetaDto;
+  @ValidateNested()
+  @Type(() => PageNavigationDto)
+  navigation: PageNavigationDto;
+}
+
+export class UpdatePagesDto {
+  @IsEnum(['configured', 'pending']) status: 'configured' | 'pending';
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PageItemDto)
+  items: PageItemDto[];
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/schemas/metadata.schema.ts ---
+--------------------------------------------------------------------------------
+
+// src/metadata/schemas/metadata.schema.ts
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
+import { Schema as MongooseSchema } from 'mongoose';
+
+@Schema({ _id: false, versionKey: false })
+class Brand {
+  @Prop({ type: String, enum: ['configured', 'pending'], default: 'pending' })
+  status: string;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: {} })
+  brandName: any;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: {} })
+  brandSlogan: any;
+
+  @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
+  brandSymbol: any[];
+
+  @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
+  brandLogo: any[];
+
+  @Prop({ type: [MongooseSchema.Types.Mixed], default: [] })
+  favicon: any[];
+}
+
+@Schema({ collection: 'metadata', timestamps: true })
+export class Metadata extends Document {
+  @Prop({ type: Brand, default: () => ({}) })
+  brand: Brand;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: { status: 'pending' } })
+  i18n: any;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: { status: 'pending' } })
+  theme: any;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: { status: 'pending' } })
+  social: any;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: { status: 'pending' } })
+  legal: any;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: { status: 'pending' } })
+  pages: any;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: { status: 'pending' } })
+  reusableContent: any;
+
+  @Prop({ type: MongooseSchema.Types.Mixed, default: { status: 'pending' } })
+  seo: any;
+}
+
+export const MetadataSchema = SchemaFactory.createForClass(Metadata);
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/orders/orders.controller.ts ---
+--------------------------------------------------------------------------------
+
+import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { OrdersService } from './orders.service';
+import { OrderResponseDto } from './dto/order-response.dto';
+
+@ApiTags('Orders')
+@Controller('orders')
+export class OrdersController {
+  constructor(private readonly ordersService: OrdersService) {}
+
+  @Get('analytics')
+  @ApiOperation({ summary: 'Get aggregated order statistics' })
+  @ApiOkResponse({
+    description: 'Returns a summary of order counts by status.',
+    schema: {
+      example: {
+        total: 1500,
+        pending: 75,
+        delivered: 1200,
+      },
+    },
+  })
+  async getOrderAnalytics(): Promise<{
+    total: number;
+    pending: number;
+    delivered: number;
+  }> {
+    return this.ordersService.getAnalytics();
+  }
+
+  @Get('count')
+  @ApiOperation({ summary: 'Get the total number of orders' })
+  @ApiOkResponse({
+    description: 'Returns the total count of all orders.',
+    schema: { example: { totalOrders: 1500 } },
+  })
+  async getOrderCount(): Promise<{ totalOrders: number }> {
+    const count = await this.ordersService.countAll();
+    return { totalOrders: count };
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get a list of all orders' })
+  @ApiOkResponse({
+    description: 'An array of order records.',
+    type: [OrderResponseDto],
+  })
+  async findAll(): Promise<OrderResponseDto[]> {
+    const orders = await this.ordersService.findAll();
+    return orders.map((order) => OrderResponseDto.fromOrderDocument(order));
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/orders/orders.module.ts ---
+--------------------------------------------------------------------------------
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { OrdersController } from './orders.controller';
+import { OrdersService } from './orders.service';
+import { Order, OrderSchema } from './schemas/order.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
+  ],
+  controllers: [OrdersController],
+  providers: [OrdersService],
+})
+export class OrdersModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/orders/orders.service.ts ---
+--------------------------------------------------------------------------------
+
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Order, OrderDocument, OrderStatus } from './schemas/order.schema';
+
+@Injectable()
+export class OrdersService {
+  constructor(
+    @InjectModel(Order.name) private orderModel: Model<OrderDocument>,
+  ) {}
+
+  async findAll(): Promise<OrderDocument[]> {
+    return this.orderModel.find().exec();
+  }
+
+  async countAll(): Promise<number> {
+    return this.orderModel.countDocuments().exec();
+  }
+
+  // --- NEW, MORE EFFICIENT ANALYTICS METHOD ---
+  async getAnalytics(): Promise<{
+    total: number;
+    pending: number;
+    delivered: number;
+  }> {
+    // Run all counting queries in parallel for maximum efficiency
+    const [totalCount, pendingCount, deliveredCount] = await Promise.all([
+      this.orderModel.countDocuments().exec(),
+      this.orderModel.countDocuments({ status: OrderStatus.PENDING }).exec(),
+      this.orderModel.countDocuments({ status: OrderStatus.DELIVERED }).exec(),
+    ]);
+
+    return {
+      total: totalCount,
+      pending: pendingCount,
+      delivered: deliveredCount,
+    };
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/orders/dto/order-response.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  OrderDocument,
+  OrderStatus,
+  PaymentStatus,
+} from '../schemas/order.schema';
+
+class OrderItemDto {
+  @ApiProperty({ example: '65f1c5a0ef3e2bde5f269b58' })
+  productId: string;
+
+  @ApiProperty({ example: 'High-Quality T-Shirt' })
+  productName: string;
+
+  @ApiProperty({ example: 10 })
+  quantity: number;
+
+  @ApiProperty({ example: 150.5 })
+  pricePerUnit: number;
+
+  @ApiProperty({ example: 1505.0 })
+  totalPrice: number;
+}
+
+class ShippingAddressDto {
+  @ApiProperty({ example: 'Jane Doe' })
+  fullName: string;
+
+  @ApiProperty({ example: 'Dhaka' })
+  city: string;
+
+  @ApiProperty({ example: 'Dhaka Division' })
+  zone: string;
+}
+
+export class OrderResponseDto {
+  @ApiProperty({ example: '65f1d8a0ef3e2bde5f269c12' })
+  _id: string;
+
+  @ApiProperty({ example: 'WBD-20240315-0001' })
+  orderNumber: string;
+
+  @ApiProperty({ example: '65f1c4a0ef3e2bde5f269a47' })
+  customerId: string;
+
+  @ApiProperty({ example: '65f1c4a0ef3e2bde5f269a49' })
+  sellerId: string;
+
+  @ApiProperty({ type: [OrderItemDto] })
+  items: OrderItemDto[];
+
+  @ApiProperty({ example: 1655.0 })
+  totalAmount: number;
+
+  @ApiProperty()
+  shippingAddress: ShippingAddressDto;
+
+  @ApiProperty({ example: OrderStatus.PENDING, enum: OrderStatus })
+  status: string;
+
+  @ApiProperty({ example: PaymentStatus.PENDING, enum: PaymentStatus })
+  paymentStatus: string;
+
+  @ApiProperty()
+  createdAt: Date;
+
+  static fromOrderDocument(orderDoc: OrderDocument): OrderResponseDto {
+    const dto = new OrderResponseDto();
+    dto._id = orderDoc._id.toString();
+    dto.orderNumber = orderDoc.orderNumber;
+    dto.customerId = orderDoc.customerId;
+    dto.sellerId = orderDoc.sellerId;
+    dto.items = orderDoc.items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      pricePerUnit: item.pricePerUnit,
+      totalPrice: item.totalPrice,
+    }));
+    dto.totalAmount = orderDoc.totalAmount;
+    dto.shippingAddress = {
+      fullName: orderDoc.shippingAddress.fullName,
+      city: orderDoc.shippingAddress.city,
+      zone: orderDoc.shippingAddress.zone,
+    };
+    dto.status = orderDoc.status;
+    dto.paymentStatus = orderDoc.paymentStatus;
+    dto.createdAt = orderDoc.createdAt;
+    return dto;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/orders/schemas/order.schema.ts ---
+--------------------------------------------------------------------------------
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+
+export type OrderDocument = HydratedDocument<Order>;
+
+// --- Enums for Type Safety ---
+export enum OrderStatus {
+  PENDING = 'pending',
+  PROCESSING = 'processing',
+  READY_FOR_DISPATCH = 'ready_for_dispatch',
+  SHIPPED = 'shipped',
+  DELIVERED = 'delivered',
+  CANCELLED = 'cancelled',
+}
+
+export enum PaymentStatus {
+  PENDING = 'pending',
+  PAID = 'paid',
+  FAILED = 'failed',
+  REFUNDED = 'refunded',
+}
+
+export enum PaymentMethod {
+  CASH_ON_DELIVERY = 'cash_on_delivery',
+  BANK_TRANSFER = 'bank_transfer',
+  MOBILE_BANKING = 'mobile_banking',
+  CARD = 'card',
+}
+
+// --- Nested Schemas ---
+@Schema({ _id: false })
+class OrderItem {
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true,
+  })
+  productId: string;
+
+  @Prop({ required: true })
+  productName: string;
+
+  @Prop()
+  productImage?: string;
+
+  @Prop({ required: true, min: 1 })
+  quantity: number;
+
+  @Prop({ required: true })
+  pricePerUnit: number;
+
+  @Prop({ required: true })
+  totalPrice: number;
+}
+const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
+
+@Schema({ _id: false })
+class ShippingAddress {
+  @Prop({ required: true })
+  fullName: string;
+
+  @Prop({ required: true })
+  phone: string;
+
+  @Prop({ required: true })
+  address: string;
+
+  @Prop({ required: true })
+  city: string;
+
+  @Prop({ required: true })
+  zone: string;
+
+  @Prop()
+  postalCode?: string;
+}
+const ShippingAddressSchema = SchemaFactory.createForClass(ShippingAddress);
+
+// --- Main Order Schema ---
+@Schema({ timestamps: true })
+export class Order {
+  @Prop({ required: true, unique: true })
+  orderNumber: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  customerId: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  sellerId: string;
+
+  @Prop({ type: [OrderItemSchema], required: true })
+  items: OrderItem[];
+
+  // --- Financials ---
+  @Prop({ required: true })
+  subtotal: number;
+
+  @Prop({ default: 0 })
+  shippingCost: number;
+
+  @Prop({ default: 0 })
+  tax: number;
+
+  @Prop({ required: true })
+  totalAmount: number;
+
+  // --- Shipping ---
+  @Prop({ type: ShippingAddressSchema, required: true })
+  shippingAddress: ShippingAddress;
+
+  // --- Status & Payment ---
+  @Prop({ type: String, enum: OrderStatus, default: OrderStatus.PENDING })
+  status: OrderStatus;
+
+  @Prop({ type: String, enum: PaymentStatus, default: PaymentStatus.PENDING })
+  paymentStatus: PaymentStatus;
+
+  @Prop({
+    type: String,
+    enum: PaymentMethod,
+    default: PaymentMethod.CASH_ON_DELIVERY,
+  })
+  paymentMethod: PaymentMethod;
+
+  @Prop()
+  notes?: string;
+
+  // --- Timestamps ---
+  @Prop({ type: Date })
+  deliveredAt?: Date;
+
+  @Prop({ type: Date })
+  cancelledAt?: Date;
+  // Add this inside the Order class
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const OrderSchema = SchemaFactory.createForClass(Order);
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/products/products.controller.ts ---
+--------------------------------------------------------------------------------
+
+import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ProductsService } from './products.service';
+import { ProductResponseDto } from './dto/product-response.dto';
+
+@ApiTags('Products')
+@Controller('products')
+export class ProductsController {
+  constructor(private readonly productsService: ProductsService) {}
+
+  @Get('count')
+  @ApiOperation({ summary: 'Get the total number of products' })
+  @ApiOkResponse({
+    description: 'Returns the total count of products.',
+    schema: { example: { totalProducts: 542 } },
+  })
+  async getProductCount(): Promise<{ totalProducts: number }> {
+    const count = await this.productsService.countAll();
+    return { totalProducts: count };
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get a list of all products' })
+  @ApiOkResponse({
+    description: 'An array of product records.',
+    type: [ProductResponseDto],
+  })
+  async findAll(): Promise<ProductResponseDto[]> {
+    const products = await this.productsService.findAll();
+    return products.map((product) =>
+      ProductResponseDto.fromProductDocument(product),
+    );
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/products/products.module.ts ---
+--------------------------------------------------------------------------------
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ProductsController } from './products.controller';
+import { ProductsService } from './products.service';
+import { Product, ProductSchema } from './schemas/product.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
+  ],
+  controllers: [ProductsController],
+  providers: [ProductsService],
+})
+export class ProductsModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/products/products.service.ts ---
+--------------------------------------------------------------------------------
+
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Product, ProductDocument } from './schemas/product.schema';
+
+@Injectable()
+export class ProductsService {
+  constructor(
+    @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+  ) {}
+
+  // The return type is now strongly typed
+  async findAll(): Promise<ProductDocument[]> {
+    return this.productModel.find().exec();
+  }
+
+  // --- NEW METHOD for the counter ---
+  async countAll(): Promise<number> {
+    return this.productModel.countDocuments().exec();
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/products/dto/product-response.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import {
+  ProductDocument,
+  ProductStatus,
+  ProductUnit,
+} from '../schemas/product.schema';
+
+class PricingTierDto {
+  @ApiProperty({
+    example: 1,
+    description: 'Minimum quantity for this price tier.',
+  })
+  minQuantity: number;
+
+  @ApiProperty({
+    required: false,
+    example: 10,
+    description:
+      'Maximum quantity for this price tier (optional for the last tier).',
+  })
+  maxQuantity?: number;
+
+  @ApiProperty({
+    example: 99.99,
+    description: 'Price per unit within this quantity range.',
+  })
+  pricePerUnit: number;
+}
+
+export class ProductResponseDto {
+  @ApiProperty({
+    example: '65f1c5a0ef3e2bde5f269b58',
+    description: 'Unique identifier for the product.',
+  })
+  _id: string;
+
+  @ApiProperty({
+    example: 'High-Quality T-Shirt',
+    description: 'Name of the product.',
+  })
+  name: string;
+
+  @ApiProperty({
+    example: 'A comfortable and durable t-shirt made from 100% cotton.',
+    description: 'Detailed description of the product.',
+  })
+  description: string;
+
+  @ApiProperty({
+    type: [String],
+    example: ['/images/tshirt1.jpg', '/images/tshirt2.jpg'],
+    description: 'Array of URLs for product images.',
+  })
+  images: string[];
+
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a47',
+    description: 'ID of the product category.',
+  })
+  categoryId: string;
+
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a48',
+    description: 'ID of the zone where the product is available.',
+  })
+  zoneId: string;
+
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a49',
+    description: 'ID of the seller who listed the product.',
+  })
+  sellerId: string;
+
+  @ApiProperty({
+    type: [PricingTierDto],
+    description: 'Defines different prices for different quantities.',
+  })
+  pricingTiers: PricingTierDto[];
+
+  @ApiProperty({
+    example: 10,
+    description:
+      'The minimum quantity required to place an order for this product.',
+  })
+  minimumOrderQuantity: number;
+
+  @ApiProperty({
+    example: 500,
+    description: 'Current available stock quantity.',
+  })
+  stockQuantity: number;
+
+  @ApiProperty({
+    example: ProductUnit.PIECE,
+    enum: ProductUnit,
+    description: 'The unit of measurement for the product (e.g., piece, kg).',
+  })
+  unit: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'BrandX',
+    description: 'The brand name of the product.',
+  })
+  brand?: string;
+
+  @ApiProperty({
+    example: ProductStatus.ACTIVE,
+    enum: ProductStatus,
+    description: 'The current status of the product listing.',
+  })
+  status: string;
+
+  @ApiProperty({
+    example: 4.5,
+    description: 'The average user rating of the product (0-5).',
+  })
+  rating: number;
+
+  @ApiProperty({
+    example: 25,
+    description: 'The total number of reviews for the product.',
+  })
+  reviewCount: number;
+
+  @ApiProperty({ description: 'Timestamp of product creation.' })
+  createdAt: Date;
+
+  @ApiProperty({ description: 'Timestamp of last product update.' })
+  updatedAt: Date;
+
+  static fromProductDocument(productDoc: ProductDocument): ProductResponseDto {
+    const dto = new ProductResponseDto();
+    dto._id = productDoc._id.toString();
+    dto.name = productDoc.name;
+    dto.description = productDoc.description;
+    dto.images = productDoc.images;
+    dto.categoryId = productDoc.categoryId;
+    dto.zoneId = productDoc.zoneId;
+    dto.sellerId = productDoc.sellerId;
+    dto.pricingTiers = productDoc.pricingTiers;
+    dto.minimumOrderQuantity = productDoc.minimumOrderQuantity;
+    dto.stockQuantity = productDoc.stockQuantity;
+    dto.unit = productDoc.unit;
+    dto.brand = productDoc.brand;
+    dto.status = productDoc.status;
+    dto.rating = productDoc.rating;
+    dto.reviewCount = productDoc.reviewCount;
+    dto.createdAt = productDoc.createdAt;
+    dto.updatedAt = productDoc.updatedAt;
+    return dto;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/products/schemas/product.schema.ts ---
+--------------------------------------------------------------------------------
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+
+export type ProductDocument = HydratedDocument<Product>;
+
+// --- Enums for Type Safety ---
+export enum ProductStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  OUT_OF_STOCK = 'out_of_stock',
+}
+
+export enum ProductUnit {
+  PIECE = 'piece',
+  KG = 'kg',
+  SET = 'set',
+  BOTTLE = 'bottle',
+  PAIR = 'pair',
+}
+
+// --- Nested Schema for Pricing Tiers ---
+@Schema({ _id: false })
+class PricingTier {
+  @Prop({ required: true })
+  minQuantity: number;
+
+  @Prop()
+  maxQuantity?: number; // Optional for the highest tier
+
+  @Prop({ required: true })
+  pricePerUnit: number;
+}
+const PricingTierSchema = SchemaFactory.createForClass(PricingTier);
+
+// --- Main Product Schema ---
+@Schema({ timestamps: true })
+export class Product {
+  @Prop({ required: true, trim: true })
+  name: string;
+
+  @Prop({ required: true, trim: true })
+  description: string;
+
+  @Prop({ type: [String], default: [] })
+  images: string[];
+
+  // --- Relationships ---
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true,
+  })
+  categoryId: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Zone', required: true })
+  zoneId: string;
+
+  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
+  sellerId: string;
+
+  // --- Pricing & Inventory ---
+  @Prop({ type: [PricingTierSchema], default: [] })
+  pricingTiers: PricingTier[];
+
+  @Prop({ required: true })
+  minimumOrderQuantity: number;
+
+  @Prop({ default: 0 })
+  stockQuantity: number;
+
+  @Prop({ type: String, enum: ProductUnit, required: true })
+  unit: ProductUnit;
+
+  // --- Details & Specifications ---
+  @Prop()
+  brand?: string;
+
+  @Prop()
+  model?: string;
+
+  @Prop()
+  specifications?: string;
+
+  @Prop()
+  sku?: string;
+
+  @Prop()
+  weight?: number; // in kg
+
+  @Prop()
+  dimensions?: string; // e.g., "10 x 5 x 15 cm"
+
+  // --- Status & Metrics ---
+  @Prop({ type: String, enum: ProductStatus, default: ProductStatus.ACTIVE })
+  status: ProductStatus;
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: 0 })
+  viewCount: number;
+
+  @Prop({ default: 0 })
+  orderCount: number;
+
+  @Prop({ default: 0, min: 0, max: 5 })
+  rating: number;
+
+  @Prop({ default: 0 })
+  reviewCount: number;
+  // Add this inside the Product class
+  // --- Timestamps (For TypeScript) ---
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const ProductSchema = SchemaFactory.createForClass(Product);
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/storage/r2.config.ts ---
+--------------------------------------------------------------------------------
+
+// src/storage/r2.config.ts
+import { registerAs } from '@nestjs/config';
+
+export default registerAs('r2', () => ({
+  endpoint: process.env.R2_ENDPOINT,
+  accessKeyId: process.env.R2_ACCESS_KEY_ID,
+  secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  bucketName: process.env.R2_BUCKET_NAME,
+  publicUrl: process.env.R2_PUBLIC_URL,
+}));
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/storage/storage.module.ts ---
+--------------------------------------------------------------------------------
+
+// src/storage/storage.module.ts
+import { Module, Global } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { StorageService } from './storage.service';
+import r2Config from './r2.config';
+
+@Global() // Make the StorageService available everywhere
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      load: [r2Config], // Load our R2 configuration
+    }),
+  ],
+  providers: [StorageService],
+  exports: [StorageService], // Export the service so other modules can use it
+})
+export class StorageModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/storage/storage.service.ts ---
+--------------------------------------------------------------------------------
+
+// src/storage/storage.service.ts
+
+import {
+  Injectable,
+  Inject,
+  InternalServerErrorException,
+  BadRequestException,
+} from '@nestjs/common';
+import { ConfigType } from '@nestjs/config';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { v4 as uuid } from 'uuid';
+import r2Config from './r2.config';
+import { UploadBase64Dto, UploadUrlDto } from '../uploads/dto/upload.dto';
+import { AssetCategory } from '../uploads/enums/asset-category.enum';
+
+@Injectable()
+export class StorageService {
+  private readonly s3Client: S3Client;
+
+  constructor(
+    @Inject(r2Config.KEY)
+    private readonly config: ConfigType<typeof r2Config>,
+  ) {
+    if (!config.endpoint || !config.accessKeyId || !config.secretAccessKey) {
+      throw new Error('R2 configuration is incomplete.');
+    }
+
+    this.s3Client = new S3Client({
+      endpoint: config.endpoint,
+      region: 'auto',
+      credentials: {
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey,
+      },
+    });
+  }
+
+  async uploadFile(
+    file: Express.Multer.File,
+    category: AssetCategory,
+  ): Promise<{ url: string }> {
+    return this._uploadBuffer(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      category,
+    );
+  }
+
+  async uploadBase64(dto: UploadBase64Dto): Promise<{ url: string }> {
+    const matches = dto.data.match(/^data:(.+);base64,(.+)$/);
+    if (!matches || matches.length !== 3) {
+      throw new BadRequestException('Invalid Base64 data URL format.');
+    }
+
+    const mimeType = matches[1];
+    const base64Data = matches[2];
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    const extension = mimeType.split('/')[1] || 'bin';
+    const originalname = `upload.${extension}`;
+
+    return this._uploadBuffer(buffer, originalname, mimeType, dto.category);
+  }
+
+  async uploadFromUrl(dto: UploadUrlDto): Promise<{ url: string }> {
+    try {
+      const response = await fetch(dto.url);
+      if (!response.ok) {
+        throw new Error(
+          `Failed to fetch file from URL: ${response.statusText}`,
+        );
+      }
+
+      const buffer = Buffer.from(await response.arrayBuffer());
+      const mimeType =
+        response.headers.get('content-type') || 'application/octet-stream';
+      const originalname =
+        dto.url.substring(dto.url.lastIndexOf('/') + 1) || 'file';
+
+      return this._uploadBuffer(buffer, originalname, mimeType, dto.category);
+    } catch (error) {
+      console.error('Error fetching file from URL:', error);
+      throw new InternalServerErrorException(
+        'Could not retrieve file from the provided URL.',
+      );
+    }
+  }
+
+  private async _uploadBuffer(
+    buffer: Buffer,
+    originalname: string,
+    mimeType: string,
+    category: AssetCategory,
+  ): Promise<{ url: string }> {
+    const fileExtension = originalname.split('.').pop() || 'bin';
+    const fileKey = `${category}/${uuid()}.${fileExtension}`;
+
+    const command = new PutObjectCommand({
+      Bucket: this.config.bucketName,
+      Key: fileKey,
+      Body: buffer,
+      ContentType: mimeType,
+    });
+
+    try {
+      // RESTORE THE FUNCTIONALITY
+      await this.s3Client.send(command);
+      const publicUrl = `${this.config.publicUrl}/${fileKey}`;
+      return { url: publicUrl };
+    } catch (error) {
+      console.error('Error uploading file to R2:', error);
+      throw new InternalServerErrorException('File upload to storage failed.');
+    }
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/uploads/uploads.controller.ts ---
+--------------------------------------------------------------------------------
+
+// src/uploads/uploads.controller.ts
+
+import {
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  UseGuards,
+  Body,
+  ParseFilePipeBuilder,
+  HttpStatus,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { StorageService } from '../storage/storage.service';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
+import {
+  UploadBase64Dto,
+  UploadFileBodyDto,
+  UploadUrlDto,
+} from './dto/upload.dto';
+import { ValidationConfigService } from './validation-config.service';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AssetCategory } from './enums/asset-category.enum';
+
+@ApiTags('Uploads')
+@Controller('uploads')
+@ApiSecurity('api_key') // <-- MINIMAL CHANGE: Corrected from 'x-api-key' to 'api_key'
+@UseGuards(ApiKeyGuard)
+export class UploadsController {
+  constructor(
+    private readonly storageService: StorageService,
+    private readonly validationConfigService: ValidationConfigService,
+  ) {}
+
+  @Post('file')
+  @ApiOperation({ summary: 'Upload an asset via file (multipart/form-data)' })
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'Upload a file with its category',
+    schema: {
+      type: 'object',
+      required: ['category', 'file'],
+      properties: {
+        category: {
+          type: 'string',
+          enum: Object.values(AssetCategory),
+          description: 'The category of the asset being uploaded.',
+        },
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'The file to upload.',
+        },
+      },
+    },
+  })
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: UploadFileBodyDto,
+  ) {
+    const config = this.validationConfigService.getConfig(body.category);
+    const pipe = new ParseFilePipeBuilder()
+      .addFileTypeValidator({ fileType: config.fileType })
+      .addMaxSizeValidator({ maxSize: config.maxSize })
+      .build({ errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY });
+    await pipe.transform(file);
+    return await this.storageService.uploadFile(file, body.category);
+  }
+
+  @Post('base64')
+  @ApiOperation({ summary: 'Upload an asset via Base64 data URL' })
+  async uploadBase64(@Body() dto: UploadBase64Dto) {
+    return await this.storageService.uploadBase64(dto);
+  }
+
+  @Post('url')
+  @ApiOperation({ summary: 'Upload an asset from a public URL' })
+  async uploadFromUrl(@Body() dto: UploadUrlDto) {
+    return await this.storageService.uploadFromUrl(dto);
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/uploads/validation-config.service.ts ---
+--------------------------------------------------------------------------------
+
+// src/uploads/validation-config.service.ts
+
+import { Injectable } from '@nestjs/common';
+import { AssetCategory } from './enums/asset-category.enum';
+
+interface ValidationConfig {
+  maxSize: number; // in bytes
+  fileType: RegExp;
+}
+
+@Injectable()
+export class ValidationConfigService {
+  private readonly configs: Record<AssetCategory, ValidationConfig> = {
+    [AssetCategory.Photo]: {
+      maxSize: 10 * 1024 * 1024, // 10MB
+      fileType: /image\/(jpeg|png|gif|svg\+xml|webp)/,
+    },
+    [AssetCategory.Video]: {
+      maxSize: 100 * 1024 * 1024, // 100MB
+      fileType: /video\/(mp4|webm|ogg|quicktime|mov)/,
+    },
+    [AssetCategory.Sound]: {
+      maxSize: 20 * 1024 * 1024, // 20MB
+      fileType: /audio\/(mpeg|wav|ogg|mp3)/,
+    },
+    [AssetCategory.Document]: {
+      maxSize: 15 * 1024 * 1024, // 15MB
+      fileType:
+        /application\/(pdf|msword|vnd.openxmlformats-officedocument.wordprocessingml.document)/,
+    },
+    [AssetCategory.Other]: {
+      maxSize: 50 * 1024 * 1024, // 50MB
+      fileType: /.*/, // Allow any file type
+    },
+  };
+
+  getConfig(category: AssetCategory): ValidationConfig {
+    return this.configs[category];
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/uploads/dto/upload.dto.ts ---
+--------------------------------------------------------------------------------
+
+// src/uploads/dto/upload.dto.ts
+
+import { IsString, IsNotEmpty, Matches, IsUrl, IsEnum } from 'class-validator';
+import { AssetCategory } from '../enums/asset-category.enum';
+
+// For the text field in multipart/form-data
+export class UploadFileBodyDto {
+  @IsEnum(AssetCategory)
+  category: AssetCategory;
+}
+
+// For Base64 uploads
+export class UploadBase64Dto {
+  @IsEnum(AssetCategory)
+  category: AssetCategory;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(
+    /^data:(image|application|video|audio)\/[a-zA-Z+.-]+;base64,[a-zA-Z0-9+/]+={0,2}$/,
+    {
+      message: 'data must be a valid Base64 data URL string.',
+    },
+  )
+  data: string;
+}
+
+// For URL uploads
+export class UploadUrlDto {
+  @IsEnum(AssetCategory)
+  category: AssetCategory;
+
+  @IsUrl()
+  @IsNotEmpty()
+  url: string;
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/uploads/enums/asset-category.enum.ts ---
+--------------------------------------------------------------------------------
+
+// src/uploads/enums/asset-category.enum.ts
+
+export enum AssetCategory {
+  Photo = 'photo',
+  Video = 'video',
+  Sound = 'sound',
+  Document = 'document',
+  Other = 'other',
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/users/users.controller.ts ---
+--------------------------------------------------------------------------------
+
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  ApiHeader,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import { UsersService } from './users.service';
+import { UserResponseDto } from './dto/user-response.dto';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
+
+@ApiTags('Users')
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get('count')
+  @ApiOperation({ summary: 'Get the total number of registered users' })
+  @ApiOkResponse({
+    description: 'Returns the total count of users.',
+    schema: { example: { totalUsers: 125 } },
+  })
+  async getUserCount(): Promise<{ totalUsers: number }> {
+    const count = await this.usersService.countAll();
+    return { totalUsers: count };
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get a list of all users (Protected)' })
+  @ApiOkResponse({
+    description: 'An array of user records.',
+    type: [UserResponseDto],
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'The secret API key for access',
+    required: true,
+  })
+  @UseGuards(ApiKeyGuard)
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.usersService.findAll();
+    return users.map((user) => UserResponseDto.fromUserDocument(user));
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/users/users.module.ts ---
+--------------------------------------------------------------------------------
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { UsersController } from './users.controller';
+import { UsersService } from './users.service';
+import { User, UserSchema } from './schemas/user.schema';
+import { ConfigModule } from '@nestjs/config'; // <-- 1. IMPORT THIS
+
+@Module({
+  imports: [
+    ConfigModule, // <-- 2. ADD THIS
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+  ],
+  controllers: [UsersController],
+  providers: [UsersService],
+})
+export class UsersModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/users/users.service.ts ---
+--------------------------------------------------------------------------------
+
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from './schemas/user.schema';
+
+@Injectable()
+export class UsersService {
+  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+
+  async findAll(): Promise<UserDocument[]> {
+    return this.userModel.find().exec();
+  }
+
+  // --- ADD THIS NEW METHOD ---
+  /**
+   * Counts all users in the database.
+   * @returns A promise that resolves to the total number of users.
+   */
+  async countAll(): Promise<number> {
+    return this.userModel.countDocuments().exec();
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/users/dto/user-response.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import { UserDocument } from '../schemas/user.schema';
+
+export class UserResponseDto {
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a47',
+    description: 'The unique identifier of the user',
+  })
+  _id: string;
+
+  @ApiProperty({
+    example: 'test@example.com',
+    description: 'The email address of the user',
+  })
+  email: string;
+
+  @ApiProperty({ example: 'John', description: "User's first name" })
+  firstName: string;
+
+  @ApiProperty({ example: 'Doe', description: "User's last name" })
+  lastName: string;
+
+  @ApiProperty({
+    required: false,
+    example: '+8801712345678',
+    description: "User's phone number",
+  })
+  phone?: string;
+
+  @ApiProperty({
+    required: false,
+    description: "URL to the user's profile picture",
+  })
+  profilePicture?: string;
+
+  @ApiProperty({ required: false, description: "User's physical address" })
+  address?: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Dhaka',
+    description: "User's business zone",
+  })
+  zone?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the user account is active',
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    example: false,
+    description: "Indicates if the user's email has been verified",
+  })
+  emailVerified: boolean;
+
+  @ApiProperty({
+    example: 'seller',
+    description: 'The role of the user (e.g., admin, seller, customer)',
+  })
+  role: string;
+
+  @ApiProperty({
+    example: 'pending',
+    description: 'KYC (Know Your Customer) verification status',
+  })
+  kycStatus: string;
+
+  @ApiProperty({
+    example: 'approved',
+    description: 'Seller application status',
+  })
+  sellerStatus: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Doe Electronics',
+    description: "User's business name",
+  })
+  businessName?: string;
+
+  @ApiProperty({
+    example: 85,
+    description: 'A calculated score representing user trustworthiness',
+  })
+  trustScore: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the user is a trusted seller',
+  })
+  isTrustedUser: boolean;
+
+  @ApiProperty({ description: 'Timestamp of user creation' })
+  createdAt: Date;
+
+  @ApiProperty({ description: 'Timestamp of last user update' })
+  updatedAt: Date;
+
+  @ApiProperty({
+    required: false,
+    description: "Timestamp of the user's last login",
+  })
+  lastLogin?: Date;
+
+  static fromUserDocument(userDoc: UserDocument): UserResponseDto {
+    const dto = new UserResponseDto();
+    dto._id = userDoc._id.toString();
+    dto.email = userDoc.email;
+    dto.firstName = userDoc.firstName;
+    dto.lastName = userDoc.lastName;
+    dto.phone = userDoc.phone;
+    dto.profilePicture = userDoc.profilePicture;
+    dto.address = userDoc.address;
+    dto.zone = userDoc.zone;
+    dto.isActive = userDoc.isActive;
+    dto.emailVerified = userDoc.emailVerified;
+    dto.role = userDoc.role;
+    dto.kycStatus = userDoc.kycStatus;
+    dto.sellerStatus = userDoc.sellerStatus;
+    dto.businessName = userDoc.businessName;
+    dto.trustScore = userDoc.trustScore;
+    dto.isTrustedUser = userDoc.isTrustedUser;
+    dto.createdAt = userDoc.createdAt;
+    dto.updatedAt = userDoc.updatedAt;
+    dto.lastLogin = userDoc.lastLogin;
+    return dto;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/users/schemas/user.schema.ts ---
+--------------------------------------------------------------------------------
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+
+export type UserDocument = HydratedDocument<User>;
+
+// --- Enums for Type Safety ---
+export enum UserRole {
+  ADMIN = 'admin',
+  SELLER = 'seller',
+  CUSTOMER = 'customer',
+}
+
+export enum KycStatus {
+  APPROVED = 'approved',
+  PENDING = 'pending',
+  REJECTED = 'rejected',
+  NOT_STARTED = 'not_started',
+}
+
+export enum SellerStatus {
+  APPROVED = 'approved',
+  PENDING = 'pending',
+  REJECTED = 'rejected',
+}
+
+// --- Nested Schema for TwoFactorAuth ---
+@Schema({ _id: false }) // _id: false prevents Mongoose from creating an _id for this sub-document
+class TwoFactorAuth {
+  @Prop({ default: false })
+  enabled: boolean;
+
+  @Prop({ type: [String], default: [] })
+  backupCodes: string[];
+}
+const TwoFactorAuthSchema = SchemaFactory.createForClass(TwoFactorAuth);
+
+// --- Main User Schema ---
+@Schema({ timestamps: true })
+export class User {
+  // --- Core Identity ---
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
+  email: string;
+
+  @Prop({ select: false }) // `select: false` hides the password by default in `find()` queries
+  password?: string;
+
+  @Prop({ required: true, trim: true })
+  firstName: string;
+
+  @Prop({ required: true, trim: true })
+  lastName: string;
+
+  @Prop()
+  phone?: string;
+
+  @Prop()
+  profilePicture?: string; // For Google/Social logins
+
+  // --- Authentication & Social Login ---
+  @Prop({ type: [String], default: [] })
+  authProviders: string[];
+
+  @Prop()
+  googleId?: string;
+
+  @Prop()
+  firebaseUid?: string;
+
+  // --- Location & Contact ---
+  @Prop()
+  address?: string;
+
+  @Prop()
+  zone?: string;
+
+  // --- Status & Roles ---
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: false })
+  emailVerified: boolean;
+
+  @Prop({ type: String, enum: UserRole, default: UserRole.CUSTOMER })
+  role: UserRole;
+
+  @Prop({ type: String, enum: KycStatus, default: KycStatus.NOT_STARTED })
+  kycStatus: KycStatus;
+
+  @Prop({ type: String, enum: SellerStatus, default: SellerStatus.PENDING })
+  sellerStatus: SellerStatus;
+
+  // --- Seller-Specific Information ---
+  @Prop()
+  businessName?: string;
+
+  @Prop()
+  businessLicense?: string;
+
+  @Prop()
+  businessDescription?: string;
+
+  @Prop({ type: Date })
+  sellerAppliedAt?: Date;
+
+  @Prop({ type: Date })
+  sellerApprovedAt?: Date;
+
+  // --- Trust & Reputation ---
+  @Prop({ default: false })
+  isTrustedUser: boolean;
+
+  @Prop({ type: Date })
+  trustedUserSince?: Date;
+
+  @Prop({ default: 0 })
+  trustScore: number;
+
+  // --- Activity & Engagement ---
+  @Prop({ default: 0 })
+  reviewCount: number;
+
+  @Prop({ default: 0 })
+  submissionCount: number;
+
+  @Prop({ default: 0 })
+  helpfulVotesReceived: number;
+
+  @Prop({ type: Date })
+  lastLogin?: Date;
+
+  // --- User Preferences & Documents ---
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Broker' }],
+    default: [],
+  })
+  favoriteBrokers: string[]; // Assuming these are references to other collections
+
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'PropFirm' }],
+    default: [],
+  })
+  favoritePropFirms: string[]; // Assuming these are references to other collections
+
+  @Prop({ type: [String], default: [] })
+  kycDocuments: string[]; // Assuming these are URLs to documents
+
+  // --- Security ---
+  @Prop({
+    type: TwoFactorAuthSchema,
+    default: () => ({ enabled: false, backupCodes: [] }),
+  })
+  twoFactorAuth: TwoFactorAuth;
+
+  // =======================================================================
+  // --- ADDED FOR TYPESCRIPT AWARENESS ---
+  // These are automatically managed by Mongoose via the `timestamps: true` option,
+  // but we need to declare them here for TypeScript to know they exist.
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const UserSchema = SchemaFactory.createForClass(User);
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/zones/zones.controller.ts ---
+--------------------------------------------------------------------------------
+
+import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ZonesService } from './zones.service';
+import { ZoneResponseDto } from './dto/zone-response.dto';
+
+@ApiTags('Zones')
+@Controller('zones')
+export class ZonesController {
+  constructor(private readonly zonesService: ZonesService) {}
+
+  @Get('count')
+  @ApiOperation({ summary: 'Get the total number of zones' })
+  @ApiOkResponse({
+    description: 'Returns the total count of zones.',
+    schema: { example: { totalZones: 8 } },
+  })
+  async getZoneCount(): Promise<{ totalZones: number }> {
+    const count = await this.zonesService.countAll();
+    return { totalZones: count };
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get a list of all zones' })
+  @ApiOkResponse({
+    description: 'An array of zone records, sorted by sortOrder.',
+    type: [ZoneResponseDto],
+  })
+  async findAll(): Promise<ZoneResponseDto[]> {
+    const zones = await this.zonesService.findAll();
+    return zones.map((zone) => ZoneResponseDto.fromZoneDocument(zone));
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/zones/zones.module.ts ---
+--------------------------------------------------------------------------------
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { ZonesController } from './zones.controller';
+import { ZonesService } from './zones.service';
+import { Zone, ZoneSchema } from './schemas/zone.schema';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([{ name: Zone.name, schema: ZoneSchema }]),
+  ],
+  controllers: [ZonesController],
+  providers: [ZonesService],
+})
+export class ZonesModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/zones/zones.service.ts ---
+--------------------------------------------------------------------------------
+
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Zone, ZoneDocument } from './schemas/zone.schema';
+
+@Injectable()
+export class ZonesService {
+  constructor(@InjectModel(Zone.name) private zoneModel: Model<ZoneDocument>) {}
+
+  async findAll(): Promise<ZoneDocument[]> {
+    return this.zoneModel.find().sort({ sortOrder: 1 }).exec();
+  }
+
+  // --- ADD THIS NEW METHOD ---
+  async countAll(): Promise<number> {
+    return this.zoneModel.countDocuments().exec();
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/zones/dto/zone-response.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import { ZoneDocument } from '../schemas/zone.schema';
+
+export class ZoneResponseDto {
+  @ApiProperty({
+    example: '65f1c4a0ef3e2bde5f269a48',
+    description: 'Unique identifier for the zone.',
+  })
+  _id: string;
+
+  @ApiProperty({
+    example: 'Dhaka Division',
+    description: 'The name of the zone.',
+  })
+  name: string;
+
+  @ApiProperty({
+    example: 'DHK',
+    description: 'A short, unique code for the zone.',
+  })
+  code: string;
+
+  @ApiProperty({
+    required: false,
+    example: 'Central business and administrative region.',
+    description: 'A brief description of the zone.',
+  })
+  description?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the zone is currently active.',
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    example: 1,
+    description: 'The order in which the zone should be displayed.',
+  })
+  sortOrder: number;
+
+  static fromZoneDocument(zoneDoc: ZoneDocument): ZoneResponseDto {
+    const dto = new ZoneResponseDto();
+    dto._id = zoneDoc._id.toString();
+    dto.name = zoneDoc.name;
+    dto.code = zoneDoc.code;
+    dto.description = zoneDoc.description;
+    dto.isActive = zoneDoc.isActive;
+    dto.sortOrder = zoneDoc.sortOrder;
+    return dto;
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/zones/schemas/zone.schema.ts ---
+--------------------------------------------------------------------------------
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { HydratedDocument } from 'mongoose';
+
+export type ZoneDocument = HydratedDocument<Zone>;
+
+@Schema({ timestamps: true })
+export class Zone {
+  @Prop({ required: true, unique: true, trim: true })
+  name: string;
+
+  @Prop({ required: true, unique: true, trim: true, uppercase: true })
+  code: string;
+
+  @Prop({ trim: true })
+  description?: string;
+
+  @Prop({ default: true })
+  isActive: boolean;
+
+  @Prop({ default: 0 })
+  sortOrder: number;
+  // Add this inside the Zone class
+  // For TypeScript awareness of Mongoose's timestamps
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const ZoneSchema = SchemaFactory.createForClass(Zone);
+
+

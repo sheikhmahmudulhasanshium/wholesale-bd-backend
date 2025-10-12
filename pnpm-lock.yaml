@@ -9,10 +9,10 @@ importers:
   .:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: ^3.908.0
+        specifier: 3.908.0
         version: 3.908.0
       '@aws-sdk/s3-request-presigner':
-        specifier: ^3.908.0
+        specifier: 3.908.0
         version: 3.908.0
       '@nestjs/common':
         specifier: ^11.0.1
@@ -44,9 +44,6 @@ importers:
       '@types/bcryptjs':
         specifier: ^3.0.0
         version: 3.0.0
-      '@types/multer':
-        specifier: ^2.0.0
-        version: 2.0.0
       '@types/nodemailer':
         specifier: ^7.0.2
         version: 7.0.2
@@ -74,6 +71,9 @@ importers:
       dotenv:
         specifier: ^17.2.3
         version: 17.2.3
+      express:
+        specifier: ^5.1.0
+        version: 5.1.0
       firebase-admin:
         specifier: ^13.5.0
         version: 13.5.0
@@ -144,6 +144,9 @@ importers:
       '@types/jest':
         specifier: ^29.5.14
         version: 29.5.14
+      '@types/multer':
+        specifier: ^2.0.0
+        version: 2.0.0
       '@types/node':
         specifier: ^22.10.7
         version: 22.18.9

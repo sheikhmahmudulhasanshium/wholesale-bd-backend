@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // src/products/products.service.ts
 import {
   Injectable,
@@ -16,11 +17,18 @@ import {
   ProductQueryDto,
   PricingTierDto,
 } from './dto/product.dto';
+=======
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Product, ProductDocument } from './schemas/product.schema';
+>>>>>>> main
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name) private productModel: Model<ProductDocument>,
+<<<<<<< HEAD
     @InjectModel(Category.name) private categoryModel: Model<Category>,
     @InjectModel(Zone.name) private zoneModel: Model<Zone>,
   ) {}
@@ -175,5 +183,17 @@ export class ProductsService {
         throw new BadRequestException('Quantities and prices must be positive');
       }
     }
+=======
+  ) {}
+
+  // The return type is now strongly typed
+  async findAll(): Promise<ProductDocument[]> {
+    return this.productModel.find().exec();
+  }
+
+  // --- NEW METHOD for the counter ---
+  async countAll(): Promise<number> {
+    return this.productModel.countDocuments().exec();
+>>>>>>> main
   }
 }

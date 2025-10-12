@@ -1,0 +1,90 @@
+removed seeder
+diagnois seeder was crashing serverless vercel deployment
+added custom header. so it was indeed the reason for crashing
+//decision: do not make anything that can crash the whole system.must ensure the delicate balance no matter what.
+===================================================
+ Seeder Module Documentation & Usage Guide
+===================================================
+
+PURPOSE
+-----------------------------------
+This module is an advanced data management tool for your database, accessible via a secure API. It allows you to create new sample data, manage existing data by flagging it, and clean up test data, all without modifying your application's code schemas. It is designed for both local development and controlled use on staging/production environments.
+
+CORE CONCEPT: The `isSampleData` Flag
+-----------------------------------
+The entire module operates on a single field: `isSampleData` (boolean).
+
+- This field is added DIRECTLY to documents in your MongoDB collections.
+- It does NOT need to be defined in your Mongoose (`.schema.ts`) files. Mongoose is flexible and will allow this extra field.
+- Documents with `isSampleData: true` are considered "sample data".
+- Documents WITHOUT the `isSampleData` field are considered "genuine data".
+
+
+ENDPOINT FUNCTIONALITY & USE CASES
+-----------------------------------
+
+1.  **GET /seeder/list-entities**
+    - **Functionality:** Dynamically fetches and returns a list of all collection names from your database.
+    - **Use Case:** This is your starting point. Use this to see the exact names ('users', 'products', etc.) to use in other seeder requests.
+    - **Response:** `["users", "products", "orders", "categories", "zones"]`
+
+2.  **GET /seeder/status**
+    - **Functionality:** Provides a report on every collection, showing the count of "sample" vs. "genuine" documents.
+    - **Use Case:** Use this to check the state of your database before and after running other seeder commands.
+    - **Response:** `{"products": {"sample": 50, "genuine": 12, "total": 62}, "users": ...}`
+
+3.  **POST /seeder/mark-all-as-sample**
+    - **Functionality:** Finds ALL documents in a collection that are NOT already marked as sample data and sets `isSampleData: true` on them.
+    - **Use Case:** This is the **MIGRATION** step. When you have existing data created before this seeder, use this endpoint ONCE per collection to flag all that old data as "sample."
+    - **Request Body:** `{"entity": "products"}`
+    - **Response:** `{"message": "Success: Marked 12 existing products as sample data.", "count": 12}`
+
+4.  **POST /seeder/run**
+    - **Functionality:** Creates a specified number of NEW, randomly generated documents and automatically marks them with `isSampleData: true`.
+    - **Use Case:** Use this to quickly populate your database with new test data.
+    - **Request Body:** `{"entity": "products", "quantity": 25}`
+    - **Response:** `{"message": "Success: Created 25 new products."}`
+
+5.  **POST /seeder/mark-one-as-sample**
+    - **Functionality:** Marks a SINGLE, specific document as sample data.
+    - **Use Case:** When you have a real document that you want to temporarily treat as test data without deleting it.
+    - **Request Body:** `{"entity": "products", "id": "65f1c4a0ef3e2bde5f269a47"}`
+    - **Response:** The full document that was just updated.
+
+6.  **POST /seeder/mark-all-as-genuine**
+    - **Functionality:** Finds all documents with `isSampleData: true` and REMOVES the flag, effectively "promoting" them to genuine data.
+    - **Use Case:** After testing, if you decide the sample data you generated is useful and want to keep it permanently.
+    - **Request Body:** `{"entity": "products"}`
+    - **Response:** `{"message": "Success: Marked 50 sample products as genuine...", "count": 50}`
+
+7.  **DELETE /seeder/clean**
+    - **Functionality:** PERMANENTLY DELETES all documents in a collection that have `isSampleData: true`.
+    - **Use Case:** The final cleanup step. Use this to wipe all test data from a collection and start fresh.
+    - **Request Body:** `{"entity": "products"}`
+    - **Response:** `{"message": "Success: Deleted 75 sample products.", "count": 75}`
+
+
+STEP-BY-STEP WORKFLOW (EXAMPLE)
+-----------------------------------
+Imagine you have an existing database with products and users.
+
+1.  **CHECK:** Call `GET /seeder/status`. You will see `{"products": {"sample": 0, "genuine": 12, "total": 12}}`.
+2.  **MIGRATE:** Call `POST /seeder/mark-all-as-sample` with `{"entity": "products"}`.
+3.  **VERIFY:** Call `GET /seeder/status` again. Now you'll see `{"products": {"sample": 12, "genuine": 0, "total": 12}}`. All your old data is now flagged.
+4.  **ADD MORE:** Call `POST /seeder/run` with `{"entity": "products", "quantity": 50}`.
+5.  **CHECK AGAIN:** `GET /seeder/status` will show `{"products": {"sample": 62, "genuine": 0, "total": 62}}`.
+6.  **CLEANUP:** Call `DELETE /seeder/clean` with `{"entity": "products"}`.
+7.  **FINAL CHECK:** `GET /seeder/status` will show `{"products": {"sample": 0, "genuine": 0, "total": 0}}`. The database is now empty of products.
+
+
+DO'S AND DON'TS
+-----------------------------------
+
+- **DO** use a secure, unique `API_KEY` in your `.env` file and in your Vercel environment variables.
+- **DO** start by using `GET /list-entities` to get the correct collection names.
+- **DO** use `POST /mark-all-as-sample` on your existing data before doing anything else.
+
+- **DON'T** expose your `API_KEY` publicly.
+- **DON'T** run `DELETE /clean` on a production database unless you are 100% certain you want to delete all flagged data.
+- **DON'T** add the `isSampleData` field to your Mongoose schemas in your `.ts` files. The seeder is designed to work without it.
+- **DON'T** add admin account for seed users(if admin exists)

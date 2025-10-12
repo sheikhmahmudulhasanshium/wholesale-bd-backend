@@ -4,11 +4,6 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { ProductsModule } from './products/products.module';
-import { OrdersModule } from './orders/orders.module';
-import { CommonModule } from './common/common.module';
 
 @Module({
   imports: [
@@ -31,15 +26,8 @@ import { CommonModule } from './common/common.module';
         limit: 60,
       },
     ]),
-
-    // Add the new modules
-    AuthModule,
-    UsersModule,
-    ProductsModule,
-    OrdersModule,
-    CommonModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, UploadsController],
+  providers: [AppService, ValidationConfigService],
 })
 export class AppModule {}
