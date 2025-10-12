@@ -104,7 +104,7 @@ export class StorageService {
     });
 
     try {
-      // THIS IS THE CORRECTED LINE. The .send() method is on the client instance.
+      // This is the line that fixes the Vercel build error.
       await this.s3Client.send(command);
       const publicUrl = `${this.config.publicUrl}/${fileKey}`;
       return { url: publicUrl };
