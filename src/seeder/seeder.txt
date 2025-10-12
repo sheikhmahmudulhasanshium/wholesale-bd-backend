@@ -1,4 +1,5 @@
 removed seeder
+diagnois seeder was crashing serverless vercel deployment
 ===================================================
  Seeder Module Documentation & Usage Guide
 ===================================================
