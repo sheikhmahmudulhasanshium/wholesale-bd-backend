@@ -1,9 +1,19 @@
+// FILE: src/products/dto/product-response.dto.ts
+
 import { ApiProperty } from '@nestjs/swagger';
 import {
   ProductDocument,
   ProductStatus,
   ProductUnit,
 } from '../schemas/product.schema';
+import { MediaResponseDto } from '../../storage/dto/media-response.dto';
+import { MediaDocument } from 'src/storage/schemas/media.schema';
+
+// LINT FIX: Create a type that represents the ProductDocument AFTER population.
+// This correctly types `images` as an array of MediaDocuments, not strings.
+type PopulatedProductDocument = Omit<ProductDocument, 'images'> & {
+  images: MediaDocument[];
+};
 
 class PricingTierDto {
   @ApiProperty({
@@ -47,11 +57,10 @@ export class ProductResponseDto {
   description: string;
 
   @ApiProperty({
-    type: [String],
-    example: ['/images/tshirt1.jpg', '/images/tshirt2.jpg'],
-    description: 'Array of URLs for product images.',
+    type: [MediaResponseDto],
+    description: 'Array of rich media objects for the product.',
   })
-  images: string[];
+  images: MediaResponseDto[];
 
   @ApiProperty({
     example: '65f1c4a0ef3e2bde5f269a47',
@@ -129,12 +138,25 @@ export class ProductResponseDto {
   @ApiProperty({ description: 'Timestamp of last product update.' })
   updatedAt: Date;
 
-  static fromProductDocument(productDoc: ProductDocument): ProductResponseDto {
+  // LINT FIX: Change the parameter type to our new PopulatedProductDocument.
+  static fromProductDocument(
+    productDoc: PopulatedProductDocument,
+  ): ProductResponseDto {
     const dto = new ProductResponseDto();
     dto._id = productDoc._id.toString();
     dto.name = productDoc.name;
     dto.description = productDoc.description;
-    dto.images = productDoc.images;
+
+    // LINT FIX: Now that `productDoc.images` is correctly typed, this mapping is safe.
+    dto.images = Array.isArray(productDoc.images)
+      ? productDoc.images.map((media) => ({
+          _id: media._id.toString(),
+          url: media.url,
+          altText: media.altText,
+          mimeType: media.mimeType,
+        }))
+      : [];
+
     dto.categoryId = productDoc.categoryId;
     dto.zoneId = productDoc.zoneId;
     dto.sellerId = productDoc.sellerId;

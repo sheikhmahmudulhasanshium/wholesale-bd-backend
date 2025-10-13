@@ -1,10 +1,17 @@
+// FILE: src/products/products.service.ts
+
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Product, ProductDocument } from './schemas/product.schema';
 import { StorageService } from '../storage/storage.service';
 import { Express } from 'express';
-import { EntityType } from '../storage/schemas/media.schema';
+import { EntityType, MediaDocument } from '../storage/schemas/media.schema';
+
+// This custom type is still correct and necessary.
+type PopulatedProductDocument = Omit<ProductDocument, 'images'> & {
+  images: MediaDocument[];
+};
 
 @Injectable()
 export class ProductsService {
@@ -16,7 +23,7 @@ export class ProductsService {
   async addMediaToProduct(
     productId: string,
     file: Express.Multer.File,
-  ): Promise<ProductDocument> {
+  ): Promise<PopulatedProductDocument> {
     const product = await this.productModel.findById(productId);
     if (!product) {
       throw new NotFoundException(`Product with ID "${productId}" not found.`);
@@ -30,13 +37,17 @@ export class ProductsService {
     product.images.push(mediaDocument._id.toString());
     await product.save();
 
-    await product.populate('images');
+    const populatedProduct = await product.populate('images');
 
-    return product;
+    // BUILD FIX: Use the 'as unknown as ...' double cast.
+    return populatedProduct as unknown as PopulatedProductDocument;
   }
 
-  async findAll(): Promise<ProductDocument[]> {
-    return this.productModel.find().populate('images').exec();
+  async findAll(): Promise<PopulatedProductDocument[]> {
+    const products = await this.productModel.find().populate('images').exec();
+
+    // BUILD FIX: Use the 'as unknown as ...' double cast.
+    return products as unknown as PopulatedProductDocument[];
   }
 
   async countAll(): Promise<number> {

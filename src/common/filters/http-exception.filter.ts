@@ -1,4 +1,5 @@
 // FILE: src/common/filters/http-exception.filter.ts
+
 import {
   ExceptionFilter,
   Catch,
@@ -8,6 +9,12 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+
+// LINT FIX: Define a type for the expected structure of an error message object.
+interface ErrorPayload {
+  message: string | string[];
+  error?: string;
+}
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -23,32 +30,50 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    const message =
+    const rawMessage =
       exception instanceof HttpException
         ? exception.getResponse()
         : { message: 'Internal server error' };
+
+    // LINT FIX: Type-safe way to build the error response.
+    let errorMessage: string | string[] = 'Internal server error';
+    let errorName: string | undefined = 'Internal Server Error';
+
+    if (typeof rawMessage === 'string') {
+      errorMessage = rawMessage;
+    } else if (
+      typeof rawMessage === 'object' &&
+      rawMessage !== null &&
+      'message' in rawMessage
+    ) {
+      const payload = rawMessage as ErrorPayload;
+      errorMessage = payload.message;
+      if (status < 500) {
+        errorName = payload.error;
+      }
+    }
 
     const errorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       method: request.method,
-      ...(typeof message === 'object' ? message : { message }),
+      error: errorName,
+      message: errorMessage,
     };
+    // END OF LINT FIX
 
-    // Log the full error for debugging, especially for 500-level errors
     if (status >= 500) {
       this.logger.error(
-        `[${request.method}] ${request.url} - Status: ${status}`,
+        `[${request.method}] ${request.url} - Status: ${status} - Internal Server Error`,
         exception instanceof Error
           ? exception.stack
           : JSON.stringify(exception),
       );
     } else {
-      // For client errors (4xx), a simple warning is often sufficient
       this.logger.warn(
         `[${request.method}] ${request.url} - Status: ${status} - Message: ${JSON.stringify(
-          message,
+          rawMessage,
         )}`,
       );
     }
