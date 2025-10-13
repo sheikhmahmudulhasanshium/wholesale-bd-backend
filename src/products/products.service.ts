@@ -8,7 +8,6 @@ import { StorageService } from '../storage/storage.service';
 import { Express } from 'express';
 import { EntityType, MediaDocument } from '../storage/schemas/media.schema';
 
-// This custom type is still correct and necessary.
 type PopulatedProductDocument = Omit<ProductDocument, 'images'> & {
   images: MediaDocument[];
 };
@@ -38,15 +37,11 @@ export class ProductsService {
     await product.save();
 
     const populatedProduct = await product.populate('images');
-
-    // BUILD FIX: Use the 'as unknown as ...' double cast.
     return populatedProduct as unknown as PopulatedProductDocument;
   }
 
   async findAll(): Promise<PopulatedProductDocument[]> {
     const products = await this.productModel.find().populate('images').exec();
-
-    // BUILD FIX: Use the 'as unknown as ...' double cast.
     return products as unknown as PopulatedProductDocument[];
   }
 

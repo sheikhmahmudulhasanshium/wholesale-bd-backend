@@ -173,7 +173,7 @@ export class StorageService {
 
     try {
       const uploadUrl = await getSignedUrl(this.s3Client, command, {
-        expiresIn: 3600, // 1 hour
+        expiresIn: 3600,
       });
 
       const finalPublicUrl = `${this.publicUrl}/${uniqueFileName}`;
@@ -260,8 +260,6 @@ export class StorageService {
     return media;
   }
 
-  // LINT FIX: Change return type from MediaDocument to Media because .lean()
-  // returns a plain object, not a full Mongoose document instance.
   async findOne(id: string): Promise<Media> {
     const media = await this.mediaModel.findById(id).lean();
     if (!media) {

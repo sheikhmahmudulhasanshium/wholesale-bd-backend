@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-// LINT FIX: Define a type for the expected structure of an error message object.
 interface ErrorPayload {
   message: string | string[];
   error?: string;
@@ -35,7 +34,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? exception.getResponse()
         : { message: 'Internal server error' };
 
-    // LINT FIX: Type-safe way to build the error response.
     let errorMessage: string | string[] = 'Internal server error';
     let errorName: string | undefined = 'Internal Server Error';
 
@@ -61,7 +59,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
       error: errorName,
       message: errorMessage,
     };
-    // END OF LINT FIX
 
     if (status >= 500) {
       this.logger.error(
