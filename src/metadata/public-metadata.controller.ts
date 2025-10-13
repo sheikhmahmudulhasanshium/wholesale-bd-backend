@@ -1,3 +1,4 @@
+// FILE: src/metadata/public-metadata.controller.ts
 import { Controller, Get, Param, Query, Res, Logger } from '@nestjs/common';
 import {
   ApiOkResponse,
@@ -97,14 +98,11 @@ export class PublicMetadataController {
     description:
       'Returns the requested metadata document, potentially filtered by language.',
   })
-  // FIX #1: Added an explicit Promise return type. This resolves the `no-unsafe-assignment` error
-  // by clearly defining the expected output on success, satisfying the linter.
   async findOne(
     @Param('key') key: string,
     @Query('lang') lang: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<PublicMetadataResponse> {
-    // The useless try/catch block has been removed.
     const document: MetadataDocument =
       await this.metadataService.findByKey(key);
 
@@ -113,9 +111,6 @@ export class PublicMetadataController {
     if (lang) {
       const globalConfigDoc =
         await this.metadataService.findByKey('globalConfig');
-      // FIX #2: Use the recommended `as unknown as Type` cast. This is the safe way to
-      // tell TypeScript you're certain about a type conversion that it can't verify itself.
-      // This resolves the compiler error 2352.
       const globalConfig =
         globalConfigDoc.value as unknown as IGlobalConfigValue;
       const defaultLang = globalConfig.defaultLanguage || 'en-US';

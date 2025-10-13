@@ -1,5 +1,187 @@
 ﻿
 --------------------------------------------------------------------------------
+--- FILE: nest-cli.json ---
+--------------------------------------------------------------------------------
+
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "assets": ["public"],
+    "watchAssets": true
+  }
+}
+
+--------------------------------------------------------------------------------
+--- FILE: package.json ---
+--------------------------------------------------------------------------------
+
+{
+  "name": "wholesalebd-backend",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.908.0",
+    "@aws-sdk/s3-request-presigner": "^3.908.0",
+    "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.1",
+    "@nestjs/mongoose": "^11.0.3",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.2.0",
+    "@nestjs/throttler": "^6.4.0",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/multer": "^2.0.0",
+    "@types/nodemailer": "^7.0.2",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/qrcode": "^1.5.5",
+    "@types/speakeasy": "^2.0.10",
+    "@types/uuid": "^11.0.0",
+    "bcryptjs": "^3.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "dotenv": "^17.2.3",
+    "firebase-admin": "^13.5.0",
+    "handlebars": "^4.7.8",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.9",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "qrcode": "^1.5.4",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1",
+    "serverless-express": "^2.0.12",
+    "speakeasy": "^2.0.0",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/cli": "^11.0.0",
+    "@nestjs/schematics": "^11.0.0",
+    "@nestjs/testing": "^11.0.1",
+    "@swc/cli": "^0.6.0",
+    "@swc/core": "^1.10.7",
+    "@types/express": "^5.0.0",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.7",
+    "@types/supertest": "^6.0.2",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-prettier": "^5.2.2",
+    "globals": "^16.0.0",
+    "jest": "^29.7.0",
+    "prettier": "^3.4.2",
+    "source-map-support": "^0.5.21",
+    "supertest": "^7.0.0",
+    "ts-jest": "^29.2.5",
+    "ts-loader": "^9.5.2",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.7.3",
+    "typescript-eslint": "^8.20.0"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: tsconfig.build.json ---
+--------------------------------------------------------------------------------
+
+{
+  "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"]
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: tsconfig.json ---
+--------------------------------------------------------------------------------
+
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "target": "ES2023",
+    "sourceMap": true,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "forceConsistentCasingInFileNames": true,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
+    "noFallthroughCasesInSwitch": false
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: vercel.json ---
+--------------------------------------------------------------------------------
+
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "src/main.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "src/main.ts"
+    }
+  ]
+}
+
+--------------------------------------------------------------------------------
 --- FILE: public/index.html ---
 --------------------------------------------------------------------------------
 
@@ -278,10 +460,23 @@ observer.observe(document.body, {
 
 // src/app.controller.ts
 
-import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
-import { AppService, HealthStatus } from './app.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  ServiceUnavailableException,
+  UseGuards, // +++ ADD THIS +++
+} from '@nestjs/common';
+import { AppService, HealthStatus, DbStats } from './app.service'; // +++ UPDATE THIS +++
+import {
+  ApiHeader, // +++ ADD THIS +++
+  ApiOkResponse, // +++ ADD THIS +++
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse, // +++ ADD THIS +++
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { ApiKeyGuard } from './auth/guards/api-key.guard'; // +++ ADD THIS +++
 
 @ApiTags('Health Check')
 @Controller()
@@ -302,9 +497,7 @@ export class AppController {
     description: 'Service is unavailable (e.g., database is down).',
   })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  // FIXED: Removed 'async' and 'Promise' to match the service method
   getStatus(): HealthStatus {
-    // FIXED: Removed 'await'
     const healthStatus = this.appService.getStatus();
 
     if (healthStatus.dbStatus !== 'connected') {
@@ -312,6 +505,34 @@ export class AppController {
     }
 
     return healthStatus;
+  }
+
+  // +++ ADD THIS NEW ENDPOINT +++
+  @Get('db-stats')
+  @ApiOperation({
+    summary: 'Get document counts for all database collections (Protected)',
+  })
+  @ApiOkResponse({
+    description: 'Returns a map of collection names to document counts.',
+    schema: {
+      example: {
+        categories: 15,
+        orders: 1500,
+        products: 542,
+        users: 125,
+        zones: 8,
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'The secret API key for access',
+    required: true,
+  })
+  @UseGuards(ApiKeyGuard)
+  async getDbStats(): Promise<DbStats> {
+    return this.appService.getDbStats();
   }
 }
 
@@ -333,7 +554,9 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
+import { ApiKeyGuard } from './auth/guards/api-key.guard';
 //import { SeederModule } from './seeder/seeder.module';
+import { MetadataModule } from './metadata/metadata.module';
 
 @Module({
   imports: [
@@ -367,9 +590,11 @@ import { ZonesModule } from './zones/zones.module';
     CategoriesModule,
 
     ZonesModule,
+
+    MetadataModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ApiKeyGuard],
 })
 export class AppModule {}
 
@@ -380,7 +605,7 @@ export class AppModule {}
 
 // src/app.service.ts
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common'; // <-- UPDATE THIS IMPORT
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 
@@ -388,6 +613,10 @@ export interface HealthStatus {
   apiStatus: 'ok';
   dbStatus: 'connected' | 'disconnected';
   timestamp: string;
+}
+
+export interface DbStats {
+  [collectionName: string]: number;
 }
 
 @Injectable()
@@ -398,10 +627,7 @@ export class AppService {
     return 'Welcome to the Wholesale BD API!';
   }
 
-  // FIXED: Removed 'async' and 'Promise' as the operation is synchronous
   getStatus(): HealthStatus {
-    // FIXED: Added type assertion '(this.connection.readyState as number)'
-    // to fix the unsafe-enum-comparison lint error.
     const dbStatus =
       (this.connection.readyState as number) === 1
         ? 'connected'
@@ -413,14 +639,44 @@ export class AppService {
       timestamp: new Date().toISOString(),
     };
   }
+
+  /**
+   * Retrieves statistics for all collections in the database.
+   * @returns A promise that resolves to an object mapping collection names to their document counts.
+   */
+  async getDbStats(): Promise<DbStats> {
+    // +++ FIX: Add a guard clause to ensure the DB connection is ready +++
+    if (!this.connection.db) {
+      throw new ServiceUnavailableException(
+        'Database connection is not available.',
+      );
+    }
+
+    const collections = await this.connection.db.collections();
+    const stats: DbStats = {};
+
+    await Promise.all(
+      collections.map(async (collection) => {
+        const count = await collection.countDocuments();
+        stats[collection.collectionName] = count;
+      }),
+    );
+
+    const sortedStats = Object.keys(stats)
+      .sort()
+      .reduce((obj, key) => {
+        obj[key] = stats[key];
+        return obj;
+      }, {});
+
+    return sortedStats;
+  }
 }
 
 
 --------------------------------------------------------------------------------
 --- FILE: src/main.ts ---
 --------------------------------------------------------------------------------
-
-// src/main.ts
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -429,12 +685,17 @@ import {
   DocumentBuilder,
   SwaggerCustomOptions,
 } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+// --- ADDED: Logger for consistent application logging ---
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+// --- ADDED: Import the global exception filter ---
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // --- ADDED: Instantiate the logger for bootstrap messages ---
+  const logger = new Logger('Bootstrap');
 
   app.enableCors({
     origin:
@@ -443,6 +704,9 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api/v1');
+
+  // --- ADDED: Register the global filter to catch all exceptions ---
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -455,12 +719,15 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
-    // --- THIS LINE HAS BEEN UPDATED ---
     .setTitle(`Backend Api documentation`)
     .setDescription('The official API for the Wholesale BD B2B Platform.')
     .setVersion('1.0')
     .addTag('API Endpoints')
     .addBearerAuth()
+    .addApiKey(
+      { type: 'apiKey', name: 'x-api-key', in: 'header' },
+      'ApiKeyAuth',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, swaggerDocConfig);
 
@@ -557,14 +824,16 @@ async function bootstrap() {
     `,
   };
 
+  // --- CHANGED: Use 'docs' as the path for consistency with other logs ---
   SwaggerModule.setup('api', app, document, customSwaggerOptions);
 
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 3001;
     await app.listen(port);
-    console.log(`ðŸš€ Local server running on: http://localhost:${port}`);
-    console.log(`ðŸŒ Public index page at: http://localhost:${port}/`);
-    console.log(`ðŸ“š Swagger docs at: http://localhost:${port}/api`);
+    // --- CHANGED: Using logger instead of console.log ---
+    logger.log(`ðŸš€ Local server running on: http://localhost:${port}`);
+    logger.log(`ðŸŒ Public index page at: http://localhost:${port}/`);
+    logger.log(`ðŸ“š Swagger docs at: http://localhost:${port}/api`);
   } else {
     await app.init();
   }
@@ -781,6 +1050,975 @@ export class Category {
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/common/filters/http-exception.filter.ts ---
+--------------------------------------------------------------------------------
+
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+
+@Catch()
+export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const message =
+      exception instanceof HttpException
+        ? exception.getResponse()
+        : { message: 'Internal server error' };
+
+    const errorResponse = {
+      statusCode: status,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      method: request.method,
+      ...(typeof message === 'object' ? message : { message }),
+    };
+
+    // Log the full error for debugging, especially for 500-level errors
+    if (status >= 500) {
+      this.logger.error(
+        `[${request.method}] ${request.url} - Status: ${status}`,
+        exception instanceof Error
+          ? exception.stack
+          : JSON.stringify(exception),
+      );
+    } else {
+      // For client errors (4xx), a simple warning is often sufficient
+      this.logger.warn(
+        `[${request.method}] ${request.url} - Status: ${status} - Message: ${JSON.stringify(
+          message,
+        )}`,
+      );
+    }
+
+    response.status(status).json(errorResponse);
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/admin-metadata.controller.ts ---
+--------------------------------------------------------------------------------
+
+import {
+  Controller,
+  Get,
+  Param,
+  Put,
+  Body,
+  UseGuards,
+  Query,
+  ParseIntPipe,
+  DefaultValuePipe,
+  Post,
+  Delete,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
+import { MetadataService } from './metadata.service';
+import {
+  ApiHeader,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { UpdateMetadataDto } from './dto/update-metadata.dto';
+import { LanguageDto } from './dto/language.dto';
+import { SetDefaultLanguageDto } from './dto/set-default-language.dto';
+
+@ApiTags('Metadata (Admin)')
+@Controller('admin/metadata')
+@UseGuards(ApiKeyGuard)
+@ApiHeader({
+  name: 'x-api-key',
+  required: true,
+  description: 'The secret API key for admin access.',
+})
+export class AdminMetadataController {
+  constructor(private readonly metadataService: MetadataService) {}
+
+  @Post('/seed')
+  @ApiOperation({
+    summary: 'Seed the database with initial data',
+    description:
+      'Populates the metadata collection with default documents (globalConfig, layoutConfig, etc.). This endpoint will fail if any data already exists in the collection, preventing accidental overwrites.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Database seeded successfully.',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict. Database is not empty.',
+  })
+  seedDatabase() {
+    return this.metadataService.seedDatabase();
+  }
+
+  @Get()
+  @ApiOperation({
+    summary: 'List all metadata keys (Paginated)',
+    description:
+      'Provides a paginated list of all metadata keys for the admin panel. The full `value` is not returned for performance; use the GET /:key endpoint to fetch the full data for editing.',
+  })
+  @ApiQuery({
+    name: 'page',
+    description: 'Page number for pagination.',
+    example: 1,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Number of items per page.',
+    example: 20,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'search',
+    description: 'Filter keys by a search term (case-insensitive).',
+    example: 'pageMeta',
+    required: false,
+  })
+  findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(20), ParseIntPipe) limit: number,
+    @Query('search') search?: string,
+  ) {
+    return this.metadataService.findAllPaginated(page, limit, search);
+  }
+
+  @Get(':key')
+  @ApiOperation({
+    summary: 'Get a single metadata document for editing',
+    description:
+      'Fetches a single, complete metadata document with all its language variants, suitable for populating an admin editing form.',
+  })
+  @ApiParam({
+    name: 'key',
+    description:
+      'The full key of the document to fetch, including `draft:` prefix if applicable.',
+    example: 'globalConfig',
+  })
+  findOne(@Param('key') key: string) {
+    return this.metadataService.findAdminByKey(key);
+  }
+
+  @Put(':key')
+  @ApiOperation({
+    summary: 'Update or create a metadata document',
+    description:
+      'Saves changes to a metadata document. If the key does not exist, it will be created. This is the primary endpoint for saving content from the admin panel. To work on changes without affecting the live site, use a `draft:` prefix on your key (e.g., `draft:layoutConfig`).',
+  })
+  @ApiParam({
+    name: 'key',
+    description: 'The key of the document to save.',
+    example: 'draft:layoutConfig',
+  })
+  update(@Param('key') key: string, @Body() updateDto: UpdateMetadataDto) {
+    return this.metadataService.update(key, updateDto);
+  }
+
+  @Post('/publish/:draftKey')
+  @ApiOperation({
+    summary: 'Publish a draft to the live site',
+    description:
+      'Copies the content from a draft document (e.g., `draft:layoutConfig`) to its corresponding live document (`layoutConfig`) and then deletes the draft. This is the action for making staged changes visible to the public.',
+  })
+  @ApiParam({
+    name: 'draftKey',
+    description: 'The full key of the draft to publish.',
+    example: 'draft:layoutConfig',
+  })
+  @HttpCode(HttpStatus.OK)
+  publishDraft(@Param('draftKey') draftKey: string) {
+    return this.metadataService.publishDraft(draftKey);
+  }
+
+  @Get('config/languages')
+  @ApiOperation({
+    summary: 'Get the list of available languages',
+    description:
+      'Retrieves the `availableLanguages` array from the `globalConfig` document.',
+  })
+  getLanguages() {
+    return this.metadataService.getLanguages();
+  }
+
+  @Post('config/languages')
+  @ApiOperation({
+    summary: 'Add a new language to the system',
+    description:
+      'Adds a new language to `globalConfig` and then traverses all other metadata documents to add a placeholder value for the new language code in every multilingual text field.',
+  })
+  @ApiResponse({ status: 201, description: 'Language added successfully.' })
+  addLanguage(@Body() languageDto: LanguageDto) {
+    return this.metadataService.addLanguage(languageDto);
+  }
+
+  @Delete('config/languages/:code')
+  @ApiOperation({
+    summary: 'Remove a language from the system (Destructive)',
+    description:
+      'Removes a language from `globalConfig` and deletes its corresponding key from every multilingual text field in all other metadata documents. This action cannot be undone. The default language cannot be deleted.',
+  })
+  @ApiParam({
+    name: 'code',
+    description: 'The language code to delete.',
+    example: 'es-ES',
+  })
+  @HttpCode(HttpStatus.NO_CONTENT)
+  removeLanguage(@Param('code') code: string) {
+    return this.metadataService.removeLanguage(code);
+  }
+
+  @Put('config/default-language')
+  @ApiOperation({
+    summary: 'Set the default language',
+    description:
+      'Updates the `defaultLanguage` property in the `globalConfig` document.',
+  })
+  setDefaultLanguage(@Body() dto: SetDefaultLanguageDto) {
+    return this.metadataService.setDefaultLanguage(dto.code);
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/metadata.module.ts ---
+--------------------------------------------------------------------------------
+
+import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { MetadataService } from './metadata.service';
+import { Metadata, MetadataSchema } from './schemas/metadata.schema';
+import { PublicMetadataController } from './public-metadata.controller';
+import { AdminMetadataController } from './admin-metadata.controller';
+
+@Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Metadata.name, schema: MetadataSchema },
+    ]),
+  ],
+  controllers: [PublicMetadataController, AdminMetadataController],
+  providers: [MetadataService],
+})
+export class MetadataModule {}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/metadata.service.ts ---
+--------------------------------------------------------------------------------
+
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Metadata, MetadataDocument } from './schemas/metadata.schema';
+import { LanguageDto } from './dto/language.dto';
+import { UpdateMetadataDto } from './dto/update-metadata.dto';
+import { IGlobalConfigValue } from './types/metadata.types';
+import { SEED_DATA } from './data/seed-data';
+
+@Injectable()
+export class MetadataService {
+  private readonly logger = new Logger(MetadataService.name);
+
+  constructor(
+    @InjectModel(Metadata.name) private metadataModel: Model<MetadataDocument>,
+  ) {}
+
+  // --- PUBLIC METHODS ---
+
+  async findByKey(key: string): Promise<MetadataDocument> {
+    if (key.startsWith('draft:')) {
+      throw new BadRequestException(
+        'Cannot fetch draft keys via the public endpoint.',
+      );
+    }
+    const doc = await this.metadataModel.findOne({ key }).lean().exec();
+    if (!doc) {
+      throw new NotFoundException(`Metadata with key "${key}" not found`);
+    }
+    return doc as MetadataDocument;
+  }
+
+  // --- ADMIN METHODS ---
+
+  async findAllPaginated(page: number, limit: number, search?: string) {
+    const query = search ? { key: { $regex: search, $options: 'i' } } : {};
+    const skip = (page - 1) * limit;
+
+    const [results, total] = await Promise.all([
+      this.metadataModel
+        .find(query, { key: 1, description: 1, updatedAt: 1 })
+        .sort({ key: 1 })
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+      this.metadataModel.countDocuments(query),
+    ]);
+
+    return { data: results, total, page, lastPage: Math.ceil(total / limit) };
+  }
+
+  async findAdminByKey(key: string): Promise<MetadataDocument> {
+    const doc = await this.metadataModel.findOne({ key }).lean().exec();
+    if (!doc) {
+      throw new NotFoundException(`Metadata with key "${key}" not found`);
+    }
+    return doc as MetadataDocument;
+  }
+
+  async update(key: string, dto: UpdateMetadataDto): Promise<MetadataDocument> {
+    return this.metadataModel
+      .findOneAndUpdate(
+        { key },
+        { $set: { value: dto.value, description: dto.description } },
+        { new: true, upsert: true },
+      )
+      .exec();
+  }
+
+  async publishDraft(
+    draftKey: string,
+  ): Promise<{ message: string; liveKey: string }> {
+    if (!draftKey.startsWith('draft:')) {
+      throw new BadRequestException(
+        'The provided key is not a valid draft key.',
+      );
+    }
+    const liveKey = draftKey.replace('draft:', '');
+    this.logger.log(
+      `Publishing draft '${draftKey}' to live key '${liveKey}'...`,
+    );
+
+    const draftDoc = await this.findAdminByKey(draftKey);
+
+    await this.update(liveKey, {
+      value: draftDoc.value,
+      description: draftDoc.description,
+    });
+    await this.metadataModel.deleteOne({ key: draftKey }).exec();
+
+    this.logger.log(`Successfully published '${liveKey}' and removed draft.`);
+    return { message: `Successfully published draft to '${liveKey}'`, liveKey };
+  }
+
+  async seedDatabase(): Promise<{ message: string; count: number }> {
+    const count = await this.metadataModel.countDocuments().exec();
+    if (count > 0) {
+      throw new ConflictException(
+        'Database is not empty. Seeding is only allowed on a fresh database.',
+      );
+    }
+
+    this.logger.log(`Seeding database with ${SEED_DATA.length} documents...`);
+    await this.metadataModel.insertMany(SEED_DATA);
+    this.logger.log('Database seeding complete.');
+
+    return {
+      message: 'Database seeded successfully.',
+      count: SEED_DATA.length,
+    };
+  }
+
+  // --- LANGUAGE MANAGEMENT ---
+
+  private async getGlobalConfig(): Promise<{
+    doc: MetadataDocument;
+    value: IGlobalConfigValue;
+  }> {
+    const doc = await this.findAdminByKey('globalConfig');
+    return { doc, value: doc.value as unknown as IGlobalConfigValue };
+  }
+
+  async getLanguages(): Promise<IGlobalConfigValue['availableLanguages']> {
+    const { value } = await this.getGlobalConfig();
+    return value.availableLanguages || [];
+  }
+
+  async setDefaultLanguage(code: string): Promise<MetadataDocument> {
+    const { doc, value } = await this.getGlobalConfig();
+    if (!value.availableLanguages.find((lang) => lang.code === code)) {
+      throw new BadRequestException(
+        `Language code "${code}" is not available.`,
+      );
+    }
+    value.defaultLanguage = code;
+    return this.update('globalConfig', {
+      // --- THE FIX ---
+      value: value as unknown as Record<string, unknown>,
+      description: doc.description,
+    });
+  }
+
+  async addLanguage(dto: LanguageDto): Promise<void> {
+    this.logger.log(`Adding new language: ${dto.code} (${dto.name})`);
+    const { doc, value } = await this.getGlobalConfig();
+
+    if (value.availableLanguages.find((lang) => lang.code === dto.code)) {
+      throw new ConflictException(
+        `Language code "${dto.code}" already exists.`,
+      );
+    }
+    value.availableLanguages.push(dto);
+    const langCodes = value.availableLanguages.map((l) => l.code);
+
+    await this.update('globalConfig', {
+      // --- THE FIX ---
+      value: value as unknown as Record<string, unknown>,
+      description: doc.description,
+    });
+
+    await this.traverseAndUpdateAllDocuments((obj) => {
+      if (this.isLanguageObject(obj, langCodes)) {
+        obj[dto.code] = `[NEEDS TRANSLATION: ${dto.name}]`;
+      }
+    });
+    this.logger.log(`Finished propagating language ${dto.code}.`);
+  }
+
+  async removeLanguage(code: string): Promise<void> {
+    this.logger.warn(`Removing language: ${code}`);
+    const { doc, value } = await this.getGlobalConfig();
+
+    if (value.defaultLanguage === code) {
+      throw new BadRequestException('Cannot remove the default language.');
+    }
+    const initialLength = value.availableLanguages.length;
+    value.availableLanguages = value.availableLanguages.filter(
+      (lang) => lang.code !== code,
+    );
+    if (initialLength === value.availableLanguages.length) {
+      throw new NotFoundException(`Language code "${code}" not found.`);
+    }
+
+    await this.update('globalConfig', {
+      // --- THE FIX ---
+      value: value as unknown as Record<string, unknown>,
+      description: doc.description,
+    });
+
+    const langCodes = value.availableLanguages.map((l) => l.code);
+    await this.traverseAndUpdateAllDocuments((obj) => {
+      if (this.isLanguageObject(obj, langCodes)) {
+        delete obj[code];
+      }
+    });
+    this.logger.log(`Finished removing language ${code}.`);
+  }
+
+  // --- HELPERS ---
+
+  private isLanguageObject(
+    obj: unknown,
+    langCodes: string[],
+  ): obj is Record<string, unknown> {
+    if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+      return false;
+    }
+    const keys = Object.keys(obj);
+    if (keys.length === 0) return false;
+    return keys.some((key) => langCodes.includes(key));
+  }
+
+  private async traverseAndUpdateAllDocuments(
+    updateFn: (obj: Record<string, unknown>) => void,
+  ) {
+    const cursor = this.metadataModel.find({}).cursor();
+    for (
+      let doc = await cursor.next();
+      doc != null;
+      doc = await cursor.next()
+    ) {
+      this.recursiveApply(doc.value, updateFn);
+      doc.markModified('value');
+      await doc.save();
+    }
+  }
+
+  private recursiveApply(
+    obj: unknown,
+    updateFn: (obj: Record<string, unknown>) => void,
+  ) {
+    if (typeof obj !== 'object' || obj === null) return;
+    const currentObj = obj as Record<string, unknown>;
+    updateFn(currentObj);
+
+    for (const key in currentObj) {
+      if (Object.prototype.hasOwnProperty.call(currentObj, key)) {
+        this.recursiveApply(currentObj[key], updateFn);
+      }
+    }
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/public-metadata.controller.ts ---
+--------------------------------------------------------------------------------
+
+import { Controller, Get, Param, Query, Res, Logger } from '@nestjs/common';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiTags,
+} from '@nestjs/swagger';
+import { Response } from 'express';
+import { MetadataService } from './metadata.service';
+import { IGlobalConfigValue } from './types/metadata.types';
+import { MetadataDocument } from './schemas/metadata.schema';
+
+// Helper function with its own logger instance
+const logger = new Logger('LanguageFilter');
+
+const isMultilingualObject = (obj: unknown): obj is Record<string, unknown> => {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+    return false;
+  }
+  const keys = Object.keys(obj);
+  return keys.length > 0 && keys.every((k) => k.match(/^[a-z]{2}-[A-Z]{2}$/));
+};
+
+/**
+ * Type-safe recursive function to filter data by language.
+ * It accepts and returns `unknown` because the transformation changes the data's shape.
+ */
+const filterByLang = (
+  data: unknown,
+  lang: string,
+  defaultLang: string,
+): unknown => {
+  if (isMultilingualObject(data)) {
+    if (data[lang]) {
+      return data[lang];
+    }
+    if (data[defaultLang]) {
+      // Logic Warning: Log when a fallback occurs.
+      logger.warn(
+        `Translation for lang '${lang}' not found. Falling back to default '${defaultLang}'.`,
+      );
+      return data[defaultLang];
+    }
+    // Fallback to the very first available translation if even the default is missing
+    return Object.values(data)[0];
+  }
+
+  if (Array.isArray(data)) {
+    return data.map((item) => filterByLang(item, lang, defaultLang));
+  }
+
+  if (typeof data === 'object' && data !== null) {
+    // Cast to Record<string, unknown> to safely iterate over keys
+    const currentObject = data as Record<string, unknown>;
+    const newObj: Record<string, unknown> = {};
+    for (const key in currentObject) {
+      newObj[key] = filterByLang(currentObject[key], lang, defaultLang);
+    }
+    return newObj;
+  }
+
+  return data;
+};
+
+// Define a clear return type for our controller method's successful response
+type PublicMetadataResponse = {
+  key: string;
+  value: unknown;
+  updatedAt: Date;
+};
+
+@ApiTags('Metadata (Public)')
+@Controller('metadata')
+export class PublicMetadataController {
+  constructor(private readonly metadataService: MetadataService) {}
+
+  @Get(':key')
+  @ApiOperation({
+    summary: 'Get a metadata document by key',
+    description:
+      'This is the primary public endpoint for fetching front-end configuration. It is highly optimized for speed and caching. It will automatically filter content to a single language if the `lang` query parameter is provided.',
+  })
+  @ApiParam({
+    name: 'key',
+    description: 'The key of the metadata document to retrieve.',
+    example: 'layoutConfig',
+  })
+  @ApiQuery({
+    name: 'lang',
+    required: false,
+    description:
+      'Language code to filter content (e.g., bn-BD). If omitted, the full multilingual object is returned.',
+    example: 'bn-BD',
+  })
+  @ApiOkResponse({
+    description:
+      'Returns the requested metadata document, potentially filtered by language.',
+  })
+  // FIX #1: Added an explicit Promise return type. This resolves the `no-unsafe-assignment` error
+  // by clearly defining the expected output on success, satisfying the linter.
+  async findOne(
+    @Param('key') key: string,
+    @Query('lang') lang: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<PublicMetadataResponse> {
+    // The useless try/catch block has been removed.
+    const document: MetadataDocument =
+      await this.metadataService.findByKey(key);
+
+    let responseValue: unknown = document.value;
+
+    if (lang) {
+      const globalConfigDoc =
+        await this.metadataService.findByKey('globalConfig');
+      // FIX #2: Use the recommended `as unknown as Type` cast. This is the safe way to
+      // tell TypeScript you're certain about a type conversion that it can't verify itself.
+      // This resolves the compiler error 2352.
+      const globalConfig =
+        globalConfigDoc.value as unknown as IGlobalConfigValue;
+      const defaultLang = globalConfig.defaultLanguage || 'en-US';
+      responseValue = filterByLang(document.value, lang, defaultLang);
+    }
+
+    res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=300, stale-while-revalidate=3600',
+    );
+
+    return {
+      key: document.key,
+      value: responseValue,
+      updatedAt: document.updatedAt,
+    };
+  }
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/data/seed-data.ts ---
+--------------------------------------------------------------------------------
+
+/**
+ * The initial data to seed the database with.
+ * This ensures the application has a valid starting configuration.
+ */
+export const SEED_DATA = [
+  {
+    key: 'globalConfig',
+    description: 'Global site configuration, cached long-term on clients.',
+    value: {
+      siteName: 'Wholesale BD',
+      defaultLanguage: 'en-US',
+      availableLanguages: [
+        { code: 'en-US', name: 'English' },
+        { code: 'bn-BD', name: 'à¦¬à¦¾à¦‚à¦²à¦¾' },
+        { code: 'es-ES', name: 'EspaÃ±ol' },
+      ],
+      brand: {
+        officialName: 'Wholesale Bangladesh Ltd.',
+        tagline: {
+          'en-US': {
+            sm: 'B2B Wholesale Platform',
+            md: 'The Premier B2B Wholesale Platform',
+            lg: 'The Premier B2B Wholesale Platform in Bangladesh',
+          },
+          'bn-BD': {
+            sm: 'B2B à¦ªà¦¾à¦‡à¦•à¦¾à¦°à¦¿ à¦ªà§à¦²à§à¦¯à¦¾à¦Ÿà¦«à¦°à§à¦®',
+            md: 'à¦ªà§à¦°à¦¿à¦®à¦¿à¦¯à¦¼à¦¾à¦° B2B à¦ªà¦¾à¦‡à¦•à¦¾à¦°à¦¿ à¦ªà§à¦²à§à¦¯à¦¾à¦Ÿà¦«à¦°à§à¦®',
+            lg: 'à¦¬à¦¾à¦‚à¦²à¦¾à¦¦à§‡à¦¶à§‡à¦° à¦ªà§à¦°à¦¿à¦®à¦¿à¦¯à¦¼à¦¾à¦° B2B à¦ªà¦¾à¦‡à¦•à¦¾à¦°à¦¿ à¦ªà§à¦²à§à¦¯à¦¾à¦Ÿà¦«à¦°à§à¦®',
+          },
+        },
+        logos: [
+          {
+            useCase: 'Primary Logo Light',
+            path: '/assets/logos/logo-light.svg',
+            alt: {
+              'en-US': 'Wholesale BD Official Logo',
+              'bn-BD': 'à¦¹à§‹à¦²à¦¸à§‡à¦² à¦¬à¦¿à¦¡à¦¿ à¦…à¦«à¦¿à¦¸à¦¿à¦¯à¦¼à¦¾à¦² à¦²à§‹à¦—à§‹',
+            },
+          },
+          {
+            useCase: 'Favicon',
+            path: '/favicon.ico',
+            alt: {
+              'en-US': 'Wholesale BD Icon',
+              'bn-BD': 'à¦¹à§‹à¦²à¦¸à§‡à¦² à¦¬à¦¿à¦¡à¦¿ à¦†à¦‡à¦•à¦¨',
+            },
+          },
+        ],
+      },
+    },
+  },
+  {
+    key: 'layoutConfig',
+    description: 'Data for the main UI layout, cached long-term on clients.',
+    value: {
+      navigation: {
+        headerNav: [
+          {
+            id: 'nav-home',
+            path: '/',
+            label: { 'en-US': 'Home', 'bn-BD': 'à¦¹à§‹à¦®' },
+            icon: 'Home',
+          },
+        ],
+        footerLinkGroups: [
+          {
+            title: { 'en-US': 'Company', 'bn-BD': 'à¦•à§‹à¦®à§à¦ªà¦¾à¦¨à¦¿' },
+            links: [
+              {
+                id: 'footer-about',
+                path: '/about',
+                label: {
+                  'en-US': { lg: 'About Us', md: 'About', sm: 'â„¹ï¸' },
+                  'bn-BD': {
+                    lg: 'à¦†à¦®à¦¾à¦¦à§‡à¦° à¦¸à¦®à§à¦ªà¦°à§à¦•à§‡',
+                    md: 'à¦¸à¦®à§à¦ªà¦°à§à¦•à§‡',
+                    sm: 'â„¹ï¸',
+                  },
+                },
+              },
+            ],
+          },
+        ],
+      },
+      footer: {
+        description: {
+          'en-US': {
+            sm: 'Your B2B destination.',
+            lg: 'Your one-stop destination for bulk purchasing and seamless B2B connections across Bangladesh.',
+          },
+          'bn-BD': {
+            sm: 'à¦†à¦ªà¦¨à¦¾à¦° B2B à¦—à¦¨à§à¦¤à¦¬à§à¦¯à¥¤',
+            lg: 'à¦¬à¦¾à¦‚à¦²à¦¾à¦¦à§‡à¦¶ à¦œà§à¦¡à¦¼à§‡ à¦¬à¦¾à¦²à§à¦• à¦•à§à¦°à¦¯à¦¼ à¦à¦¬à¦‚ à¦¨à¦¿à¦°à§à¦¬à¦¿à¦˜à§à¦¨ B2B à¦¸à¦‚à¦¯à§‹à¦—à§‡à¦° à¦œà¦¨à§à¦¯ à¦†à¦ªà¦¨à¦¾à¦° à¦“à¦¯à¦¼à¦¾à¦¨-à¦¸à§à¦Ÿà¦ª à¦—à¦¨à§à¦¤à¦¬à§à¦¯à¥¤',
+          },
+        },
+        socialLinks: [
+          {
+            platform: 'Facebook',
+            url: 'https://facebook.com/wholesalebd',
+            icon: 'Facebook',
+          },
+        ],
+        copyright: {
+          'en-US': 'Â© {currentYear} Wholesale BD Ltd. All rights reserved.',
+          'bn-BD': 'Â© {currentYear} à¦¹à§‹à¦²à¦¸à§‡à¦² à¦¬à¦¿à¦¡à¦¿ à¦²à¦¿à¦®à¦¿à¦Ÿà§‡à¦¡à¥¤ à¦¸à¦°à§à¦¬à¦¸à§à¦¬à¦¤à§à¦¬ à¦¸à¦‚à¦°à¦•à§à¦·à¦¿à¦¤à¥¤',
+        },
+      },
+    },
+  },
+  {
+    key: 'pageMeta:/profile/:profileId',
+    description: 'SEO metadata for dynamic user profile pages.',
+    value: {
+      titleTemplate: {
+        'en-US': "{profileName}'s Profile | Wholesale BD",
+        'bn-BD': '{profileName}-à¦à¦° à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² | à¦¹à§‹à¦²à¦¸à§‡à¦² à¦¬à¦¿à¦¡à¦¿',
+      },
+      descriptionTemplate: {
+        'en-US':
+          'View the public business profile for {profileName} on Wholesale BD.',
+        'bn-BD':
+          'à¦¹à§‹à¦²à¦¸à§‡à¦² à¦¬à¦¿à¦¡à¦¿-à¦¤à§‡ {profileName}-à¦à¦° à¦ªà¦¾à¦¬à¦²à¦¿à¦• à¦¬à§à¦¯à¦¬à¦¸à¦¾à¦¯à¦¼à¦¿à¦• à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦¦à§‡à¦–à§à¦¨à¥¤',
+      },
+    },
+  },
+];
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/dto/language.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
+
+export class LanguageDto {
+  @ApiProperty({
+    example: 'fr-FR',
+    description: 'The IETF language tag (e.g., en-US, bn-BD).',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @Length(2, 10)
+  code: string;
+
+  @ApiProperty({
+    example: 'FranÃ§ais',
+    description: 'The native name of the language.',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/dto/set-default-language.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsString } from 'class-validator';
+
+export class SetDefaultLanguageDto {
+  @ApiProperty({
+    example: 'bn-BD',
+    description: 'The language code to set as the new default.',
+  })
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/dto/update-metadata.dto.ts ---
+--------------------------------------------------------------------------------
+
+import { ApiProperty } from '@nestjs/swagger';
+import { IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+
+export class UpdateMetadataDto {
+  @ApiProperty({
+    description: 'The entire new value object for the metadata key.',
+    example: { siteName: 'My Awesome Site', defaultLanguage: 'en-US' },
+    type: 'object',
+    // --- THE FIX ---
+    // This property is required by Swagger when defining a generic object
+    // to indicate that it can have arbitrary keys.
+    additionalProperties: true,
+  })
+  @IsObject()
+  @IsNotEmpty()
+  value: Record<string, unknown>;
+
+  @ApiProperty({
+    required: false,
+    description: 'An optional internal-facing description for this entry.',
+    example: 'Global configuration for the main website.',
+  })
+  @IsString()
+  @IsOptional()
+  description?: string;
+}
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/schemas/metadata.schema.ts ---
+--------------------------------------------------------------------------------
+
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { HydratedDocument } from 'mongoose';
+
+export type MetadataDocument = HydratedDocument<Metadata>;
+
+@Schema({ timestamps: true, collection: 'metadatas' })
+export class Metadata {
+  @Prop({
+    required: true,
+    unique: true,
+    trim: true,
+    description:
+      'The unique key for the metadata entry (e.g., globalConfig, draft:layoutConfig)',
+  })
+  key: string;
+
+  @Prop({
+    type: mongoose.Schema.Types.Mixed,
+    required: true,
+    description:
+      'The value of the entry, which can be any valid JSON structure.',
+  })
+  // I'm also tightening this from `any` to `Record<string, unknown>` to match our DTO for full type consistency.
+  value: Record<string, unknown>;
+
+  @Prop({
+    trim: true,
+    description: 'An internal-facing description for administrators.',
+  })
+  description?: string;
+
+  // --- THE FIX ---
+  // These properties are managed by Mongoose's `timestamps` option.
+  // We declare them here without @Prop() decorators so TypeScript becomes
+  // aware of their existence and their type.
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export const MetadataSchema = SchemaFactory.createForClass(Metadata);
+
+
+--------------------------------------------------------------------------------
+--- FILE: src/metadata/types/metadata.types.ts ---
+--------------------------------------------------------------------------------
+
+// Represents a language entry in the global configuration.
+export interface ILanguage {
+  code: string;
+  name: string;
+}
+
+// Represents an object where keys are language codes (e.g., "en-US")
+// and values are the translated strings.
+export type TMultilingual<T> = Record<string, T>;
+
+// Defines the structure of the 'value' field for the 'globalConfig' document.
+export interface IGlobalConfigValue {
+  siteName: string;
+  defaultLanguage: string;
+  availableLanguages: ILanguage[];
+  brand: {
+    officialName: string;
+    tagline: TMultilingual<{ sm: string; md: string; lg: string }>;
+    logos: Array<{
+      useCase: string;
+      path: string;
+      alt: TMultilingual<string>;
+    }>;
+  };
+}
+
+// Defines the structure for a generic metadata document stored in the database.
+// The `value` can be of a known type or a generic object for pageMeta etc.
+export interface IMetadata<T = Record<string, unknown>> {
+  key: string;
+  value: T;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 
 --------------------------------------------------------------------------------
