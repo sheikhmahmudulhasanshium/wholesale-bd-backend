@@ -11,7 +11,9 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
+import { ApiKeyGuard } from './auth/guards/api-key.guard';
 //import { SeederModule } from './seeder/seeder.module';
+import { MetadataModule } from './metadata/metadata.module';
 
 @Module({
   imports: [
@@ -45,8 +47,10 @@ import { ZonesModule } from './zones/zones.module';
     CategoriesModule,
 
     ZonesModule,
+
+    MetadataModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, ApiKeyGuard],
 })
 export class AppModule {}

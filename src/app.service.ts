@@ -1,6 +1,6 @@
 // src/app.service.ts
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common'; // <-- UPDATE THIS IMPORT
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
 
@@ -8,6 +8,10 @@ export interface HealthStatus {
   apiStatus: 'ok';
   dbStatus: 'connected' | 'disconnected';
   timestamp: string;
+}
+
+export interface DbStats {
+  [collectionName: string]: number;
 }
 
 @Injectable()
@@ -18,10 +22,7 @@ export class AppService {
     return 'Welcome to the Wholesale BD API!';
   }
 
-  // FIXED: Removed 'async' and 'Promise' as the operation is synchronous
   getStatus(): HealthStatus {
-    // FIXED: Added type assertion '(this.connection.readyState as number)'
-    // to fix the unsafe-enum-comparison lint error.
     const dbStatus =
       (this.connection.readyState as number) === 1
         ? 'connected'
@@ -32,5 +33,37 @@ export class AppService {
       dbStatus,
       timestamp: new Date().toISOString(),
     };
+  }
+
+  /**
+   * Retrieves statistics for all collections in the database.
+   * @returns A promise that resolves to an object mapping collection names to their document counts.
+   */
+  async getDbStats(): Promise<DbStats> {
+    // +++ FIX: Add a guard clause to ensure the DB connection is ready +++
+    if (!this.connection.db) {
+      throw new ServiceUnavailableException(
+        'Database connection is not available.',
+      );
+    }
+
+    const collections = await this.connection.db.collections();
+    const stats: DbStats = {};
+
+    await Promise.all(
+      collections.map(async (collection) => {
+        const count = await collection.countDocuments();
+        stats[collection.collectionName] = count;
+      }),
+    );
+
+    const sortedStats = Object.keys(stats)
+      .sort()
+      .reduce((obj, key) => {
+        obj[key] = stats[key];
+        return obj;
+      }, {});
+
+    return sortedStats;
   }
 }

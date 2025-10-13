@@ -1,5 +1,3 @@
-// src/main.ts
-
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import {
@@ -7,12 +5,17 @@ import {
   DocumentBuilder,
   SwaggerCustomOptions,
 } from '@nestjs/swagger';
-import { ValidationPipe } from '@nestjs/common';
+// --- ADDED: Logger for consistent application logging ---
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
+// --- ADDED: Import the global exception filter ---
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // --- ADDED: Instantiate the logger for bootstrap messages ---
+  const logger = new Logger('Bootstrap');
 
   app.enableCors({
     origin:
@@ -21,6 +24,9 @@ async function bootstrap() {
   });
 
   app.setGlobalPrefix('api/v1');
+
+  // --- ADDED: Register the global filter to catch all exceptions ---
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -33,12 +39,15 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
   const swaggerDocConfig = new DocumentBuilder()
-    // --- THIS LINE HAS BEEN UPDATED ---
     .setTitle(`Backend Api documentation`)
     .setDescription('The official API for the Wholesale BD B2B Platform.')
     .setVersion('1.0')
     .addTag('API Endpoints')
     .addBearerAuth()
+    .addApiKey(
+      { type: 'apiKey', name: 'x-api-key', in: 'header' },
+      'ApiKeyAuth',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, swaggerDocConfig);
 
@@ -135,14 +144,16 @@ async function bootstrap() {
     `,
   };
 
+  // --- CHANGED: Use 'docs' as the path for consistency with other logs ---
   SwaggerModule.setup('api', app, document, customSwaggerOptions);
 
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 3001;
     await app.listen(port);
-    console.log(`🚀 Local server running on: http://localhost:${port}`);
-    console.log(`🌐 Public index page at: http://localhost:${port}/`);
-    console.log(`📚 Swagger docs at: http://localhost:${port}/api`);
+    // --- CHANGED: Using logger instead of console.log ---
+    logger.log(`🚀 Local server running on: http://localhost:${port}`);
+    logger.log(`🌐 Public index page at: http://localhost:${port}/`);
+    logger.log(`📚 Swagger docs at: http://localhost:${port}/api`);
   } else {
     await app.init();
   }

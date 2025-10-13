@@ -1,9 +1,22 @@
 // src/app.controller.ts
 
-import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
-import { AppService, HealthStatus } from './app.service';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  ServiceUnavailableException,
+  UseGuards, // +++ ADD THIS +++
+} from '@nestjs/common';
+import { AppService, HealthStatus, DbStats } from './app.service'; // +++ UPDATE THIS +++
+import {
+  ApiHeader, // +++ ADD THIS +++
+  ApiOkResponse, // +++ ADD THIS +++
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiUnauthorizedResponse, // +++ ADD THIS +++
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { ApiKeyGuard } from './auth/guards/api-key.guard'; // +++ ADD THIS +++
 
 @ApiTags('Health Check')
 @Controller()
@@ -24,9 +37,7 @@ export class AppController {
     description: 'Service is unavailable (e.g., database is down).',
   })
   @Throttle({ default: { limit: 10, ttl: 60000 } })
-  // FIXED: Removed 'async' and 'Promise' to match the service method
   getStatus(): HealthStatus {
-    // FIXED: Removed 'await'
     const healthStatus = this.appService.getStatus();
 
     if (healthStatus.dbStatus !== 'connected') {
@@ -34,5 +45,33 @@ export class AppController {
     }
 
     return healthStatus;
+  }
+
+  // +++ ADD THIS NEW ENDPOINT +++
+  @Get('db-stats')
+  @ApiOperation({
+    summary: 'Get document counts for all database collections (Protected)',
+  })
+  @ApiOkResponse({
+    description: 'Returns a map of collection names to document counts.',
+    schema: {
+      example: {
+        categories: 15,
+        orders: 1500,
+        products: 542,
+        users: 125,
+        zones: 8,
+      },
+    },
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiHeader({
+    name: 'x-api-key',
+    description: 'The secret API key for access',
+    required: true,
+  })
+  @UseGuards(ApiKeyGuard)
+  async getDbStats(): Promise<DbStats> {
+    return this.appService.getDbStats();
   }
 }

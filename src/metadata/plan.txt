@@ -1,0 +1,327 @@
+Excellent. You've approved the core strategy ("Deconstruct and Cache") and are now asking for the complete, detailed plan that incorporates the administrative features while ensuring no data is lost from our original design.
+
+This is the definitive blueprint for building a high-performance, scalable, and manageable metadata system for your serverless backend.
+
+Here is the full, updated plan.
+
+Part 1: Finalized Data Structure (The "What")
+
+We will deconstruct the monolithic object into logical documents stored in the metadatas collection. No features will be cut off; they are simply reorganized.
+
+Document 1: globalConfig
+(Data needed on initial app load, cached long-term on the client)
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "key": "globalConfig",
+  "value": {
+    "siteName": "Wholesale BD",
+    "defaultLanguage": "en-US",
+    "availableLanguages": [
+      { "code": "en-US", "name": "English" },
+      { "code": "bn-BD", "name": "বাংলা" },
+      { "code": "es-ES", "name": "Español" }
+    ],
+    "brand": {
+      "officialName": "Wholesale Bangladesh Ltd.",
+      "tagline": {
+        "en-US": { "sm": "B2B Wholesale Platform", "md": "The Premier B2B Wholesale Platform", "lg": "The Premier B2B Wholesale Platform in Bangladesh" },
+        "bn-BD": { "sm": "B2B পাইকারি প্ল্যাটফর্ম", "md": "প্রিমিয়ার B2B পাইকারি প্ল্যাটফর্ম", "lg": "বাংলাদেশের প্রিমিয়ার B2B পাইকারি প্ল্যাটফর্ম" }
+      },
+      "logos": [
+         { "useCase": "Primary Logo Light", "path": "/assets/logos/logo-light.svg", "alt": { "en-US": "Wholesale BD Official Logo", "bn-BD": "হোলসেল বিডি অফিসিয়াল লোগো" } },
+         { "useCase": "Favicon", "path": "/favicon.ico", "alt": { "en-US": "Wholesale BD Icon", "bn-BD": "হোলসেল বিডি আইকন" } }
+      ]
+    }
+  }
+}
+
+Document 2: layoutConfig
+(Data for the main layout, cached long-term on the client)
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "key": "layoutConfig",
+  "value": {
+    "navigation": {
+      "headerNav": [
+        { "id": "nav-home", "path": "/", "label": { "en-US": "Home", "bn-BD": "হোম" }, "icon": "Home" }
+      ],
+      "footerLinkGroups": [
+         {
+          "title": { "en-US": "Company", "bn-BD": "কোম্পানি" },
+          "links": [
+            {
+              "id": "footer-about",
+              "path": "/about",
+              "label": {
+                "en-US": { "lg": "About Us", "md": "About", "sm": "ℹ️" },
+                "bn-BD": { "lg": "আমাদের সম্পর্কে", "md": "সম্পর্কে", "sm": "ℹ️" }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "footer": {
+      "description": {
+        "en-US": { "sm": "Your B2B destination.", "lg": "Your one-stop destination for bulk purchasing and seamless B2B connections across Bangladesh." },
+        "bn-BD": { "sm": "আপনার B2B গন্তব্য।", "lg": "বাংলাদেশ জুড়ে বাল্ক ক্রয় এবং নির্বিঘ্ন B2B সংযোগের জন্য আপনার ওয়ান-স্টপ গন্তব্য।" }
+      },
+      "socialLinks": [
+        { "platform": "Facebook", "url": "https://facebook.com/wholesalebd", "icon": "Facebook" }
+      ],
+      "copyright": {
+        "en-US": "© {currentYear} Wholesale BD Ltd. All rights reserved.",
+        "bn-BD": "© {currentYear} হোলসেল বিডি লিমিটেড। সর্বস্বত্ব সংরক্ষিত।"
+      }
+    }
+  }
+}
+
+Document 3 (and beyond): pageMeta:/...
+(One document per unique route pattern, fetched on-demand)
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "key": "pageMeta:/profile/:profileId",
+  "value": {
+    "titleTemplate": { "en-US": "{profileName}'s Profile | Wholesale BD", "bn-BD": "{profileName}-এর প্রোফাইল | হোলসেল বিডি" },
+    "descriptionTemplate": { "en-US": "View the public business profile for {profileName} on Wholesale BD.", "bn-BD": "হোলসেল বিডি-তে {profileName}-এর পাবলিক ব্যবসায়িক প্রোফাইল দেখুন।" }
+  }
+}
+Part 2: The API Endpoints (The "How")
+
+We will create two sets of endpoints: fast, cacheable Public Endpoints for the front end, and secure Admin Endpoints for content management.
+
+A. Public Endpoints (Optimized for Speed)
+
+These are designed to be hit by the front-end application.
+
+GET /metadata/:key
+
+Purpose: The primary workhorse. Fetches a single, small metadata document by its key.
+
+Example: GET /metadata/globalConfig or GET /metadata/pageMeta%3A%2Fproducts.
+
+Key Feature - Language Filtering: To reduce payload size even further, it will accept a query parameter.
+
+GET /metadata/layoutConfig?lang=bn-BD
+
+How it works: The serverless function reads the lang parameter. It then processes the JSON document, removing all language keys except bn-BD before sending the response. This dramatically shrinks the payload, sending only the data the user's browser actually needs.
+
+Performance: Heavily cached at the CDN.
+
+B. Admin Endpoints (Optimized for Management)
+
+These endpoints will be protected (e.g., require an admin JWT token) and will never be cached.
+
+GET /admin/metadata
+
+Purpose: Get all metadata documents for the admin panel.
+
+Solves "Crash" Problem: This endpoint will be paginated. It will never return all documents at once.
+
+Example: GET /admin/metadata?page=1&limit=20&search=pageMeta
+
+The admin UI can use this to list all pages, configs, etc., for editing.
+
+GET /admin/metadata/:key
+
+Purpose: Fetches a single, complete metadata document with all language variants for editing in the admin panel.
+
+Example: GET /admin/metadata/layoutConfig
+
+PUT /admin/metadata/:key
+
+Purpose: Updates a metadata document. The request body will contain the entire new value object.
+
+Example: Admin edits the footer links in the UI and saves, which triggers a PUT request to /admin/metadata/layoutConfig with the updated JSON.
+
+Language Management Endpoints:
+
+GET /admin/metadata/config/languages: (Was getAllLanguages) Reads the availableLanguages array from the globalConfig document.
+
+POST /admin/metadata/config/languages: (Was setAvailableLanguage) Adds a new language.
+
+Example Body: { "code": "fr-FR", "name": "Français" }
+
+Backend Logic:
+
+Adds the new language to the availableLanguages array in globalConfig.
+
+Iterates through every other document in the metadatas collection.
+
+For every field that has language variants, it adds the new language key (e.g., "fr-FR") with a placeholder value (e.g., "[NEEDS TRANSLATION]"). This makes it easy for admins to find and fill in the new content.
+
+DELETE /admin/metadata/config/languages/:code: (Was deleteAvailableLanguage) Removes a language. This is a highly destructive operation.
+
+Example: DELETE /admin/metadata/config/languages/es-ES
+
+Backend Logic: Performs the reverse of the POST operation, removing the specified language key from all fields in all documents.
+
+PUT /admin/metadata/config/default-language: (Was setdefault) Updates the defaultLanguage field in the globalConfig document.
+
+Example Body: { "code": "bn-BD" }
+
+Part 3: Caching & Performance Strategy (The "Why It's Fast")
+
+This is the critical part that prevents serverless stress.
+
+Public Endpoints (GET /metadata/:key):
+
+CDN / Edge Caching: The serverless function will set a Cache-Control: public, s-maxage=600, stale-while-revalidate=3600 header.
+
+Result: After the first request, the response is served instantly from the CDN for 10 minutes. Your function does not run. This is the ultimate optimization for speed and cost. The lang filter creates a unique cache entry per language.
+
+Admin Endpoints (/admin/metadata/*):
+
+No Caching: These endpoints will set a Cache-Control: no-store, no-cache header.
+
+Result: Admins always see the absolute latest data from the database, which is essential for a content management system.
+
+Client-Side Caching:
+
+The front end fetches globalConfig and layoutConfig once on initial load and stores them in localStorage or a state manager. This avoids re-fetching on every page navigation.
+
+When navigating, the front end only fetches the small, specific pageMeta document for the new route, which is likely already cached at the CDN.
+
+This full plan provides a robust, scalable, and extremely fast system. The data is logically separated, the APIs are tailored for their specific use cases (public vs. admin), and the caching strategy ensures your serverless functions are used efficiently and sparingly.
+Excellent idea. A critical part of any production-ready system is clear documentation for when things go wrong. Adding a troubleshooting guide directly to your project's README.md or a CONTRIBUTING.md is a professional best practice.
+
+Here is a comprehensive troubleshooting guide tailored specifically to your Vercel serverless environment and the architecture we've built. You can copy and paste this directly into your project's documentation.
+
+Troubleshooting Vercel Production Failures
+
+If a deployment to Vercel fails or results in runtime errors, follow these steps systematically. Don't panic; the logs will almost always tell you the story.
+
+Step 1: 🔍 Check the Vercel Logs (The Golden Rule)
+
+There are two types of logs on Vercel. Knowing which one to check is key.
+
+Deployment Logs: For issues where the build itself is failing.
+
+How to Access: In your Vercel dashboard, go to the Deployments tab. Click on the failed deployment. The main screen shows the build process log.
+
+Look For: Errors during the pnpm install or pnpm build (nest build) steps.
+
+Function Logs: For issues where the build succeeds, but the application crashes when you visit a URL (e.g., you see a 500 Internal Server Error).
+
+How to Access: In your Vercel dashboard, go to the Logs tab. This shows real-time logs from your running serverless functions.
+
+Look For: Stack traces, error messages from our HttpExceptionFilter, or database connection errors.
+
+Step 2: Diagnose the Problem Based on the Logs
+Scenario A: The Deployment Fails (Build-time Error)
+
+If the Deployment Log shows an error, it's one of these common issues:
+
+🚨 Cause 1: Code Works Locally but Not on Vercel
+
+Symptom: The build fails with TypeScript errors or nest build errors that you don't see on your machine.
+
+Solution:
+
+Run git status. Ensure you have committed all your latest changes. It's easy to forget to git add a new file.
+
+Run pnpm build locally one last time to confirm it passes.
+
+🚨 Cause 2: Missing Production Environment Variables
+
+Symptom: The build fails with an error like "Could not connect to database" or "Missing required environment variable X". Your .env file is not uploaded to Vercel.
+
+Solution:
+
+Navigate to Project > Settings > Environment Variables in your Vercel dashboard.
+
+Ensure that all required variables (DATABASE_URL, API_KEY, etc.) are present and have the correct values for the "Production" environment.
+
+🚨 Cause 3: Dependency Issues
+
+Symptom: The build fails during the pnpm install step, often with errors about a specific package.
+
+Solution:
+
+Delete your local node_modules folder and pnpm-lock.yaml file.
+
+Run pnpm install again locally. This forces a fresh install and can help reproduce Vercel's build environment. If it fails locally, you've found the problematic package.
+
+Scenario B: The Deployment Succeeds, but the API Crashes (Runtime Error)
+
+If the API returns a 500 error, check the Function Logs.
+
+🚨 Cause 1: Missing Runtime Environment Variables
+
+Symptom: The log shows an error like TypeError: Cannot read properties of undefined when trying to connect to the database, or an authentication error.
+
+Solution: Double-check your environment variables in the Vercel dashboard as described above. A variable might be missing or incorrect.
+
+🚨 Cause 2: Database Connectivity Issues (Most Common Runtime Error!)
+
+Symptom: The function log shows a MongooseServerSelectionError, MongoNetworkError, or a connection timeout error.
+
+Solution: Your Vercel serverless function is trying to connect to your database from a dynamic IP address. You must allow access from anywhere.
+
+Go to your MongoDB Atlas dashboard (or other database provider).
+
+Navigate to Network Access.
+
+Add an IP Address and select "Allow Access from Anywhere" (0.0.0.0/0). This is a requirement for most serverless platforms.
+
+🚨 Cause 3: A Bug in the Code
+
+Symptom: The function log shows a detailed stack trace captured by our HttpExceptionFilter. The log will look something like [ERROR] [HttpExceptionFilter] [GET] /api/v1/some/route - Status: 500 ... followed by the full error.
+
+Solution:
+
+Read the stack trace carefully. It will point to the exact file and line of code that caused the crash.
+
+This is a genuine bug that needs to be fixed in the code, committed, and redeployed.
+
+🚨 Cause 4: Serverless Function Timeout or Memory Limit
+
+Symptom: The log shows a message like Task timed out after X seconds or an out-of-memory error.
+
+Solution:
+
+Review the code for the endpoint that timed out. Is there a long-running loop or a very heavy database query?
+
+Our addLanguage and removeLanguage functions are the most intensive. They use a cursor to be memory-efficient, but if you have tens of thousands of documents, they could still time out on Vercel's default plan.
+
+You can increase the timeout limit in your vercel.json file if necessary, but optimizing the code should be the first step.
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "functions": {
+    "api/**/*.ts": {
+      "maxDuration": 30
+    }
+  }
+}
+Step 3: Reproducing the Error Locally
+
+If you can't figure it out from the logs, the next step is to simulate the Vercel environment on your machine.
+
+Install the Vercel CLI: pnpm add -g vercel
+
+Link your project: Run vercel link in your project root.
+
+Pull Production Variables: Run vercel env pull .env.development.local. This creates a local .env file with your production variables.
+
+Run the Dev Server: Run vercel dev. This starts your NestJS app in a simulated serverless environment, using the production environment variables. This is the most accurate way to reproduce production issues.
