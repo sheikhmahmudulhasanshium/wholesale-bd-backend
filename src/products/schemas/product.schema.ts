@@ -3,7 +3,6 @@ import mongoose, { HydratedDocument } from 'mongoose';
 
 export type ProductDocument = HydratedDocument<Product>;
 
-// --- Enums for Type Safety ---
 export enum ProductStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
@@ -18,21 +17,19 @@ export enum ProductUnit {
   PAIR = 'pair',
 }
 
-// --- Nested Schema for Pricing Tiers ---
 @Schema({ _id: false })
 class PricingTier {
   @Prop({ required: true })
   minQuantity: number;
 
   @Prop()
-  maxQuantity?: number; // Optional for the highest tier
+  maxQuantity?: number;
 
   @Prop({ required: true })
   pricePerUnit: number;
 }
 const PricingTierSchema = SchemaFactory.createForClass(PricingTier);
 
-// --- Main Product Schema ---
 @Schema({ timestamps: true })
 export class Product {
   @Prop({ required: true, trim: true })
@@ -41,10 +38,12 @@ export class Product {
   @Prop({ required: true, trim: true })
   description: string;
 
-  @Prop({ type: [String], default: [] })
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Media' }],
+    default: [],
+  })
   images: string[];
 
-  // --- Relationships ---
   @Prop({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category',
@@ -58,7 +57,6 @@ export class Product {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
   sellerId: string;
 
-  // --- Pricing & Inventory ---
   @Prop({ type: [PricingTierSchema], default: [] })
   pricingTiers: PricingTier[];
 
@@ -71,7 +69,6 @@ export class Product {
   @Prop({ type: String, enum: ProductUnit, required: true })
   unit: ProductUnit;
 
-  // --- Details & Specifications ---
   @Prop()
   brand?: string;
 
@@ -85,12 +82,11 @@ export class Product {
   sku?: string;
 
   @Prop()
-  weight?: number; // in kg
+  weight?: number;
 
   @Prop()
-  dimensions?: string; // e.g., "10 x 5 x 15 cm"
+  dimensions?: string;
 
-  // --- Status & Metrics ---
   @Prop({ type: String, enum: ProductStatus, default: ProductStatus.ACTIVE })
   status: ProductStatus;
 
@@ -108,8 +104,7 @@ export class Product {
 
   @Prop({ default: 0 })
   reviewCount: number;
-  // Add this inside the Product class
-  // --- Timestamps (For TypeScript) ---
+
   createdAt: Date;
   updatedAt: Date;
 }

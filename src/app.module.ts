@@ -14,6 +14,7 @@ import { ZonesModule } from './zones/zones.module';
 import { ApiKeyGuard } from './auth/guards/api-key.guard';
 //import { SeederModule } from './seeder/seeder.module';
 import { MetadataModule } from './metadata/metadata.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { MetadataModule } from './metadata/metadata.module';
     ZonesModule,
 
     MetadataModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService, ApiKeyGuard],

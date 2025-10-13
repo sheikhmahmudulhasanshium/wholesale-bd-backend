@@ -1,0 +1,173 @@
+code
+Raw.txt
+download
+content_copy
+expand_less
+Project Plan: Centralized Media Management System (Wholesale BD Backend)
+
+---
+### 1. High-Level Goal
+---
+To create a robust, scalable, and cost-effective media management system for the Wholesale BD backend. This system will handle both user-uploaded files and links to external media, storing all associated metadata in a central MongoDB collection. It will leverage Cloudflare R2 for file storage to minimize server load and bandwidth costs.
+
+---
+### 2. Core Architecture
+---
+- **Strategy:** Server-Offloaded Uploads via Presigned URLs.
+- **Workflow:**
+  1. The client (admin panel/frontend) informs the NestJS server it wants to upload a file, providing metadata (filename, size, MIME type).
+  2. The server validates this metadata against defined rules (file type, size limit).
+  3. If valid, the server generates a secure, temporary (presigned) URL that points directly to Cloudflare R2 and creates a corresponding `Media` document in MongoDB.
+  4. The server sends this presigned URL and the new `Media` document's ID back to the client.
+  5. The client uploads the file directly to the presigned URL, completely bypassing the NestJS server.
+  6. The client then associates the returned `Media` ID with the relevant entity (Product, User, etc.).
+- **Benefit:** The NestJS server's resources are not consumed by file streaming. It only handles lightweight JSON requests, making the system highly scalable and efficient.
+
+---
+### 3. Requirements Summary
+---
+#### Functional Requirements:
+- **File Uploads:**
+  - Support for common image formats: `JPEG`, `PNG`, `GIF`, `WEBP`, `SVG`.
+  - Support for document formats: `PDF`, `DOC`, `DOCX`, `TXT`.
+  - A strict maximum file size of **5MB** per upload.
+- **External Media Linking:**
+  - Ability to store and manage links to external media like YouTube videos, Vimeo videos, or images hosted on other websites.
+  - This process involves no file upload and has no size limit, as we only store the URL.
+- **Forbidden File Types:**
+  - Explicitly block uploads of archives (`ZIP`, `RAR`), audio (`MP3`), and video (`MP4`, `MOV`). The system is not designed for hosting large media files directly.
+- **Metadata:**
+  - Every media item (uploaded or linked) must have a rich metadata record in the database.
+  - This includes fields for alt text, description, dimensions, and linkage to parent entities (e.g., this image belongs to Product XYZ).
+- **Security:**
+  - All endpoints for generating upload URLs, linking media, and deleting media must be protected and accessible only to authorized users (e.g., via API Key).
+
+#### Non-Functional Requirements:
+- **Scalability:** Must handle a high volume of media uploads without degrading server performance.
+- **Cost-Effectiveness:** Must operate within the constraints of a "free tier" model by enforcing size limits and offloading bandwidth to R2.
+- **Maintainability:** The logic for uploads and external links must be clearly separated for easy maintenance.
+
+---
+### 4. Sample Data Structures (in `media` collection)
+---
+**Scenario 1: A User-Uploaded Product Image**
+```json
+{
+  "_id": "667c1a8b1f2e3d4c5a6b7c8d",
+  "mediaType": "UPLOADED_FILE",
+  "originalName": "samsung-galaxy-a54-front.jpg",
+  "fileName": "c984fd25-3f8c-475f-891f-a914c7033585.jpg",
+  "url": "https://pub-your-id.r2.dev/c984fd25-3f8c-475f-891f-a914c7033585.jpg",
+  "mimeType": "image/jpeg",
+  "size": 874321, // in bytes (~0.87 MB)
+  "altText": "Front view of the Samsung Galaxy A54 in Awesome Lime color.",
+  "description": "Primary promotional image for the product page.",
+  "dimensions": { "width": 800, "height": 800 },
+  "entityType": "PRODUCT",
+  "entityId": "65f1c5a0ef3e2bde5f269b58",
+  "createdAt": "2024-06-26T12:00:00.000Z",
+  "updatedAt": "2024-06-26T12:00:00.000Z"
+}
+
+Scenario 2: An External YouTube Video Linked to a Product
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "_id": "667c1b3d1f2e3d4c5a6b7c8e",
+  "mediaType": "EXTERNAL_URL",
+  "originalName": "Official Samsung Galaxy A54 Product Demo",
+  "fileName": null, // Is null/undefined because it's not stored in our R2
+  "url": "https://www.youtube.com/watch?v=your_video_id",
+  "mimeType": null, // We don't know or care about the MIME type
+  "size": null, // We are not storing it, so size is irrelevant
+  "altText": "Official product demonstration video for the Galaxy A54.",
+  "description": "Embedded video for the product description section.",
+  "dimensions": null,
+  "entityType": "PRODUCT",
+  "entityId": "65f1c5a0ef3e2bde5f269b58",
+  "createdAt": "2024-06-26T12:05:00.000Z",
+  "updatedAt": "2024-06-26T12:05:00.000Z"
+}
+
+Scenario 3: An Uploaded PDF Order Receipt
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "_id": "667c1c0f1f2e3d4c5a6b7c8f",
+  "mediaType": "UPLOADED_FILE",
+  "originalName": "receipt-wbd-20240315-0001.pdf",
+  "fileName": "a65c3247-73b3-43a8-80e4-ad043f1eedc2.pdf",
+  "url": "https://pub-your-id.r2.dev/a65c3247-73b3-43a8-80e4-ad043f1eedc2.pdf",
+  "mimeType": "application/pdf",
+  "size": 125890, // in bytes (~125 KB)
+  "altText": null,
+  "description": "Official receipt for order WBD-20240315-0001.",
+  "dimensions": null,
+  "entityType": "ORDER",
+  "entityId": "65f1d8a0ef3e2bde5f269c12",
+  "createdAt": "2024-06-26T12:10:00.000Z",
+  "updatedAt": "2024-06-26T12:10:00.000Z"
+}
+5. Action Plan (TO DO)
+
+Environment: Ensure all R2 environment variables are correctly set in the .env file.
+
+Schema: Implement the Media Mongoose schema with the new mediaType enum and optional fields.
+
+Module: Create the StorageModule, StorageService, and StorageController.
+
+DTOs: Create two distinct DTOs:
+
+GenerateUploadUrlDto: With validation for file size (<= 5MB) and allowed MIME types.
+
+LinkExternalMediaDto: With validation for a valid URL.
+
+Service Logic:
+
+Implement the generateUploadUrl method in the service to interact with the S3 SDK and create a Media record of type UPLOADED_FILE.
+
+Implement the linkExternalMedia method to simply create a Media record of type EXTERNAL_URL.
+
+Implement a deleteMedia method that checks mediaType. If it's UPLOADED_FILE, it must delete the file from R2 before deleting the DB record. If it's EXTERNAL_URL, it only deletes the DB record.
+
+Controller Endpoints:
+
+Create a protected POST /storage/upload-url endpoint.
+
+Create a protected POST /storage/link-external endpoint.
+
+Create a protected DELETE /storage/:id endpoint.
+
+Integration:
+
+Update existing schemas (e.g., Product, User) to replace simple string arrays for images/files with an array of ObjectIds referencing the Media collection (e.g., images: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Media' }]).
+
+This is a migration step for existing data.
+
+Frontend: Update the client-side application to use the new two-step upload process and the external linking endpoint.
+
+6. Constraints & Guidelines (NOT TO DO)
+
+DO NOT process file streams or buffers on the NestJS server. Do not use multer to handle the file upload itself. The server's only job is to provide the presigned URL.
+
+DO NOT store file content (e.g., Base64 strings) in MongoDB. The database is for metadata only.
+
+DO NOT combine the logic for uploads and external links into a single endpoint. Keeping them separate (/upload-url vs. /link-external) makes the code cleaner and the intent clearer.
+
+DO NOT leave the media management endpoints unprotected. They are powerful and must require authentication/authorization.
+
+DO NOT forget to handle the full lifecycle. A delete operation on a product should also trigger the deletion of its associated media files from R2 to avoid orphaned files.
+
+code
+Code
+download
+content_copy
+expand_less
