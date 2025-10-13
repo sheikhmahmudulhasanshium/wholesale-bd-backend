@@ -22,16 +22,17 @@ import {
   MediaType,
   EntityType,
 } from './schemas/media.schema';
+import { Express } from 'express';
 import { GenerateUploadUrlDto } from './dto/generate-upload-url.dto';
 import { LinkExternalMediaDto } from './dto/link-external-media.dto';
-import { UpdateMediaDto } from './dto/update-media.dto';
 import { FindMediaDto } from './dto/find-media.dto';
-import { Express } from 'express';
 import { GroupedResult } from './types/storage.types';
+import { UpdateMediaDto } from './dto/update-media.dto';
 
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
+  // FINAL FIX: Restore the correct type. The dependency cleanup should have fixed the underlying issue.
   private readonly s3Client: S3Client;
   private readonly bucketName: string;
   private readonly publicUrl: string;
@@ -41,7 +42,6 @@ export class StorageService {
     @InjectModel(Media.name) private readonly mediaModel: Model<MediaDocument>,
   ) {
     this.logger.log('Initializing StorageService...');
-
     try {
       this.logger.debug('Loading R2 environment variables...');
       this.bucketName = this.configService.getOrThrow<string>('R2_BUCKET_NAME');

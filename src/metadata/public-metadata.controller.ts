@@ -1,17 +1,11 @@
 // FILE: src/metadata/public-metadata.controller.ts
 
 import { Controller, Get, Param, Query, Res, Logger } from '@nestjs/common';
-import {
-  ApiOkResponse,
-  ApiOperation,
-  ApiParam,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
-import { MetadataService } from './metadata.service';
 import { IGlobalConfigValue } from './types/metadata.types';
 import { MetadataDocument } from './schemas/metadata.schema';
+import { MetadataService } from './metadata.service';
 
 const logger = new Logger('LanguageFilter');
 
@@ -69,25 +63,11 @@ export class PublicMetadataController {
   constructor(private readonly metadataService: MetadataService) {}
 
   @Get(':key')
-  @ApiOperation({
-    summary: 'Get a metadata document by key',
-  })
-  @ApiParam({
-    name: 'key',
-    example: 'layoutConfig',
-  })
-  @ApiQuery({
-    name: 'lang',
-    required: false,
-    example: 'bn-BD',
-  })
-  @ApiOkResponse({
-    description:
-      'Returns the requested metadata document, potentially filtered by language.',
-  })
+  @ApiOperation({ summary: 'Get a metadata document by key' })
   async findOne(
     @Param('key') key: string,
     @Query('lang') lang: string,
+    // FINAL FIX: Restore the correct type.
     @Res({ passthrough: true }) res: Response,
   ): Promise<PublicMetadataResponse> {
     const document: MetadataDocument =

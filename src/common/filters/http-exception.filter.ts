@@ -10,19 +10,14 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-interface ErrorPayload {
-  message: string | string[];
-  error?: string;
-}
-
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const response = ctx.getResponse<any>() as Response;
+    const request = ctx.getRequest<any>() as Request;
 
     const status =
       exception instanceof HttpException
@@ -44,7 +39,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       rawMessage !== null &&
       'message' in rawMessage
     ) {
-      const payload = rawMessage as ErrorPayload;
+      const payload = rawMessage as {
+        message: string | string[];
+        error?: string;
+      };
       errorMessage = payload.message;
       if (status < 500) {
         errorName = payload.error;
