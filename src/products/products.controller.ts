@@ -1,4 +1,4 @@
-// src/products/products.controller.ts (add this new method)
+// src/products/products.controller.ts
 import {
   Controller,
   Get,
@@ -103,6 +103,26 @@ export class ProductsController {
     @Param('categoryId') categoryId: string,
   ): Promise<ProductResponseDto[]> {
     const products = await this.productsService.findByCategoryId(categoryId);
+    return products.map((product) =>
+      plainToInstance(ProductResponseDto, product.toJSON()),
+    );
+  }
+  // --- END NEW ENDPOINT ---
+
+  // --- NEW ENDPOINT TO GET PRODUCTS BY ZONE ID ---
+  @Get('zone/:zoneId') // New route: /products/zone/:zoneId
+  @ApiOperation({ summary: 'Retrieve products by zone ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved products for the given zone ID.',
+    type: [ProductResponseDto],
+  })
+  @ApiBadRequestResponse({ description: 'Invalid zone ID format.' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  async findProductsByZoneId(
+    @Param('zoneId') zoneId: string,
+  ): Promise<ProductResponseDto[]> {
+    const products = await this.productsService.findByZoneId(zoneId);
     return products.map((product) =>
       plainToInstance(ProductResponseDto, product.toJSON()),
     );

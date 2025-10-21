@@ -1,3 +1,4 @@
+// src/products/products.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -132,6 +133,19 @@ export class ProductsService {
     const products = await this.productModel
       .find({ categoryId: categoryId })
       .exec();
+    return products;
+  }
+  /**
+   * Retrieves products available in a specific zone ID.
+   * @param zoneId The ID of the zone.
+   * @returns An array of product documents available in that zone.
+   * @throws BadRequestException if the zone ID format is invalid.
+   */
+  async findByZoneId(zoneId: string): Promise<ProductDocument[]> {
+    if (!Types.ObjectId.isValid(zoneId)) {
+      throw new BadRequestException(`Invalid zone ID format: "${zoneId}"`);
+    }
+    const products = await this.productModel.find({ zoneId: zoneId }).exec();
     return products;
   }
 
