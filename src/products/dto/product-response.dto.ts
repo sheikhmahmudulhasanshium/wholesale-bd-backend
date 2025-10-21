@@ -224,7 +224,7 @@ export class ProductResponseDto {
   })
   @IsMongoId()
   @Transform(
-    ({ value }) =>
+    ({ value }: { value: Types.ObjectId | string }) =>
       value instanceof Types.ObjectId ? value.toHexString() : value,
     { toPlainOnly: true },
   )
@@ -255,7 +255,7 @@ export class ProductResponseDto {
     example: '68f4529b0b588f71ad0fa1a4',
   })
   @Transform(
-    ({ value }) =>
+    ({ value }: { value: Types.ObjectId | string }) =>
       value instanceof Types.ObjectId ? value.toHexString() : value,
     { toPlainOnly: true },
   )
@@ -267,7 +267,7 @@ export class ProductResponseDto {
     example: '68f4529a0b588f71ad0fa18b',
   })
   @Transform(
-    ({ value }) =>
+    ({ value }: { value: Types.ObjectId | string }) =>
       value instanceof Types.ObjectId ? value.toHexString() : value,
     { toPlainOnly: true },
   )
@@ -278,7 +278,7 @@ export class ProductResponseDto {
     example: '68f4529b0b588f71ad0fa1ae',
   })
   @Transform(
-    ({ value }) =>
+    ({ value }: { value: Types.ObjectId | string }) =>
       value instanceof Types.ObjectId ? value.toHexString() : value,
     { toPlainOnly: true },
   )

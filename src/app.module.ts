@@ -13,8 +13,8 @@ import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
 import { ApiKeyGuard } from './auth/guards/api-key.guard';
 //import { SeederModule } from './seeder/seeder.module';
-import { MetadataModule } from './metadata/metadata.module';
-import { StorageModule } from './storage/storage.module';
+//import { MetadataModule } from './metadata/metadata.module';
+//import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -49,8 +49,8 @@ import { StorageModule } from './storage/storage.module';
 
     ZonesModule,
 
-    MetadataModule,
-    StorageModule,
+    //MetadataModule,
+    //StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService, ApiKeyGuard],
