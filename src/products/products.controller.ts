@@ -74,6 +74,18 @@ export class ProductsController {
     );
   }
 
+  @Get('count') // This must come BEFORE @Get(':id')
+  @ApiOperation({ summary: 'Get the total count of products' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved the total count of products.',
+    type: Number,
+  })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  async countProducts(): Promise<number> {
+    return this.productsService.countAllProducts();
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Retrieve a product by its ID' })
   @ApiResponse({
@@ -89,8 +101,8 @@ export class ProductsController {
     return plainToInstance(ProductResponseDto, product.toJSON());
   }
 
-  // --- NEW ENDPOINT TO GET PRODUCTS BY CATEGORY ID ---
-  @Get('category/:categoryId') // New route: /products/category/:categoryId
+  // --- EXISTING ENDPOINT TO GET PRODUCTS BY CATEGORY ID ---
+  @Get('category/:categoryId') // Route: /products/category/:categoryId
   @ApiOperation({ summary: 'Retrieve products by category ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -107,10 +119,10 @@ export class ProductsController {
       plainToInstance(ProductResponseDto, product.toJSON()),
     );
   }
-  // --- END NEW ENDPOINT ---
+  // --- END EXISTING ENDPOINT ---
 
-  // --- NEW ENDPOINT TO GET PRODUCTS BY ZONE ID ---
-  @Get('zone/:zoneId') // New route: /products/zone/:zoneId
+  // --- EXISTING ENDPOINT TO GET PRODUCTS BY ZONE ID ---
+  @Get('zone/:zoneId') // Route: /products/zone/:zoneId
   @ApiOperation({ summary: 'Retrieve products by zone ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -123,6 +135,26 @@ export class ProductsController {
     @Param('zoneId') zoneId: string,
   ): Promise<ProductResponseDto[]> {
     const products = await this.productsService.findByZoneId(zoneId);
+    return products.map((product) =>
+      plainToInstance(ProductResponseDto, product.toJSON()),
+    );
+  }
+  // --- END EXISTING ENDPOINT ---
+
+  // --- NEW ENDPOINT TO GET PRODUCTS BY SELLER ID ---
+  @Get('seller/:sellerId') // New route: /products/seller/:sellerId
+  @ApiOperation({ summary: 'Retrieve products by seller ID' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved products for the given seller ID.',
+    type: [ProductResponseDto],
+  })
+  @ApiBadRequestResponse({ description: 'Invalid seller ID format.' })
+  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  async findProductsBySellerId(
+    @Param('sellerId') sellerId: string,
+  ): Promise<ProductResponseDto[]> {
+    const products = await this.productsService.findBySellerId(sellerId);
     return products.map((product) =>
       plainToInstance(ProductResponseDto, product.toJSON()),
     );

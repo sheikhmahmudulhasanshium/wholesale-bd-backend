@@ -117,6 +117,7 @@ export class ProductsService {
       throw error;
     }
   }
+
   /**
    * Retrieves products belonging to a specific category ID.
    * @param categoryId The ID of the category.
@@ -135,6 +136,7 @@ export class ProductsService {
       .exec();
     return products;
   }
+
   /**
    * Retrieves products available in a specific zone ID.
    * @param zoneId The ID of the zone.
@@ -147,6 +149,30 @@ export class ProductsService {
     }
     const products = await this.productModel.find({ zoneId: zoneId }).exec();
     return products;
+  }
+
+  /**
+   * Retrieves products belonging to a specific seller ID.
+   * @param sellerId The ID of the seller.
+   * @returns An array of product documents owned by that seller.
+   * @throws BadRequestException if the seller ID format is invalid.
+   */
+  async findBySellerId(sellerId: string): Promise<ProductDocument[]> {
+    if (!Types.ObjectId.isValid(sellerId)) {
+      throw new BadRequestException(`Invalid seller ID format: "${sellerId}"`);
+    }
+    const products = await this.productModel
+      .find({ sellerId: sellerId })
+      .exec();
+    return products;
+  }
+
+  /**
+   * Retrieves the total count of all products.
+   * @returns The total number of products.
+   */
+  async countAllProducts(): Promise<number> {
+    return this.productModel.countDocuments().exec();
   }
 
   async remove(id: string): Promise<void> {
