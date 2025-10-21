@@ -1,171 +1,424 @@
-// FILE: src/products/dto/product-response.dto.ts
-
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
-  ProductDocument,
-  ProductStatus,
-  ProductUnit,
-} from '../schemas/product.schema';
-import { MediaResponseDto } from '../../storage/dto/media-response.dto';
-import { MediaDocument } from 'src/storage/schemas/media.schema';
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+  IsArray,
+  ArrayMinSize,
+  Min,
+  ValidateNested,
+  IsMongoId,
+  IsEnum,
+  IsUrl,
+} from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import { Types } from 'mongoose'; // Import Types from mongoose
 
-type PopulatedProductDocument = Omit<ProductDocument, 'images'> & {
-  images: MediaDocument[];
-};
-
-class PricingTierDto {
+export class PricingTierDto {
   @ApiProperty({
+    description: 'Minimum quantity for this pricing tier',
     example: 1,
-    description: 'Minimum quantity for this price tier.',
+    minimum: 1,
   })
+  @IsNumber()
+  @Min(1)
   minQuantity: number;
 
   @ApiProperty({
-    required: false,
-    example: 10,
     description:
-      'Maximum quantity for this price tier (optional for the last tier).',
+      'Maximum quantity for this pricing tier (optional for the last tier)',
+    example: 9,
+    minimum: 1,
+    required: false,
   })
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
   maxQuantity?: number;
 
   @ApiProperty({
-    example: 99.99,
-    description: 'Price per unit within this quantity range.',
+    description: 'Price per unit for this pricing tier',
+    example: 45000,
+    minimum: 0,
   })
+  @IsNumber()
+  @Min(0)
   pricePerUnit: number;
+}
+
+export class CreateProductDto {
+  @ApiProperty({
+    description: 'The unique name of the product',
+    example: 'Samsung Galaxy A54 5G',
+  })
+  @IsString()
+  name: string;
+
+  @ApiProperty({
+    description: 'A detailed description of the product',
+    example:
+      'Latest Samsung smartphone with 5G connectivity, 128GB storage, and triple camera setup',
+  })
+  @IsString()
+  description: string;
+
+  @ApiProperty({
+    description: 'An array of URLs for product images',
+    type: [String],
+    example: ['https://example.com/samsung-a54-front.jpg'],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @IsUrl({}, { each: true, message: 'Each image URL must be a valid URL' })
+  images?: string[];
+
+  @ApiProperty({
+    description: 'The MongoDB ObjectId of the category this product belongs to',
+    example: '68f4529b0b588f71ad0fa1a4',
+  })
+  @IsMongoId()
+  categoryId: string;
+
+  @ApiProperty({
+    description:
+      'The MongoDB ObjectId of the zone this product is available in',
+    example: '68f4529a0b588f71ad0fa18b',
+  })
+  @IsMongoId()
+  zoneId: string;
+
+  @ApiProperty({
+    description: 'The MongoDB ObjectId of the seller who owns this product',
+    example: '68f4529b0b588f71ad0fa1ae',
+  })
+  @IsMongoId()
+  sellerId: string;
+
+  @ApiProperty({
+    description: 'An array of pricing tiers based on quantity',
+    type: [PricingTierDto],
+    example: [{ minQuantity: 1, maxQuantity: 9, pricePerUnit: 45000 }],
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => PricingTierDto)
+  pricingTiers: PricingTierDto[];
+
+  @ApiProperty({
+    description: 'The minimum quantity that can be ordered for this product',
+    example: 1,
+    minimum: 1,
+  })
+  @IsNumber()
+  @Min(1)
+  minimumOrderQuantity: number;
+
+  @ApiProperty({
+    description: 'The current stock quantity of the product',
+    example: 150,
+    minimum: 0,
+  })
+  @IsNumber()
+  @Min(0)
+  stockQuantity: number;
+
+  @ApiProperty({
+    description:
+      'The unit of measurement for the product (e.g., "piece", "kg")',
+    example: 'piece',
+  })
+  @IsString()
+  unit: string;
+
+  @ApiProperty({
+    description: 'The brand name of the product',
+    example: 'Samsung',
+  })
+  @IsString()
+  brand: string;
+
+  @ApiProperty({
+    description: 'The model name of the product',
+    example: 'Galaxy A54 5G',
+  })
+  @IsString()
+  model: string;
+
+  @ApiProperty({
+    description: 'Detailed specifications of the product',
+    example: '6.4" Super AMOLED, Exynos 1380, 8GB RAM, 128GB Storage',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  specifications?: string;
+
+  @ApiProperty({
+    description: 'The current status of the product',
+    enum: ['active', 'inactive', 'archived'],
+    example: 'active',
+  })
+  @IsEnum(['active', 'inactive', 'archived'])
+  @IsOptional()
+  status?: 'active' | 'inactive' | 'archived';
+
+  @ApiProperty({
+    description: 'The Stock Keeping Unit (SKU) of the product',
+    example: 'SAM-A54-128-BLK',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  sku?: string;
+
+  @ApiProperty({
+    description: 'The weight of the product in kg',
+    example: 0.202,
+    minimum: 0,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  weight?: number;
+
+  @ApiProperty({
+    description: 'The dimensions of the product',
+    example: '158.2 x 76.7 x 8.2 mm',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  dimensions?: string;
+
+  @ApiProperty({
+    description: 'Whether the product is currently active and available',
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
+}
+
+export class UpdateProductDto extends PartialType(CreateProductDto) {
+  @ApiProperty({
+    description: 'The unique ID of the product',
+    example: '68f4529b0b588f71ad0fa1b2',
+    readOnly: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsMongoId()
+  _id?: string;
 }
 
 export class ProductResponseDto {
   @ApiProperty({
-    example: '65f1c5a0ef3e2bde5f269b58',
-    description: 'Unique identifier for the product.',
+    description: 'The unique identifier of the product',
+    example: '68f4529b0b588f71ad0fa1b2',
   })
+  @IsMongoId()
+  @Transform(
+    ({ value }) =>
+      value instanceof Types.ObjectId ? value.toHexString() : value,
+    { toPlainOnly: true },
+  )
   _id: string;
 
   @ApiProperty({
-    example: 'High-Quality T-Shirt',
-    description: 'Name of the product.',
+    description: 'The unique name of the product',
+    example: 'Samsung Galaxy A54 5G',
   })
   name: string;
 
   @ApiProperty({
-    example: 'A comfortable and durable t-shirt made from 100% cotton.',
-    description: 'Detailed description of the product.',
+    description: 'A detailed description of the product',
+    example:
+      'Latest Samsung smartphone with 5G connectivity, 128GB storage, and triple camera setup',
   })
   description: string;
 
   @ApiProperty({
-    type: [MediaResponseDto],
-    description: 'Array of rich media objects for the product.',
+    description: 'An array of URLs for product images',
+    type: [String],
+    example: ['https://example.com/samsung-a54-front.jpg'],
   })
-  images: MediaResponseDto[];
+  images: string[];
 
   @ApiProperty({
-    example: '65f1c4a0ef3e2bde5f269a47',
-    description: 'ID of the product category.',
+    description: 'The MongoDB ObjectId of the category this product belongs to',
+    example: '68f4529b0b588f71ad0fa1a4',
   })
+  @Transform(
+    ({ value }) =>
+      value instanceof Types.ObjectId ? value.toHexString() : value,
+    { toPlainOnly: true },
+  )
   categoryId: string;
 
   @ApiProperty({
-    example: '65f1c4a0ef3e2bde5f269a48',
-    description: 'ID of the zone where the product is available.',
+    description:
+      'The MongoDB ObjectId of the zone this product is available in',
+    example: '68f4529a0b588f71ad0fa18b',
   })
+  @Transform(
+    ({ value }) =>
+      value instanceof Types.ObjectId ? value.toHexString() : value,
+    { toPlainOnly: true },
+  )
   zoneId: string;
 
   @ApiProperty({
-    example: '65f1c4a0ef3e2bde5f269a49',
-    description: 'ID of the seller who listed the product.',
+    description: 'The MongoDB ObjectId of the seller who owns this product',
+    example: '68f4529b0b588f71ad0fa1ae',
   })
+  @Transform(
+    ({ value }) =>
+      value instanceof Types.ObjectId ? value.toHexString() : value,
+    { toPlainOnly: true },
+  )
   sellerId: string;
 
   @ApiProperty({
+    description: 'An array of pricing tiers based on quantity',
     type: [PricingTierDto],
-    description: 'Defines different prices for different quantities.',
+    example: [{ minQuantity: 1, maxQuantity: 9, pricePerUnit: 45000 }],
   })
   pricingTiers: PricingTierDto[];
 
   @ApiProperty({
-    example: 10,
-    description:
-      'The minimum quantity required to place an order for this product.',
+    description: 'The minimum quantity that can be ordered for this product',
+    example: 1,
+    minimum: 1,
   })
   minimumOrderQuantity: number;
 
   @ApiProperty({
-    example: 500,
-    description: 'Current available stock quantity.',
+    description: 'The current stock quantity of the product',
+    example: 150,
+    minimum: 0,
   })
   stockQuantity: number;
 
   @ApiProperty({
-    example: ProductUnit.PIECE,
-    enum: ProductUnit,
-    description: 'The unit of measurement for the product (e.g., piece, kg).',
+    description:
+      'The unit of measurement for the product (e.g., "piece", "kg")',
+    example: 'piece',
   })
   unit: string;
 
   @ApiProperty({
+    description: 'The brand name of the product',
+    example: 'Samsung',
+  })
+  brand: string;
+
+  @ApiProperty({
+    description: 'The model name of the product',
+    example: 'Galaxy A54 5G',
+  })
+  model: string;
+
+  @ApiProperty({
+    description: 'Detailed specifications of the product',
+    example: '6.4" Super AMOLED, Exynos 1380, 8GB RAM, 128GB Storage',
     required: false,
-    example: 'BrandX',
-    description: 'The brand name of the product.',
   })
-  brand?: string;
+  @IsOptional()
+  @IsString()
+  specifications?: string;
 
   @ApiProperty({
-    example: ProductStatus.ACTIVE,
-    enum: ProductStatus,
-    description: 'The current status of the product listing.',
+    description: 'The current status of the product',
+    enum: ['active', 'inactive', 'archived'],
+    example: 'active',
   })
-  status: string;
+  status: 'active' | 'inactive' | 'archived';
 
   @ApiProperty({
+    description: 'The current view count of the product',
+    example: 2,
+    minimum: 0,
+  })
+  viewCount: number;
+
+  @ApiProperty({
+    description: 'The total number of times this product has been ordered',
+    example: 0,
+    minimum: 0,
+  })
+  orderCount: number;
+
+  @ApiProperty({
+    description: 'The average rating of the product (0-5)',
     example: 4.5,
-    description: 'The average user rating of the product (0-5).',
+    minimum: 0,
+    maximum: 5,
   })
   rating: number;
 
   @ApiProperty({
-    example: 25,
-    description: 'The total number of reviews for the product.',
+    description: 'The total number of reviews for the product',
+    example: 10,
+    minimum: 0,
   })
   reviewCount: number;
 
-  @ApiProperty({ description: 'Timestamp of product creation.' })
+  @ApiProperty({
+    description: 'The Stock Keeping Unit (SKU) of the product',
+    example: 'SAM-A54-128-BLK',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  sku?: string;
+
+  @ApiProperty({
+    description: 'The weight of the product in kg',
+    example: 0.202,
+    minimum: 0,
+    required: false,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  weight?: number;
+
+  @ApiProperty({
+    description: 'The dimensions of the product',
+    example: '158.2 x 76.7 x 8.2 mm',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  dimensions?: string;
+
+  @ApiProperty({
+    description: 'Whether the product is currently active and available',
+    example: true,
+  })
+  isActive: boolean;
+
+  @ApiProperty({
+    description: 'Timestamp when the product was created',
+    example: '2025-10-19T02:53:15.683Z',
+  })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Timestamp of last product update.' })
+  @ApiProperty({
+    description: 'Timestamp when the product was last updated',
+    example: '2025-10-19T08:58:48.807Z',
+  })
   updatedAt: Date;
 
-  static fromProductDocument(
-    productDoc: PopulatedProductDocument,
-  ): ProductResponseDto {
-    const dto = new ProductResponseDto();
-    dto._id = productDoc._id.toString();
-    dto.name = productDoc.name;
-    dto.description = productDoc.description;
-
-    dto.images = Array.isArray(productDoc.images)
-      ? productDoc.images.map((media) => ({
-          _id: media._id.toString(),
-          url: media.url,
-          altText: media.altText,
-          mimeType: media.mimeType,
-        }))
-      : [];
-
-    dto.categoryId = productDoc.categoryId;
-    dto.zoneId = productDoc.zoneId;
-    dto.sellerId = productDoc.sellerId;
-    dto.pricingTiers = productDoc.pricingTiers;
-    dto.minimumOrderQuantity = productDoc.minimumOrderQuantity;
-    dto.stockQuantity = productDoc.stockQuantity;
-    dto.unit = productDoc.unit;
-    dto.brand = productDoc.brand;
-    dto.status = productDoc.status;
-    dto.rating = productDoc.rating;
-    dto.reviewCount = productDoc.reviewCount;
-    dto.createdAt = productDoc.createdAt;
-    dto.updatedAt = productDoc.updatedAt;
-    return dto;
-  }
+  @ApiProperty({
+    description: 'Mongoose document version key',
+    example: 0,
+  })
+  __v: number;
 }

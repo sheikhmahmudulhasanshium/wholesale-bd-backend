@@ -1,112 +1,107 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import { Document, Types } from 'mongoose';
 
-export type ProductDocument = HydratedDocument<Product>;
-
-export enum ProductStatus {
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  OUT_OF_STOCK = 'out_of_stock',
-}
-
-export enum ProductUnit {
-  PIECE = 'piece',
-  KG = 'kg',
-  SET = 'set',
-  BOTTLE = 'bottle',
-  PAIR = 'pair',
-}
-
-@Schema({ _id: false })
-class PricingTier {
-  @Prop({ required: true })
+export class PricingTier {
+  @Prop({ required: true, type: Number, min: 1 })
   minQuantity: number;
 
-  @Prop()
+  @Prop({ type: Number, min: 1 })
   maxQuantity?: number;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Number, min: 0 })
   pricePerUnit: number;
 }
-const PricingTierSchema = SchemaFactory.createForClass(PricingTier);
+
+export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true })
 export class Product {
-  @Prop({ required: true, trim: true })
+  _id: Types.ObjectId; // Explicitly define _id to help TypeScript
+
+  @Prop({ required: true, unique: true, trim: true })
   name: string;
 
   @Prop({ required: true, trim: true })
   description: string;
 
-  @Prop({
-    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Media' }],
-    default: [],
-  })
+  @Prop({ type: [String], default: [] })
   images: string[];
 
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category',
-    required: true,
-  })
-  categoryId: string;
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
+  categoryId: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Zone', required: true })
-  zoneId: string;
+  @Prop({ type: Types.ObjectId, required: true, ref: 'Zone' })
+  zoneId: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  sellerId: string;
+  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
+  sellerId: Types.ObjectId;
 
-  @Prop({ type: [PricingTierSchema], default: [] })
+  @Prop({ type: [PricingTier], required: true })
   pricingTiers: PricingTier[];
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: Number, min: 1 })
   minimumOrderQuantity: number;
 
-  @Prop({ default: 0 })
+  @Prop({ required: true, type: Number, min: 0 })
   stockQuantity: number;
 
-  @Prop({ type: String, enum: ProductUnit, required: true })
-  unit: ProductUnit;
+  @Prop({ required: true, trim: true })
+  unit: string;
 
-  @Prop()
-  brand?: string;
+  @Prop({ required: true, trim: true })
+  brand: string;
 
-  @Prop()
-  model?: string;
+  @Prop({ required: true, trim: true })
+  model: string;
 
-  @Prop()
+  @Prop({ trim: true })
   specifications?: string;
 
-  @Prop()
+  @Prop({
+    required: true,
+    enum: ['active', 'inactive', 'archived'],
+    default: 'active',
+  })
+  status: string;
+
+  @Prop({ type: Number, default: 0 })
+  viewCount: number;
+
+  @Prop({ type: Number, default: 0 })
+  orderCount: number;
+
+  @Prop({ type: Number, default: 0, min: 0, max: 5 })
+  rating: number;
+
+  @Prop({ type: Number, default: 0 })
+  reviewCount: number;
+
+  @Prop({ unique: true, sparse: true, trim: true })
   sku?: string;
 
-  @Prop()
+  @Prop({ type: Number, min: 0 })
   weight?: number;
 
-  @Prop()
+  @Prop({ trim: true })
   dimensions?: string;
-
-  @Prop({ type: String, enum: ProductStatus, default: ProductStatus.ACTIVE })
-  status: ProductStatus;
 
   @Prop({ default: true })
   isActive: boolean;
 
-  @Prop({ default: 0 })
-  viewCount: number;
-
-  @Prop({ default: 0 })
-  orderCount: number;
-
-  @Prop({ default: 0, min: 0, max: 5 })
-  rating: number;
-
-  @Prop({ default: 0 })
-  reviewCount: number;
-
+  @Prop({ type: Date })
   createdAt: Date;
+
+  @Prop({ type: Date })
   updatedAt: Date;
+
+  @Prop({ type: Number })
+  __v: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
+
+ProductSchema.index({ name: 1 });
+ProductSchema.index({ categoryId: 1 });
+ProductSchema.index({ sellerId: 1 });
+ProductSchema.index({ brand: 1, model: 1 });
+ProductSchema.index({ status: 1 });

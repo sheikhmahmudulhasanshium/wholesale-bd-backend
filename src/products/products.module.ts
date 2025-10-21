@@ -1,16 +1,16 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { ProductsController } from './products.controller';
 import { ProductsService } from './products.service';
+import { ProductsController } from './products.controller';
 import { Product, ProductSchema } from './schemas/product.schema';
-import { StorageModule } from '../storage/storage.module'; // +++ ADD THIS IMPORT
+import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
-    StorageModule, // +++ ADD THIS MODULE TO IMPORTS
   ],
   controllers: [ProductsController],
-  providers: [ProductsService],
+  providers: [ProductsService, ApiKeyGuard],
+  exports: [ProductsService],
 })
 export class ProductsModule {}
