@@ -100,7 +100,6 @@ export class Product {
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
 
-ProductSchema.index({ name: 1 });
 ProductSchema.index({ categoryId: 1 });
 ProductSchema.index({ sellerId: 1 });
 ProductSchema.index({ brand: 1, model: 1 });
