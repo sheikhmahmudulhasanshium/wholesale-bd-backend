@@ -1,0 +1,156 @@
+i need the followng auth end points
+* auth/register ( 2 way available using email pass or using oauth , need first and last name also for email based login)[implement email,password based login first][dont let existing email to re-register, only 1 method is available simultaneously but may use different method]
+* auth/login (user )
+** auth/google
+* auth/profile (use jwt token to get profile)
+** auth/forgot-password
+** auth/reset-password
+** auth/validate-otp (need to validate account creation by entering correct otp)
+
+** auth/change-password()
+** auth/verify-email{
+  "email": "string",
+  "otp": "string"
+}(oauth){i need auth/validate-otp if email some how fails to deliver}
+
+* auth/admin/list()
+* auth/seller/register{
+  "email": "string",
+  "password": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "businessName": "string",
+  "businessLicense": "string",
+  "businessDescription": "string",
+  "zone": "string"
+}
+* /auth/admin/sellers(admin checks sellers)
+* /auth/admin/sellers/pending(admin checks pending sellers)
+* auth/admin/seller/[id]/approve (admin approves seller)
+** auth/admin/seller/[id]/reject {reason: string}
+*** auth/admin/user/[id]/block {reason: string}
+*** auth/admin/user/[id]/unblock {reason: string}
+
+*highest priority
+** medium priority
+** lower priority
+
+
+used .env
+# Email Configuration (if using email service)
+SMTP_HOST=
+SMTP_PORT=
+SMTP_SECURE=
+SMTP_USER=
+SMTP_PASS=
+SMTP_FROM_NAME=
+SMTP_FROM_EMAIL=
+
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+
+# Firebase Configuration
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=
+
+MONGODB_URI=
+
+available package/modules
+{
+  "authentication_modules": [
+    {
+      "tier": "Core (Absolutely Required for Basic Auth)",
+      "modules": [
+        "@nestjs/jwt",
+        "@nestjs/passport",
+        "passport",
+        "passport-jwt",
+        "bcryptjs"
+      ],
+      "description": "These modules are fundamental for setting up a standard JWT-based authentication system with password hashing in a NestJS application. '@nestjs/jwt' and 'passport-jwt' handle token creation and verification, while 'bcryptjs' secures user passwords."
+    },
+    {
+      "tier": "Standard (Highly Recommended for Robust Auth)",
+      "modules": [
+        "class-validator",
+        "@nestjs/throttler",
+        "@types/passport-jwt"
+      ],
+      "description": "These modules enhance the security and reliability of your authentication system. 'class-validator' ensures input data integrity, '@nestjs/throttler' protects against brute-force attacks, and '@types/passport-jwt' provides type safety."
+    },
+    {
+      "tier": "Advanced (For Specific Auth Features)",
+      "modules": [
+        "speakeasy",
+        "@types/speakeasy",
+        "firebase-admin"
+      ],
+      "description": "These modules enable more advanced authentication features. 'speakeasy' is for implementing Two-Factor Authentication (2FA) with TOTP, and 'firebase-admin' is necessary if your application uses Firebase Authentication as part of its strategy."
+    },
+    {
+      "tier": "Supporting (General Purpose, but Essential for Auth Context)",
+      "modules": [
+        "@nestjs/common",
+        "@nestjs/config",
+        "class-transformer"
+      ],
+      "description": "While not exclusively for authentication, these modules are crucial for configuring, integrating, and managing the authentication logic within a NestJS application. '@nestjs/config' for environment variables, '@nestjs/common' for decorators and utilities, and 'class-transformer' for DTO mapping."
+    }
+  ]
+}
+node mailer for email handling
+
+basic RBA (improve later)
+------------
+user can login, register
+seller can login, register after being user, checks own profile, can see other's profile by id
+admin can see all profile, approve seller, block/unblock users, delete profile if necessary
+
+every user either can be User(default)|admin|Seller
+
+build first tweak later
+src/
+  auth/
+    auth.module.ts
+    auth.controller.ts
+    auth.service.ts
+    strategies/
+      jwt.strategy.ts
+      google.strategy.ts (for OAuth)
+    guards/
+      jwt-auth.guard.ts
+      roles.guard.ts
+    decorators/
+      roles.decorator.ts
+    dto/
+      register.dto.ts
+      login.dto.ts
+      forgot-password.dto.ts
+      reset-password.dto.ts
+      validate-otp.dto.ts
+      change-password.dto.ts
+      seller-register.dto.ts
+      approve-reject-seller.dto.ts
+      block-unblock-user.dto.ts
+      verify-email.dto.ts
+    interfaces/
+      jwt-payload.interface.ts
+  user/
+    user.module.ts
+    user.service.ts
+    user.controller.ts
+    schemas/
+      user.schema.ts (already provided)
+    dto/
+      user-response.dto.ts (already provided)
+  mail/
+    mail.module.ts
+    mail.service.ts
+  config/
+    configuration.ts
+    validation.ts
+  app.module.ts
+  main.ts

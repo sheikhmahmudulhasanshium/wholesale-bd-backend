@@ -26,7 +26,9 @@ export default tseslint.config(
       },
       sourceType: 'commonjs',
       parserOptions: {
-        projectService: true,
+        //projectService: true,
+        //tsconfigRootDir: import.meta.dirname,
+        project: true, // <-- CHANGE THIS LINE
         tsconfigRootDir: import.meta.dirname,
       },
     },

@@ -1,3 +1,5 @@
+// src/users/users.controller.ts (This file is correct)
+
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import {
   ApiHeader,
@@ -6,14 +8,13 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { UsersService } from './users.service';
 import { UserResponseDto } from './dto/user-response.dto';
 import { ApiKeyGuard } from '../auth/guards/api-key.guard';
-
+import { UserService } from './users.service';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UserService) {}
 
   @Get('count')
   @ApiOperation({ summary: 'Get the total number of registered users' })
@@ -41,6 +42,7 @@ export class UsersController {
   @UseGuards(ApiKeyGuard)
   async findAll(): Promise<UserResponseDto[]> {
     const users = await this.usersService.findAll();
+    // This line will now work correctly because `users` is correctly inferred as `UserDocument[]`
     return users.map((user) => UserResponseDto.fromUserDocument(user));
   }
 }
