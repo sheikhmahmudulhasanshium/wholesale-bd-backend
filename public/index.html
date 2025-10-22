@@ -119,52 +119,45 @@
 
     <footer><p>&copy; 2024 Wholesale BD &bull; All Rights Reserved</p></footer>
     
+    <!-- =================== SCRIPT UPDATED FOR ROBUSTNESS =================== -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const showAnalyticsBtn = document.getElementById('show-analytics-btn');
             const analyticsSection = document.getElementById('analytics-section');
-            
-            const totalUsersSpan = document.getElementById('total-users-count');
-            const totalProductsSpan = document.getElementById('total-products-count');
-            const totalCategoriesSpan = document.getElementById('total-categories-count');
-            const totalZonesSpan = document.getElementById('total-zones-count');
-            const totalOrdersSpan = document.getElementById('total-orders-count');
-            const pendingOrdersSpan = document.getElementById('pending-orders-count');
 
-            async function fetchAnalyticsData() {
+            /**
+             * A robust function to fetch data from a single endpoint and update the UI.
+             * @param {string} url - The API endpoint to fetch.
+             * @param {HTMLElement} element - The span element to update with the count.
+             * @param {string} dataKey - The key in the JSON response that holds the count.
+             */
+            async function fetchStat(url, element, dataKey) {
                 try {
-                    const [userResponse, productResponse, categoryResponse, zoneResponse, orderResponse] = await Promise.all([
-                        fetch('/api/v1/users/count'),
-                        fetch('/api/v1/products/count'),
-                        fetch('/api/v1/categories/count'),
-                        fetch('/api/v1/zones/count'),
-                        fetch('/api/v1/orders/analytics')
-                    ]);
-
-                    if (!userResponse.ok || !productResponse.ok || !orderResponse.ok || !categoryResponse.ok || !zoneResponse.ok) {
-                        throw new Error('Failed to fetch one or more analytics endpoints');
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        // This will catch 404s, 500s, etc.
+                        throw new Error(`HTTP error! status: ${response.status}`);
                     }
-
-                    const userData = await userResponse.json();
-                    const productData = await productResponse.json();
-                    const categoryData = await categoryResponse.json();
-                    const zoneData = await zoneResponse.json();
-                    const orderData = await orderResponse.json();
-
-                    totalUsersSpan.textContent = userData.totalUsers;
-                    totalProductsSpan.textContent = productData.totalProducts;
-                    totalCategoriesSpan.textContent = categoryData.totalCategories;
-                    totalZonesSpan.textContent = zoneData.totalZones;
-                    totalOrdersSpan.textContent = orderData.total;
-                    pendingOrdersSpan.textContent = orderData.pending;
-
+                    const data = await response.json();
+                    element.textContent = data[dataKey] ?? 'Error';
                 } catch (error) {
-                    console.error('Error fetching analytics:', error);
-                    [totalUsersSpan, totalProductsSpan, totalCategoriesSpan, totalZonesSpan, totalOrdersSpan, pendingOrdersSpan]
-                        .forEach(span => span.textContent = 'N/A');
+                    console.error(`Failed to fetch ${url}:`, error);
+                    element.textContent = 'N/A'; // Set to N/A on failure
                 }
             }
 
+            function fetchAllAnalyticsData() {
+                // Fetch each statistic individually. One failure will not stop the others.
+                fetchStat('/api/v1/users/count', document.getElementById('total-users-count'), 'totalUsers');
+                fetchStat('/api/v1/products/count', document.getElementById('total-products-count'), 'totalProducts');
+                fetchStat('/api/v1/categories/count', document.getElementById('total-categories-count'), 'totalCategories');
+                fetchStat('/api/v1/zones/count', document.getElementById('total-zones-count'), 'totalZones');
+
+                // Special handling for the orders endpoint which returns multiple values
+                fetchStat('/api/v1/orders/analytics', document.getElementById('total-orders-count'), 'total');
+                fetchStat('/api/v1/orders/analytics', document.getElementById('pending-orders-count'), 'pending');
+            }
+            
             showAnalyticsBtn.addEventListener('click', () => {
                 if (analyticsSection.classList.contains('hidden')) {
                     analyticsSection.classList.remove('hidden');
@@ -172,8 +165,9 @@
                 analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
             
-            fetchAnalyticsData();
+            fetchAllAnalyticsData();
         });
     </script>
+    <!-- =================== END OF SCRIPT UPDATE =================== -->
 </body>
 </html>

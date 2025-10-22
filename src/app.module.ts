@@ -10,7 +10,7 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
-import { ApiKeyGuard } from './auth/guards/api-key.guard';
+//import { ApiKeyGuard } from './auth/guards/api-key.guard';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './users/users.module';
 import { MailModule } from './mail/mail.module';
@@ -52,6 +52,6 @@ import configuration from './config/configuration';
     ZonesModule,
   ],
   controllers: [AppController],
-  providers: [AppService, ApiKeyGuard],
+  providers: [AppService], // removed ApiKeyGuard],
 })
 export class AppModule {}

@@ -21,28 +21,31 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiHeader,
   ApiUnauthorizedResponse,
   ApiNotFoundResponse,
   ApiBadRequestResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { plainToInstance } from 'class-transformer';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/schemas/user.schema';
+import { Public } from '../auth/decorators/public.decorator'; // --- ADDED: Import the Public decorator ---
 
 @ApiTags('Products')
-@ApiHeader({
-  name: 'x-api-key',
-  description: 'The secret API key for access',
-  required: true,
-})
-@UseGuards(ApiKeyGuard)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new product' })
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @ApiOperation({
+    summary: 'Create a new product (Requires Admin/Seller Role)',
+  })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'The product has been successfully created.',
@@ -51,7 +54,9 @@ export class ProductsController {
   @ApiBadRequestResponse({
     description: 'Invalid input data or duplicate name/SKU.',
   })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async create(
     @Body() createProductDto: CreateProductDto,
   ): Promise<ProductResponseDto> {
@@ -66,7 +71,9 @@ export class ProductsController {
     description: 'Successfully retrieved all products.',
     type: [ProductResponseDto],
   })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async findAll(): Promise<ProductResponseDto[]> {
     const products = await this.productsService.findAll();
     return products.map((product) =>
@@ -74,17 +81,24 @@ export class ProductsController {
     );
   }
 
-  @Get('count') // This must come BEFORE @Get(':id')
-  @ApiOperation({ summary: 'Get the total count of products' })
+  // --- vvvvvvv THIS IS THE UPDATED ENDPOINT vvvvvvv ---
+  @Public()
+  @Get('count')
+  @ApiOperation({ summary: 'Get the total count of products (Public)' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved the total count of products.',
-    type: Number,
+    // UPDATED: The schema now reflects the object being returned
+    schema: { example: { totalProducts: 125 } },
   })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
-  async countProducts(): Promise<number> {
-    return this.productsService.countAllProducts();
+  // UPDATED: The return type is now an object, matching the frontend's expectation
+  async countProducts(): Promise<{ totalProducts: number }> {
+    const count = await this.productsService.countAllProducts();
+    // FIXED: Return an object instead of a raw number
+    return { totalProducts: count };
   }
+
+  // --- ^^^^^^^ THIS IS THE UPDATED ENDPOINT ^^^^^^^ ---
 
   @Get(':id')
   @ApiOperation({ summary: 'Retrieve a product by its ID' })
@@ -95,14 +109,15 @@ export class ProductsController {
   })
   @ApiNotFoundResponse({ description: 'Product not found.' })
   @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
     const product = await this.productsService.findOne(id);
     return plainToInstance(ProductResponseDto, product.toJSON());
   }
 
-  // --- EXISTING ENDPOINT TO GET PRODUCTS BY CATEGORY ID ---
-  @Get('category/:categoryId') // Route: /products/category/:categoryId
+  @Get('category/:categoryId')
   @ApiOperation({ summary: 'Retrieve products by category ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -110,7 +125,9 @@ export class ProductsController {
     type: [ProductResponseDto],
   })
   @ApiBadRequestResponse({ description: 'Invalid category ID format.' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async findProductsByCategoryId(
     @Param('categoryId') categoryId: string,
   ): Promise<ProductResponseDto[]> {
@@ -119,10 +136,8 @@ export class ProductsController {
       plainToInstance(ProductResponseDto, product.toJSON()),
     );
   }
-  // --- END EXISTING ENDPOINT ---
 
-  // --- EXISTING ENDPOINT TO GET PRODUCTS BY ZONE ID ---
-  @Get('zone/:zoneId') // Route: /products/zone/:zoneId
+  @Get('zone/:zoneId')
   @ApiOperation({ summary: 'Retrieve products by zone ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -130,7 +145,9 @@ export class ProductsController {
     type: [ProductResponseDto],
   })
   @ApiBadRequestResponse({ description: 'Invalid zone ID format.' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async findProductsByZoneId(
     @Param('zoneId') zoneId: string,
   ): Promise<ProductResponseDto[]> {
@@ -139,10 +156,8 @@ export class ProductsController {
       plainToInstance(ProductResponseDto, product.toJSON()),
     );
   }
-  // --- END EXISTING ENDPOINT ---
 
-  // --- NEW ENDPOINT TO GET PRODUCTS BY SELLER ID ---
-  @Get('seller/:sellerId') // New route: /products/seller/:sellerId
+  @Get('seller/:sellerId')
   @ApiOperation({ summary: 'Retrieve products by seller ID' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -150,7 +165,9 @@ export class ProductsController {
     type: [ProductResponseDto],
   })
   @ApiBadRequestResponse({ description: 'Invalid seller ID format.' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async findProductsBySellerId(
     @Param('sellerId') sellerId: string,
   ): Promise<ProductResponseDto[]> {
@@ -159,10 +176,12 @@ export class ProductsController {
       plainToInstance(ProductResponseDto, product.toJSON()),
     );
   }
-  // --- END NEW ENDPOINT ---
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update an existing product by ID' })
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @ApiOperation({
+    summary: 'Update an existing product by ID (Requires Admin/Seller Role)',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'The product has been successfully updated.',
@@ -172,7 +191,9 @@ export class ProductsController {
   @ApiBadRequestResponse({
     description: 'Invalid product ID format or invalid update data.',
   })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
@@ -183,14 +204,19 @@ export class ProductsController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({ summary: 'Delete a product by its ID' })
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @ApiOperation({
+    summary: 'Delete a product by its ID (Requires Admin/Seller Role)',
+  })
   @ApiResponse({
     status: HttpStatus.NO_CONTENT,
     description: 'The product has been successfully deleted.',
   })
   @ApiNotFoundResponse({ description: 'Product not found.' })
   @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
-  @ApiUnauthorizedResponse({ description: 'Invalid or missing API Key.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
   async remove(@Param('id') id: string): Promise<void> {
     return this.productsService.remove(id);
   }

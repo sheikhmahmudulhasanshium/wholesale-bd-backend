@@ -1,5 +1,3 @@
-// src/users/users.service.ts
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 // FIX: Import FilterQuery from mongoose
@@ -43,6 +41,37 @@ export class UserService {
   async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().exec();
   }
+
+  // --- vvvvvvv ADDED THIS METHOD vvvvvvv ---
+  /**
+   * Finds a user by ID and returns only public-safe fields.
+   * A profile is considered public only if the user is an active, approved seller.
+   * @param id The user's ID.
+   * @returns A user document with a limited set of fields, or null if not found/not public.
+   */
+  async findPublicProfileById(id: string): Promise<UserDocument | null> {
+    const publicFields = [
+      'firstName',
+      'profilePicture',
+      'businessName',
+      'businessDescription',
+      'isTrustedUser',
+      'trustScore',
+      'reviewCount',
+      'createdAt', // Needed for "memberSince" in the DTO
+    ].join(' ');
+
+    return this.userModel
+      .findOne({
+        _id: id,
+        role: UserRole.SELLER,
+        sellerStatus: SellerStatus.APPROVED,
+        isActive: true,
+      })
+      .select(publicFields)
+      .exec();
+  }
+  // --- ^^^^^^^ ADDED THIS METHOD ^^^^^^^ ---
 
   async update(id: string, updates: Partial<User>): Promise<UserDocument> {
     const user = await this.userModel

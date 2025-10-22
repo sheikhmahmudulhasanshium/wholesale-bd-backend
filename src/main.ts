@@ -38,17 +38,17 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'public'));
 
+  // --- vvvvvvv THIS IS THE UPDATED SECTION vvvvvvv ---
   const swaggerDocConfig = new DocumentBuilder()
     .setTitle(`Backend Api documentation`)
     .setDescription('The official API for the Wholesale BD B2B Platform.')
     .setVersion('1.0')
     .addTag('API Endpoints')
-    .addBearerAuth()
-    .addApiKey(
-      { type: 'apiKey', name: 'x-api-key', in: 'header' },
-      'ApiKeyAuth',
-    )
+    .addBearerAuth() // This correctly represents the new JWT authentication
+    // --- REMOVED: The old .addApiKey() method call ---
     .build();
+  // --- ^^^^^^^ THIS IS THE UPDATED SECTION ^^^^^^^ ---
+
   const document = SwaggerModule.createDocument(app, swaggerDocConfig);
 
   const customSwaggerOptions: SwaggerCustomOptions = {
@@ -144,13 +144,11 @@ async function bootstrap() {
     `,
   };
 
-  // --- CHANGED: Use 'docs' as the path for consistency with other logs ---
   SwaggerModule.setup('api', app, document, customSwaggerOptions);
 
   if (!process.env.VERCEL) {
     const port = process.env.PORT || 3001;
     await app.listen(port);
-    // --- CHANGED: Using logger instead of console.log ---
     logger.log(`🚀 Local server running on: http://localhost:${port}`);
     logger.log(`🌐 Public index page at: http://localhost:${port}/`);
     logger.log(`📚 Swagger docs at: http://localhost:${port}/api`);
