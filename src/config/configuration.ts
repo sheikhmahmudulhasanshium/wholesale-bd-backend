@@ -22,8 +22,7 @@ export default () => ({
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
     callbackUrl:
-      process.env.GOOGLE_CALLBACK_URL ||
-      'http://localhost:3001/auth/google/callback', // Update for production
+      process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/callback', // Update for production
   },
   r2: {
     endpoint: process.env.R2_ENDPOINT,
