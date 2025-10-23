@@ -1,3 +1,5 @@
+// src/orders/orders.module.ts
+
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { OrdersController } from './orders.controller';
@@ -10,5 +12,8 @@ import { Order, OrderSchema } from './schemas/order.schema';
   ],
   controllers: [OrdersController],
   providers: [OrdersService],
+  // <-- SOLUTION: THIS LINE MAKES THE SERVICE PUBLIC -->
+  // Without this, UploadsModule cannot see or use OrdersService.
+  exports: [OrdersService],
 })
 export class OrdersModule {}

@@ -1,25 +1,26 @@
+// src/uploads/uploads.service.ts
+
 import {
   Injectable,
   NotFoundException,
   BadRequestException,
   Inject,
   forwardRef,
-  Logger, // Added Logger
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-
-// --- THESE IMPORTS ARE CRUCIAL FOR ENTITY VALIDATION ---
 import { ProductsService } from '../products/products.service';
-// FIX: Corrected to import UserService as per your feedback.
 import { UserService } from '../users/users.service';
 import { StorageService } from '../storage/storage.service';
 import { EntityModel } from './enums/entity-model.enum';
 import { MediaType } from './enums/media-type.enum';
 import { Media, MediaDocument } from 'src/storage/schemas/media.schema';
 import { CreateLinkDto } from 'src/storage/dto/create-link.dto';
+import { CategoriesService } from '../categories/categories.service';
+import { OrdersService } from '../orders/orders.service';
+import { ZonesService } from '../zones/zones.service';
 
-// Interface for the structured response
 export interface GroupedMedia {
   images: MediaDocument[];
   videos: MediaDocument[];
@@ -29,20 +30,21 @@ export interface GroupedMedia {
 
 @Injectable()
 export class UploadsService {
-  // Added a logger instance for debugging
   private readonly logger = new Logger(UploadsService.name);
 
   constructor(
     @InjectModel(Media.name) private readonly mediaModel: Model<MediaDocument>,
     private readonly storageService: StorageService,
-    // Inject services of modules you want to associate media with
-    // Use forwardRef to handle circular dependency issues if they arise
     @Inject(forwardRef(() => ProductsService))
     private readonly productsService: ProductsService,
-    // FIX: Corrected service class name in injection to UserService.
     @Inject(forwardRef(() => UserService))
-    // FIX: Corrected type hint for the service to UserService.
     private readonly usersService: UserService,
+    @Inject(forwardRef(() => CategoriesService))
+    private readonly categoriesService: CategoriesService,
+    @Inject(forwardRef(() => OrdersService))
+    private readonly ordersService: OrdersService,
+    @Inject(forwardRef(() => ZonesService))
+    private readonly zonesService: ZonesService,
   ) {}
 
   /**
@@ -56,23 +58,31 @@ export class UploadsService {
     try {
       switch (entityModel) {
         case EntityModel.PRODUCT:
+          // ProductsService uses findOne, which is fine, but findById is more standard for this use case.
           entityExists = !!(await this.productsService.findOne(entityId));
           break;
         case EntityModel.USER:
-          // Assuming UserService has a findById method
           entityExists = !!(await this.usersService.findById(entityId));
+          break;
+        // <-- MODIFIED: Standardized method calls to 'findById'.
+        // This is a more common and descriptive name for finding a single document by its ID.
+        case EntityModel.CATEGORY:
+          entityExists = !!(await this.categoriesService.findById(entityId));
+          break;
+        case EntityModel.ORDER:
+          entityExists = !!(await this.ordersService.findById(entityId));
+          break;
+        case EntityModel.ZONE:
+          entityExists = !!(await this.zonesService.findById(entityId));
           break;
         default:
           throw new BadRequestException('Invalid entity model provided.');
       }
-      // FIX: The caught error is now logged for debugging.
-      // This uses the 'error' variable and resolves the linting issue.
     } catch (error) {
       this.logger.error(
         `Validation check failed for entity ${entityModel}:${entityId}. Reason:`,
         error,
       );
-      // Catch potential errors from services (e.g., invalid ObjectId format)
       throw new NotFoundException(
         `Entity of model ${entityModel} with ID ${entityId} not found.`,
       );
@@ -103,6 +113,7 @@ export class UploadsService {
     const { url, fileKey } = await this.storageService.uploadFile(
       file,
       entityModel.toLowerCase(),
+      mediaType,
     );
 
     const newMedia = new this.mediaModel({
@@ -144,7 +155,6 @@ export class UploadsService {
       .find({ entityId, entityModel })
       .exec();
 
-    // Group the results into the required structured format
     return mediaItems.reduce(
       (acc: GroupedMedia, item: MediaDocument) => {
         switch (item.mediaType) {
@@ -174,7 +184,6 @@ export class UploadsService {
       throw new NotFoundException(`Media with ID ${mediaId} not found.`);
     }
 
-    // If it's a file (not a link), delete it from R2 storage
     if (media.fileKey) {
       await this.storageService.deleteFile(media.fileKey);
     }

@@ -1,3 +1,5 @@
+// src/uploads/pipes/parse-entity-model.pipe.ts
+
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 import { EntityModel } from '../enums/entity-model.enum';
 
@@ -18,6 +20,12 @@ export class ParseEntityModelPipe
         return EntityModel.PRODUCT;
       case 'user':
         return EntityModel.USER;
+      case 'category': // <-- ADDED
+        return EntityModel.CATEGORY;
+      case 'order': // <-- ADDED
+        return EntityModel.ORDER;
+      case 'zone': // <-- ADDED
+        return EntityModel.ZONE;
       default:
         throw new BadRequestException(
           `'${value}' is not a valid entity model.`,

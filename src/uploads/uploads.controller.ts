@@ -1,3 +1,5 @@
+// src/uploads/uploads.controller.ts
+
 import {
   Controller,
   Post,
@@ -14,19 +16,27 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+// <-- ADDED: Import decorators from @nestjs/swagger for UI enhancements
+import { ApiParam, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { EntityModel } from './enums/entity-model.enum';
-import { MediaDocument } from 'src/storage/schemas/media.schema'; // Note: You might want to fix this path to './schemas/media.schema'
-import { CreateLinkDto } from 'src/storage/dto/create-link.dto'; // Note: You might want to fix this path to './dto/create-link.dto'
+import { MediaDocument } from 'src/storage/schemas/media.schema';
+import { CreateLinkDto } from 'src/storage/dto/create-link.dto';
 import { GroupedMedia, UploadsService } from './uploads.service';
-import { ParseEntityModelPipe } from './pipes/parse-entity-model.pipe'; // <-- IMPORT THE PIPE
+import { ParseEntityModelPipe } from './pipes/parse-entity-model.pipe';
 
 @Controller('api/v1/uploads')
 export class UploadsController {
   constructor(private readonly uploadsService: UploadsService) {}
 
   @Get(':entityModel/:entityId')
+  // <-- ADDED: Swagger decorator to create a dropdown for the 'entityModel' parameter
+  @ApiParam({
+    name: 'entityModel',
+    required: true,
+    description: 'The entity model to fetch media for.',
+    enum: EntityModel, // This is the key that creates the dropdown
+  })
   async getMediaForEntity(
-    // USE THE PIPE HERE
     @Param('entityModel', ParseEntityModelPipe) entityModel: EntityModel,
     @Param('entityId') entityId: string,
   ): Promise<GroupedMedia> {
@@ -35,8 +45,27 @@ export class UploadsController {
 
   @Post(':entityModel/:entityId/file')
   @UseInterceptors(FileInterceptor('file'))
+  // <-- ADDED: Swagger decorators for documenting file uploads and the entity dropdown
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    description: 'File to upload',
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary', // Essential for file upload UI in Swagger
+        },
+      },
+    },
+  })
+  @ApiParam({
+    name: 'entityModel',
+    required: true,
+    description: 'The entity model to associate the file with.',
+    enum: EntityModel, // Creates the dropdown
+  })
   async uploadFileForEntity(
-    // USE THE PIPE HERE
     @Param('entityModel', ParseEntityModelPipe) entityModel: EntityModel,
     @Param('entityId') entityId: string,
     @UploadedFile(
@@ -55,8 +84,14 @@ export class UploadsController {
   }
 
   @Post(':entityModel/:entityId/link')
+  // <-- ADDED: Swagger decorator for the entity dropdown
+  @ApiParam({
+    name: 'entityModel',
+    required: true,
+    description: 'The entity model to associate the link with.',
+    enum: EntityModel,
+  })
   async addLinkForEntity(
-    // USE THE PIPE HERE
     @Param('entityModel', ParseEntityModelPipe) entityModel: EntityModel,
     @Param('entityId') entityId: string,
     @Body() createLinkDto: CreateLinkDto,

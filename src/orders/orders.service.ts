@@ -17,13 +17,11 @@ export class OrdersService {
     return this.orderModel.countDocuments().exec();
   }
 
-  // --- NEW, MORE EFFICIENT ANALYTICS METHOD ---
   async getAnalytics(): Promise<{
     total: number;
     pending: number;
     delivered: number;
   }> {
-    // Run all counting queries in parallel for maximum efficiency
     const [totalCount, pendingCount, deliveredCount] = await Promise.all([
       this.orderModel.countDocuments().exec(),
       this.orderModel.countDocuments({ status: OrderStatus.PENDING }).exec(),
@@ -36,4 +34,17 @@ export class OrdersService {
       delivered: deliveredCount,
     };
   }
+
+  // <-- SOLUTION: ADD THIS FINAL REQUIRED METHOD -->
+  /**
+   * Finds a single order by its unique ID.
+   * This method is required by the UploadsService to validate that an order
+   * exists before media can be associated with it.
+   * @param id The string representation of the MongoDB ObjectId.
+   * @returns A promise that resolves to the order document or null if not found.
+   */
+  async findById(id: string): Promise<OrderDocument | null> {
+    return this.orderModel.findById(id).exec();
+  }
+  // <-- END OF ADDED METHOD -->
 }
