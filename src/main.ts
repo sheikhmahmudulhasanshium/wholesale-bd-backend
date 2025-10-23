@@ -18,8 +18,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   app.enableCors({
-    origin:
-      process.env.FRONTEND_URL || 'https://wholesale-bd-web-app.vercel.app',
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // --- UPDATED: Use FRONTEND_URL from env ---
     credentials: true,
   });
 
