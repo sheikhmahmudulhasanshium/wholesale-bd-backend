@@ -18,6 +18,8 @@ export default () => ({
     fromName: process.env.SMTP_FROM_NAME || 'Your App',
     fromEmail: process.env.SMTP_FROM_EMAIL,
   },
+  // +++ ADDED THIS LINE +++
+  frontendUrl: process.env.FRONTEND_URL,
   google: {
     clientId: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,

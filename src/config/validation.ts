@@ -48,6 +48,9 @@ export const validationSchema = Joi.object({
   GOOGLE_CLIENT_SECRET: Joi.string().optional(),
   GOOGLE_CALLBACK_URL: Joi.string().uri().optional(),
 
+  // +++ ADDED THIS LINE +++
+  FRONTEND_URL: Joi.string().uri().required(),
+
   // +++ ADD R2 VALIDATION RULES +++
   R2_ENDPOINT: Joi.string().uri().required(),
   R2_ACCESS_KEY_ID: Joi.string().required(),

@@ -1,3 +1,5 @@
+// src/auth/auth.controller.ts
+
 import {
   Controller,
   Post,
@@ -9,8 +11,9 @@ import {
   Req,
   Param,
   Put,
+  Res,
 } from '@nestjs/common';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -36,6 +39,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { BlockUserDto } from './dto/block-unblock.dto';
+import { ConfigService } from '@nestjs/config';
 
 interface RequestWithUser extends Request {
   user: UserDocument;
@@ -45,7 +49,10 @@ interface RequestWithUser extends Request {
 @Controller('auth')
 @UseGuards(ThrottlerGuard)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // --- Highest Priority Endpoints ---
 
@@ -88,12 +95,25 @@ export class AuthController {
     // This route will redirect to Google for authentication
   }
 
+  // --- *** THIS IS THE CORRECTED FUNCTION (async keyword removed) *** ---
   @Get('google/callback')
   @ApiOperation({ summary: 'Google OAuth callback URL' })
   @UseGuards(AuthGuard('google'))
-  googleAuthRedirect(@Req() req: RequestWithUser) {
-    return this.authService.googleLogin(req);
+  googleAuthRedirect(@Req() req: RequestWithUser, @Res() res: Response) {
+    const { token } = this.authService.googleLogin(req);
+    const frontendUrl = this.configService.get<string>('frontendUrl');
+
+    if (!frontendUrl) {
+      // Gracefully handle missing configuration
+      return res
+        .status(500)
+        .send('Configuration error: Frontend URL is not set.');
+    }
+
+    // Redirect the user's browser to the frontend callback page with the token
+    res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
   }
+  // --- *** END OF CORRECTED FUNCTION *** ---
 
   @Get('profile')
   @ApiBearerAuth()
