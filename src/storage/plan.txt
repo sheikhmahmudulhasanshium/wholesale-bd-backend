@@ -1,0 +1,167 @@
+Of course. It's an excellent idea to reset and summarize the requirements to ensure we are perfectly aligned. You have provided very specific and important corrections, and I want to make sure the final solution reflects them exactly.
+
+Here is a complete summary of your request, including the goal, the explicit do's and don'ts, and a sample of how the final system should behave.
+
+Overall Goal
+
+To create a completely independent, standalone media management micro-service within the NestJS application. This system will be responsible for handling all file uploads and external links, associating them with other application entities (like Products or Users) without being a part of them. It must have its own dedicated API endpoints and its own database collection, acting as a centralized and decoupled source of truth for all media.
+
+The "Do's" (Core Requirements)
+
+Build an Independent System:
+
+Create a new, self-contained UploadsModule.
+
+This module will have its own Mongoose schema and a dedicated media collection in the database.
+
+Use Specific, Independent API Routes:
+
+All media operations must go through a dedicated API path structure.
+
+Examples:
+
+GET /api/v1/uploads/product/:id (Get all media for a specific product)
+
+POST /api/v1/uploads/product/:id/file (Upload a file for a product)
+
+POST /api/v1/uploads/user/:id/link (Add a link for a user profile)
+
+DELETE /api/v1/uploads/:mediaId (Delete a specific media item by its own ID)
+
+Associate Media via Polymorphic Relationship:
+
+The new Media schema must store the ID and the Type of the entity it belongs to.
+
+For example: { "entityId": "68f4529b0b588f71ad0fa1b2", "entityModel": "Product" }. This is how you "link" media without touching the Product schema.
+
+Handle Structured Media Types:
+
+The system must differentiate between different kinds of media. The Media schema should have a mediaType field that can be image, video, audio, or link.
+
+When retrieving media for an entity, the API response should be a structured object, grouped by these types.
+
+Implement Full CRUD Functionality:
+
+Create: Upload new files or add new external links.
+
+Read: Retrieve all media associated with a specific entity ID.
+
+Delete: Remove a specific media item by its unique ID.
+
+Validate Entity Existence:
+
+Before associating a media item, the system must use the "get by id" function of the relevant service (e.g., ProductsService.findOne(id)) to confirm that the target entity (product, user, etc.) actually exists. If it doesn't, return a 404 Not Found error.
+
+The "Don'ts" (Critical Constraints)
+
+DO NOT Modify Existing Schemas: This is the most important rule. Do not add any new fields (like images, media, profilePicture, etc.) to the existing Product, User, Order, or any other Mongoose schema. They must remain untouched.
+
+DO NOT Modify Existing APIs/Controllers: Do not add any new endpoints to ProductsController, UsersController, etc. All new functionality must reside in the new UploadsController.
+
+DO NOT Use a Common Schema: The new Media schema should be unique to the Uploads module and not be a sub-document or a "common" schema shared directly inside other schemas.
+
+DO NOT Accept Document Files: The file upload process must strictly validate the MIME type to reject non-media files like pdf, txt, ppt, docx, etc. Only images, videos, and audio files are allowed.
+
+Sample: How It Should Look in Practice
+
+This example demonstrates the complete, decoupled workflow.
+
+Step 1: A Product in the Database (Initial State)
+
+A document in the products collection has NO media-related fields.
+
+code
+JSON
+download
+content_copy
+expand_less
+// In the 'products' collection
+{
+  "_id": "product_123",
+  "name": "Samsung Galaxy A54",
+  "description": "A great phone.",
+  // ...other product fields
+}
+
+Step 2: Uploading an Image for that Product
+
+A client sends a POST request to the new, independent endpoint.
+
+Request: POST /api/v1/uploads/product/product_123/file
+
+Body: multipart/form-data with a field named file containing my-phone-pic.png.
+
+Step 3: The Resulting Media Document
+
+The API creates a new document in the separate media collection.
+
+code
+JSON
+download
+content_copy
+expand_less
+// In the 'media' collection
+{
+  "_id": "media_abc",
+  "url": "https://r2.dev/product/uuid-my-phone-pic.png",
+  "fileKey": "product/uuid-my-phone-pic.png",
+  "mediaType": "image",
+  "mimeType": "image/png",
+  "entityId": "product_123", // Link to the product
+  "entityModel": "Product",    // Specifies the collection
+  "createdAt": "...",
+  "updatedAt": "..."
+}
+
+Step 4: Adding a YouTube Link for the Same Product
+
+Request: POST /api/v1/uploads/product/product_123/link
+
+Body: application/json
+
+code
+JSON
+download
+content_copy
+expand_less
+{ "url": "https://www.youtube.com/watch?v=somevideo" }
+
+Step 5: Retrieving All Media for the Product
+
+A client now wants to see everything associated with product_123.
+
+Request: GET /api/v1/uploads/product/product_123
+
+Response (200 OK): The API finds all documents in the media collection matching the entityId and entityModel and returns them in a structured format.
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "images": [
+    {
+      "_id": "media_abc",
+      "url": "https://r2.dev/product/uuid-my-phone-pic.png",
+      "mediaType": "image",
+      "entityId": "product_123",
+      "entityModel": "Product",
+      ...
+    }
+  ],
+  "videos": [],
+  "audio": [],
+  "links": [
+    {
+      "_id": "media_def",
+      "url": "https://www.youtube.com/watch?v=somevideo",
+      "mediaType": "link",
+      "entityId": "product_123",
+      "entityModel": "Product",
+      ...
+    }
+  ]
+}
+
+This summary encapsulates all your requirements. We can now proceed with building the code that implements this exact logic.

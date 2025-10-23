@@ -25,6 +25,13 @@ export default () => ({
       process.env.GOOGLE_CALLBACK_URL ||
       'http://localhost:3000/auth/google/callback', // Update for production
   },
+  r2: {
+    endpoint: process.env.R2_ENDPOINT,
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    bucketName: process.env.R2_BUCKET_NAME,
+    publicUrl: process.env.R2_PUBLIC_URL,
+  },
   // Firebase configuration might be needed later if you fully integrate Firebase Auth
   // firebase: {
   //   projectId: process.env.FIREBASE_PROJECT_ID,

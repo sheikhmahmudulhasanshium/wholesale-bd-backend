@@ -16,6 +16,8 @@ import { UserModule } from './users/users.module';
 import { MailModule } from './mail/mail.module';
 import { validationSchema } from './config/validation';
 import configuration from './config/configuration';
+import { UploadsModule } from './uploads/uploads.module';
+import { StorageModule } from './storage/storage.module';
 
 @Module({
   imports: [
@@ -50,6 +52,8 @@ import configuration from './config/configuration';
     OrdersModule,
     CategoriesModule,
     ZonesModule,
+    UploadsModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService], // removed ApiKeyGuard],

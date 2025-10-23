@@ -48,6 +48,12 @@ export const validationSchema = Joi.object({
   GOOGLE_CLIENT_SECRET: Joi.string().optional(),
   GOOGLE_CALLBACK_URL: Joi.string().uri().optional(),
 
+  // +++ ADD R2 VALIDATION RULES +++
+  R2_ENDPOINT: Joi.string().uri().required(),
+  R2_ACCESS_KEY_ID: Joi.string().required(),
+  R2_SECRET_ACCESS_KEY: Joi.string().required(),
+  R2_BUCKET_NAME: Joi.string().required(),
+  R2_PUBLIC_URL: Joi.string().uri().required(),
   // Firebase (if fully integrating)
   // FIREBASE_PROJECT_ID: Joi.string().optional(),
   // FIREBASE_CLIENT_EMAIL: Joi.string().email().optional(),
