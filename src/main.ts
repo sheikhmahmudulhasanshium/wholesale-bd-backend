@@ -18,7 +18,7 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // --- UPDATED: Use FRONTEND_URL from env ---
+    origin: [process.env.FRONTEND_URL!, 'http://localhost:3000'], // <-- FIX: Added '!' to assert FRONTEND_URL is not undefined
     credentials: true,
   });
 
