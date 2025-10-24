@@ -55,6 +55,14 @@ export class ProductsService {
     return this.productModel.find().exec();
   }
 
+  /**
+   * Retrieves all active products. For public use.
+   * @returns An array of active product documents.
+   */
+  async findAllActive(): Promise<ProductDocument[]> {
+    return this.productModel.find({ status: 'active' }).exec();
+  }
+
   async findOne(id: string): Promise<ProductDocument> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
@@ -62,6 +70,30 @@ export class ProductsService {
     const product = await this.productModel.findById(id).exec();
     if (!product) {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
+    }
+    return product;
+  }
+
+  /**
+   * Retrieves a single active product by its ID. For public use.
+   * @param id The ID of the product.
+   * @returns A product document if found and active.
+   * @throws BadRequestException if the product ID format is invalid.
+   * @throws NotFoundException if the product is not found or is not active.
+   */
+  async findOneActive(id: string): Promise<ProductDocument> {
+    if (!Types.ObjectId.isValid(id)) {
+      throw new BadRequestException(`Invalid product ID format: "${id}"`);
+    }
+    const product = await this.productModel
+      .findOne({ _id: id, status: 'active' })
+      .exec();
+    if (!product) {
+      // Intentionally use NotFoundException to avoid leaking information
+      // about the existence of inactive products.
+      throw new NotFoundException(
+        `Product with ID "${id}" not found or is not active.`,
+      );
     }
     return product;
   }

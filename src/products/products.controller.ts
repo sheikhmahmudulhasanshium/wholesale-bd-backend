@@ -64,6 +64,23 @@ export class ProductsController {
     return plainToInstance(ProductResponseDto, product.toJSON());
   }
 
+  // --- vvvvvvv THIS IS THE NEWLY ADDED PUBLIC ENDPOINT vvvvvvv ---
+  @Public()
+  @Get('public/all')
+  @ApiOperation({ summary: 'Retrieve all active products (Public)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved all active products.',
+    type: [ProductResponseDto],
+  })
+  async findAllPublic(): Promise<ProductResponseDto[]> {
+    const products = await this.productsService.findAllActive();
+    return products.map((product) =>
+      plainToInstance(ProductResponseDto, product.toJSON()),
+    );
+  }
+  // --- ^^^^^^^ THIS IS THE NEWLY ADDED PUBLIC ENDPOINT ^^^^^^^ ---
+
   @Get()
   @ApiOperation({ summary: 'Retrieve all products' })
   @ApiResponse({
@@ -97,8 +114,24 @@ export class ProductsController {
     // FIXED: Return an object instead of a raw number
     return { totalProducts: count };
   }
-
   // --- ^^^^^^^ THIS IS THE UPDATED ENDPOINT ^^^^^^^ ---
+
+  // --- vvvvvvv ROUTE CORRECTED AND REMAINS PUBLIC vvvvvvv ---
+  @Public()
+  @Get('public/find/:id')
+  @ApiOperation({ summary: 'Retrieve a single active product by ID (Public)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved the active product.',
+    type: ProductResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Product not found or is not active.' })
+  @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
+  async findPublicOne(@Param('id') id: string): Promise<ProductResponseDto> {
+    const product = await this.productsService.findOneActive(id);
+    return plainToInstance(ProductResponseDto, product.toJSON());
+  }
+  // --- ^^^^^^^ ROUTE CORRECTED AND REMAINS PUBLIC ^^^^^^^ ---
 
   @Get(':id')
   @ApiOperation({ summary: 'Retrieve a product by its ID' })
