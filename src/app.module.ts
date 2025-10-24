@@ -18,6 +18,7 @@ import { validationSchema } from './config/validation';
 import configuration from './config/configuration';
 import { UploadsModule } from './uploads/uploads.module';
 import { StorageModule } from './storage/storage.module';
+import { CollectionsModule } from './collections/collections.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { StorageModule } from './storage/storage.module';
     ZonesModule,
     UploadsModule,
     StorageModule,
+    CollectionsModule,
   ],
   controllers: [AppController],
   providers: [AppService], // removed ApiKeyGuard],
