@@ -1,4 +1,4 @@
-// src/products/products.controller.ts
+// src/products/products.controller.ts (Updated)
 import {
   Controller,
   Get,
@@ -31,9 +31,8 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
-import { Public } from '../auth/decorators/public.decorator'; // --- ADDED: Import the Public decorator ---
 
-@ApiTags('Products')
+@ApiTags('Products (Protected)') // Updated tag for clarity in Swagger
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
@@ -64,25 +63,8 @@ export class ProductsController {
     return plainToInstance(ProductResponseDto, product.toJSON());
   }
 
-  // --- vvvvvvv THIS IS THE NEWLY ADDED PUBLIC ENDPOINT vvvvvvv ---
-  @Public()
-  @Get('public/all')
-  @ApiOperation({ summary: 'Retrieve all active products (Public)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieved all active products.',
-    type: [ProductResponseDto],
-  })
-  async findAllPublic(): Promise<ProductResponseDto[]> {
-    const products = await this.productsService.findAllActive();
-    return products.map((product) =>
-      plainToInstance(ProductResponseDto, product.toJSON()),
-    );
-  }
-  // --- ^^^^^^^ THIS IS THE NEWLY ADDED PUBLIC ENDPOINT ^^^^^^^ ---
-
   @Get()
-  @ApiOperation({ summary: 'Retrieve all products' })
+  @ApiOperation({ summary: 'Retrieve all products (Requires Auth)' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved all products.',
@@ -98,43 +80,8 @@ export class ProductsController {
     );
   }
 
-  // --- vvvvvvv THIS IS THE UPDATED ENDPOINT vvvvvvv ---
-  @Public()
-  @Get('count')
-  @ApiOperation({ summary: 'Get the total count of products (Public)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieved the total count of products.',
-    // UPDATED: The schema now reflects the object being returned
-    schema: { example: { totalProducts: 125 } },
-  })
-  // UPDATED: The return type is now an object, matching the frontend's expectation
-  async countProducts(): Promise<{ totalProducts: number }> {
-    const count = await this.productsService.countAllProducts();
-    // FIXED: Return an object instead of a raw number
-    return { totalProducts: count };
-  }
-  // --- ^^^^^^^ THIS IS THE UPDATED ENDPOINT ^^^^^^^ ---
-
-  // --- vvvvvvv ROUTE CORRECTED AND REMAINS PUBLIC vvvvvvv ---
-  @Public()
-  @Get('public/find/:id')
-  @ApiOperation({ summary: 'Retrieve a single active product by ID (Public)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieved the active product.',
-    type: ProductResponseDto,
-  })
-  @ApiNotFoundResponse({ description: 'Product not found or is not active.' })
-  @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
-  async findPublicOne(@Param('id') id: string): Promise<ProductResponseDto> {
-    const product = await this.productsService.findOneActive(id);
-    return plainToInstance(ProductResponseDto, product.toJSON());
-  }
-  // --- ^^^^^^^ ROUTE CORRECTED AND REMAINS PUBLIC ^^^^^^^ ---
-
   @Get(':id')
-  @ApiOperation({ summary: 'Retrieve a product by its ID' })
+  @ApiOperation({ summary: 'Retrieve a product by its ID (Requires Auth)' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved the product.',
@@ -151,7 +98,7 @@ export class ProductsController {
   }
 
   @Get('category/:categoryId')
-  @ApiOperation({ summary: 'Retrieve products by category ID' })
+  @ApiOperation({ summary: 'Retrieve products by category ID (Requires Auth)' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved products for the given category ID.',
@@ -171,7 +118,7 @@ export class ProductsController {
   }
 
   @Get('zone/:zoneId')
-  @ApiOperation({ summary: 'Retrieve products by zone ID' })
+  @ApiOperation({ summary: 'Retrieve products by zone ID (Requires Auth)' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved products for the given zone ID.',
@@ -191,7 +138,7 @@ export class ProductsController {
   }
 
   @Get('seller/:sellerId')
-  @ApiOperation({ summary: 'Retrieve products by seller ID' })
+  @ApiOperation({ summary: 'Retrieve products by seller ID (Requires Auth)' })
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved products for the given seller ID.',
