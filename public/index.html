@@ -149,7 +149,9 @@
             function fetchAllAnalyticsData() {
                 // Fetch each statistic individually. One failure will not stop the others.
                 fetchStat('/api/v1/users/count', document.getElementById('total-users-count'), 'totalUsers');
-                fetchStat('/api/v1/products/count', document.getElementById('total-products-count'), 'totalProducts');
+                // 👇 --- FIX IS HERE --- 👇
+                fetchStat('/api/v1/products/public/count', document.getElementById('total-products-count'), 'totalProducts');
+                // 👆 --- END OF FIX --- 👆
                 fetchStat('/api/v1/categories/count', document.getElementById('total-categories-count'), 'totalCategories');
                 fetchStat('/api/v1/zones/count', document.getElementById('total-zones-count'), 'totalZones');
 

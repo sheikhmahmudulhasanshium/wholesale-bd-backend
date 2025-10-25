@@ -1,4 +1,4 @@
-// src/products/public-products.controller.ts  <-- (You can create this new file)
+// src/products/public-products.controller.ts
 import { Controller, Get, Param, HttpStatus } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { ProductResponseDto } from './dto/product-response.dto';
@@ -30,7 +30,7 @@ export class PublicProductsController {
     );
   }
 
-  @Get('count')
+  @Get('public/count')
   @ApiOperation({ summary: 'Get the total count of products (Public)' })
   @ApiResponse({
     status: HttpStatus.OK,

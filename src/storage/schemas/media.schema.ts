@@ -1,32 +1,43 @@
+// src/storage/schemas/media.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { EntityModel } from 'src/uploads/enums/entity-model.enum';
-import { MediaType } from 'src/uploads/enums/media-type.enum';
 
 export type MediaDocument = Media & Document;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, strict: false }) // Use strict: false to allow dynamic keys
 export class Media {
   @Prop({ required: true })
   url: string;
 
-  @Prop() // Not required for links
+  @Prop()
   fileKey?: string;
 
-  @Prop({ required: true, enum: MediaType })
-  mediaType: MediaType;
+  @Prop({ required: true, type: String })
+  mediaType: string;
 
-  @Prop() // Not required for links
+  @Prop()
   mimeType?: string;
-
-  @Prop({ required: true })
-  entityId: string; // Storing as string to match your requirement for flexibility
 
   @Prop({ required: true, enum: EntityModel })
   entityModel: EntityModel;
+
+  // --- V ADDED: The new, indexed field for context/purpose ---
+  @Prop({ type: String, index: true })
+  purpose?: string;
+  // --- ^ END OF ADDED FIELD ^ ---
+
+  @Prop()
+  originalName?: string;
+
+  @Prop()
+  size?: number;
+
+  @Prop()
+  description?: string;
+
+  // Note: productId, userId, entityId, entityType etc. are now dynamic.
+  // We have removed the old redundant fields from the schema definition.
 }
 
 export const MediaSchema = SchemaFactory.createForClass(Media);
-
-// Indexing for faster lookups
-MediaSchema.index({ entityId: 1, entityModel: 1 });
