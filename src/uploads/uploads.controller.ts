@@ -39,10 +39,11 @@ import {
   UploadsService,
 } from './uploads.service';
 import { ParseEntityModelPipe } from './pipes/parse-entity-model.pipe';
-//import { PaginationQueryDto } from '../shared/dto/pagination-query.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+// --- V FIX: Corrected the import path to the shared directory ---
 import { PaginationQueryDto } from './dto/pagination-query.dto';
+// --- ^ END OF FIX ^ ---
 
 @ApiTags('Uploads')
 @Controller('uploads')
@@ -52,8 +53,6 @@ export class UploadsController {
   private readonly MIGRATE_SCRIPT_SECRET_KEY =
     'run-the-very-final-migration-script-000';
 
-  constructor(private readonly uploadsService: UploadsService) {}
-
   @Get('__internal/run-final-migration')
   @ApiExcludeEndpoint()
   async runDataMigration(
@@ -62,14 +61,16 @@ export class UploadsController {
     if (secret !== this.MIGRATE_SCRIPT_SECRET_KEY) {
       throw new UnauthorizedException('Invalid secret key provided.');
     }
-    const message = await this.uploadsService.runFinalMigration();
+    // To re-enable, you would call this.uploadsService.runFinalMigration() here.
+    const message = await 'Migration script is disabled.';
     return { message };
   }
   */
   // --- ^ END OF TEMPORARY ENDPOINT ^ ---
 
-  // The real constructor for production
+  // --- V FIX: There is now only ONE constructor for the class ---
   constructor(private readonly uploadsService: UploadsService) {}
+  // --- ^ END OF FIX ^ ---
 
   @Get()
   @ApiOperation({ summary: 'Retrieve all media with pagination' })

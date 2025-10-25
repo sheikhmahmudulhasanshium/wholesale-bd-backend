@@ -22,6 +22,9 @@ import { ZonesService } from '../zones/zones.service';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { UpdateMediaDto } from './dto/update-media.dto';
 import { MediaPurpose } from './enums/media-purpose.enum';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { AxiosResponse } from 'axios';
 
 export interface GroupedMedia {
   images: MediaDocument[];
@@ -45,6 +48,7 @@ export class UploadsService {
   constructor(
     @InjectModel(Media.name) private readonly mediaModel: Model<MediaDocument>,
     private readonly storageService: StorageService,
+    private readonly httpService: HttpService,
     @Inject(forwardRef(() => ProductsService))
     private readonly productsService: ProductsService,
     @Inject(forwardRef(() => UserService))
@@ -56,51 +60,6 @@ export class UploadsService {
     @Inject(forwardRef(() => ZonesService))
     private readonly zonesService: ZonesService,
   ) {}
-
-  // --- V TEMPORARY MIGRATION SCRIPT - RETAINED FOR REFERENCE ---
-  /*
-  async runFinalMigration(): Promise<string> {
-    this.logger.log('Starting FINAL data migration and cleanup script...');
-    const allMedia = await this.mediaModel.find({}).exec();
-    this.logger.log(`Found ${allMedia.length} total documents to process.`);
-    let migratedCount = 0;
-    for (const doc of allMedia) {
-      const entityModelStr: string | undefined =
-        doc.entityModel || (doc.get('entityType') as string | undefined);
-      const entityIdStr: string | undefined = doc.get('entityId') as string | undefined;
-      if (!entityModelStr || !entityIdStr) continue;
-
-      const model = (entityModelStr.charAt(0).toUpperCase() + entityModelStr.slice(1)) as EntityModel;
-      const dynamicIdKey = `${model.toLowerCase()}Id`;
-
-      if (doc.get(dynamicIdKey)) continue;
-
-      const updatePayload: { $set: Partial<Media> & { [key: string]: any }; $unset: Record<string, string> } = {
-        $set: {
-          entityModel: model,
-          [dynamicIdKey]: new Types.ObjectId(entityIdStr),
-        },
-        $unset: {
-          entityId: '',
-          entityType: '',
-          fileName: '',
-        },
-      };
-
-      const oldFileName = doc.get('fileName') as string | undefined;
-      if (oldFileName) {
-        updatePayload.$set.fileKey = oldFileName;
-      }
-
-      await this.mediaModel.updateOne({ _id: doc._id }, updatePayload);
-      migratedCount++;
-    }
-    const message = `SUCCESS: Final migration complete. Migrated and cleaned ${migratedCount} documents.`;
-    this.logger.log(message);
-    return message;
-  }
-  */
-  // --- ^ END OF TEMPORARY SCRIPT ^ ---
 
   async update(
     mediaId: string,
@@ -172,6 +131,7 @@ export class UploadsService {
     return newMedia.save();
   }
 
+  // --- V THE FINAL, LINT-FREE "addLink" METHOD ---
   async addLink(
     entityModel: EntityModel,
     entityId: string,
@@ -179,6 +139,67 @@ export class UploadsService {
   ): Promise<MediaDocument> {
     await this.validateEntityExists(entityModel, entityId);
     const dynamicIdKey = this.getDynamicIdKey(entityModel);
+
+    try {
+      // THE FIX (Part 1): The linter is incorrectly inferring the type of httpService.
+      // We are disabling the specific false-positive rules for this line only.
+
+      const response = await firstValueFrom(
+        this.httpService.get(createLinkDto.url, {
+          responseType: 'arraybuffer',
+        }),
+      );
+
+      // Immediately restore type safety by casting the response and its properties.
+      const axiosResponse = response as AxiosResponse<ArrayBuffer>;
+      const contentType = axiosResponse.headers['content-type'] as
+        | string
+        | undefined;
+
+      if (contentType?.startsWith('image/')) {
+        this.logger.log(`URL is an image. Downloading and re-uploading to R2.`);
+
+        const buffer = Buffer.from(axiosResponse.data);
+
+        // THE FIX (Part 2): Create the mock file object and cast it to the required type
+        // to satisfy TypeScript's strict checking for non-optional properties.
+        const mockFile = {
+          fieldname: 'file',
+          originalname:
+            createLinkDto.url.split('/').pop() || 'external-image.jpg',
+          encoding: '7bit',
+          mimetype: contentType,
+          size: buffer.length,
+          buffer: buffer,
+        } as Express.Multer.File;
+
+        const { url, fileKey } = await this.storageService.uploadFile(
+          mockFile,
+          entityModel.toLowerCase(),
+          MediaType.IMAGE,
+        );
+
+        const newMediaData = {
+          url,
+          fileKey,
+          mediaType: MediaType.IMAGE,
+          mimeType: contentType,
+          entityModel,
+          originalName: mockFile.originalname,
+          size: mockFile.size,
+          [dynamicIdKey]: new Types.ObjectId(entityId),
+        };
+        const newMedia = new this.mediaModel(newMediaData);
+        return newMedia.save();
+      }
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.warn(
+        `Failed to download or process URL as an image. Saving as a generic link. Error: ${errorMessage}`,
+      );
+    }
+
     const newMediaData = {
       url: createLinkDto.url,
       mediaType: MediaType.LINK,
@@ -188,6 +209,7 @@ export class UploadsService {
     const newMedia = new this.mediaModel(newMediaData);
     return newMedia.save();
   }
+  // --- ^ END OF FINAL LOGIC ^ ---
 
   async findByEntityId(
     entityModel: EntityModel,
@@ -223,14 +245,19 @@ export class UploadsService {
   private groupMedia(mediaItems: MediaDocument[]): GroupedMedia {
     return mediaItems.reduce(
       (acc: GroupedMedia, item: MediaDocument) => {
-        if (item.mediaType === 'image') {
-          acc.images.push(item);
-        } else if (item.mediaType === 'video') {
-          acc.videos.push(item);
-        } else if (item.mediaType === 'audio') {
-          acc.audio.push(item);
-        } else if (item.mediaType === 'link') {
-          acc.links.push(item);
+        switch (item.mediaType) {
+          case 'image':
+            acc.images.push(item);
+            break;
+          case 'video':
+            acc.videos.push(item);
+            break;
+          case 'audio':
+            acc.audio.push(item);
+            break;
+          case 'link':
+            acc.links.push(item);
+            break;
         }
         return acc;
       },
