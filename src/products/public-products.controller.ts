@@ -1,7 +1,8 @@
 // src/products/public-products.controller.ts
 import { Controller, Get, Param, HttpStatus } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { ProductResponseDto } from './dto/product-response.dto';
+// --- MODIFY THIS IMPORT to use our new public DTO ---
+import { PublicProductResponseDto } from './dto/public-product-response.dto';
 import {
   ApiTags,
   ApiOperation,
@@ -21,12 +22,68 @@ export class PublicProductsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved all active products.',
-    type: [ProductResponseDto],
+    // --- UPDATE RESPONSE TYPE ---
+    type: [PublicProductResponseDto],
   })
-  async findAllPublic(): Promise<ProductResponseDto[]> {
+  async findAllPublic(): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findAllActive();
     return products.map((product) =>
-      plainToInstance(ProductResponseDto, product.toJSON()),
+      // --- UPDATE DTO MAPPING ---
+      plainToInstance(PublicProductResponseDto, product.toJSON()),
+    );
+  }
+
+  // --- ADD THIS NEW METHOD ---
+  @Get('public/category/:categoryId')
+  @ApiOperation({ summary: 'Retrieve products by category ID (Public)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved products for the given category ID.',
+    type: [PublicProductResponseDto],
+  })
+  @ApiBadRequestResponse({ description: 'Invalid category ID format.' })
+  async findProductsByCategoryId(
+    @Param('categoryId') categoryId: string,
+  ): Promise<PublicProductResponseDto[]> {
+    const products = await this.productsService.findByCategoryId(categoryId);
+    return products.map((product) =>
+      plainToInstance(PublicProductResponseDto, product.toJSON()),
+    );
+  }
+
+  // --- ADD THIS NEW METHOD ---
+  @Get('public/zone/:zoneId')
+  @ApiOperation({ summary: 'Retrieve products by zone ID (Public)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved products for the given zone ID.',
+    type: [PublicProductResponseDto],
+  })
+  @ApiBadRequestResponse({ description: 'Invalid zone ID format.' })
+  async findProductsByZoneId(
+    @Param('zoneId') zoneId: string,
+  ): Promise<PublicProductResponseDto[]> {
+    const products = await this.productsService.findByZoneId(zoneId);
+    return products.map((product) =>
+      plainToInstance(PublicProductResponseDto, product.toJSON()),
+    );
+  }
+
+  // --- ADD THIS NEW METHOD ---
+  @Get('public/seller/:sellerId')
+  @ApiOperation({ summary: 'Retrieve products by seller ID (Public)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Successfully retrieved products for the given seller ID.',
+    type: [PublicProductResponseDto],
+  })
+  @ApiBadRequestResponse({ description: 'Invalid seller ID format.' })
+  async findProductsBySellerId(
+    @Param('sellerId') sellerId: string,
+  ): Promise<PublicProductResponseDto[]> {
+    const products = await this.productsService.findBySellerId(sellerId);
+    return products.map((product) =>
+      plainToInstance(PublicProductResponseDto, product.toJSON()),
     );
   }
 
@@ -47,12 +104,16 @@ export class PublicProductsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved the active product.',
-    type: ProductResponseDto,
+    // --- UPDATE RESPONSE TYPE ---
+    type: PublicProductResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Product not found or is not active.' })
   @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
-  async findPublicOne(@Param('id') id: string): Promise<ProductResponseDto> {
+  async findPublicOne(
+    @Param('id') id: string,
+  ): Promise<PublicProductResponseDto> {
     const product = await this.productsService.findOneActive(id);
-    return plainToInstance(ProductResponseDto, product.toJSON());
+    // --- UPDATE DTO MAPPING ---
+    return plainToInstance(PublicProductResponseDto, product.toJSON());
   }
 }

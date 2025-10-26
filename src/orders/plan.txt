@@ -1,0 +1,167 @@
+Of course. Here is the complete project plan consolidated into a single document. It details all the changes, new features, and the specific files I will need from your codebase to guide you through the implementation.
+
+Project Plan: WholesaleBD API Evolution
+
+This document outlines the plan to update the WholesaleBD backend API. The goals are to open up product browsing for public access, introduce new user interaction features like view counts and reviews, and implement a complete shopping cart system.
+
+1. Summary of Endpoint Changes & Additions
+Method	Endpoint	Status	Authentication	Key Logic
+GET	/api/v1/products/category/{categoryId}	Modified	Public	Returns all products in a category. Hides the orderCount field.
+GET	/api/v1/products/zone/{zoneId}	Modified	Public	Returns all products in a zone. Hides the orderCount field.
+GET	/api/v1/products/seller/{sellerId}	Modified	Public	Returns all products for a seller. Hides the orderCount field.
+PATCH	/api/v1/products/{productId}/view	New	Public	Increments product view count organically. See detailed logic below.
+POST	/api/v1/products/{productId}/reviews	New	Protected	Allows a logged-in user to add a rating and review for a product.
+POST	/api/v1/cart/items	New	Protected	Adds an item (or updates its quantity) in the user's cart.
+GET	/api/v1/cart	New	Protected	Retrieves the contents of the user's cart.
+DELETE	/api/v1/cart/items/{productId}	New	Protected	Removes a specific item from the user's cart.
+DELETE	/api/v1/cart	New	Protected	Clears all items from the user's cart.
+2. Database Schema Modifications
+
+To support the new features, the following database changes are required.
+
+A. New Cart Model
+A new collection named carts will be created to manage user shopping carts.
+
+File to Create: models/cart.model.js (or similar)
+
+Schema Definition:
+
+code
+JavaScript
+download
+content_copy
+expand_less
+const cartSchema = new mongoose.Schema({
+  userId: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', // Links to the User who owns the cart
+    required: true,
+    unique: true // Each user has only one cart
+  },
+  items: [
+    {
+      productId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Product', // Links to the Product in the cart
+        required: true 
+      },
+      quantity: { 
+        type: Number, 
+        required: true,
+        min: 1
+      }
+    }
+  ]
+}, { timestamps: true }); // `timestamps` adds createdAt and updatedAt
+
+B. Updates to Product Model
+To handle reviews directly on the product, we will add a reviews array to the existing product schema.
+
+File to Modify: models/product.model.js (or similar)
+
+Additions to productSchema:
+
+code
+JavaScript
+download
+content_copy
+expand_less
+// ... inside your existing productSchema definition
+reviews: [
+  {
+    userId: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: 'User',
+      required: true
+    },
+    rating: { 
+      type: Number, 
+      required: true, 
+      min: 1, 
+      max: 5 
+    },
+    comment: { 
+      type: String, 
+      trim: true 
+    },
+    createdAt: { 
+      type: Date, 
+      default: Date.now 
+    }
+  }
+]
+// The existing fields `rating` and `reviewCount` will be updated programmatically
+// whenever a new review is added to this array.
+3. Implementation Deep Dive: Organic View Count
+
+To ensure the view count is a trustworthy metric, we will implement a multi-layered strategy.
+
+Endpoint: PATCH /api/v1/products/{productId}/view (Public)
+
+A. Frontend Logic (Client-Side)
+
+Goal: Prevent a user from inflating views by refreshing the page.
+
+Tool: Browser sessionStorage.
+
+Workflow:
+
+When a product page loads, check sessionStorage for a viewedProducts array.
+
+If the current product's ID is NOT in the array:
+
+Make the API call to the PATCH endpoint.
+
+On success, add the product ID to the viewedProducts array in sessionStorage.
+
+If the product's ID IS in the array, do nothing.
+
+B. Backend Logic (Server-Side)
+
+Goal: Prevent sellers from inflating their own product views and block simple bots.
+
+Workflow:
+
+Rate Limiting: Implement IP-based rate limiting on this endpoint (e.g., max 20 requests per IP per 5 minutes) using a library like express-rate-limit. This is the first line of defense against bots.
+
+Ownership Check: Inside the controller, check if a user is logged in.
+
+If a user is logged in (req.user exists), compare req.user.id with the product.sellerId.
+
+If they match, return a 200 OK success response immediately without incrementing the view count. This silently prevents the seller from boosting their stats.
+
+Increment: If the checks pass (or if the visitor is not logged in), proceed to atomically increment the viewCount in the database.
+
+4. Required Codebase Files
+
+To provide you with the exact code modifications and new files, I will need to see the following from your project. Please provide the contents of these files.
+
+Main Server File:
+
+This is your application's entry point, likely named server.js, app.js, or index.js. It shows how you set up Express, middleware, and routes.
+
+Routing Files:
+
+Product Routes: The file that defines all /api/v1/products/... routes. It's likely named routes/product.routes.js or similar.
+
+Main Router File (if any): If you have a central index.js inside your routes folder that aggregates all other route files.
+
+Model/Schema Files:
+
+Product Model: The Mongoose schema definition for your products collection. Likely models/product.model.js.
+
+User Model: The Mongoose schema for your users collection. This is needed for the cart and review logic. Likely models/user.model.js.
+
+Controller Files:
+
+Product Controller: The file containing the logic for handling product-related requests (e.g., getProductsByCategory). Likely controllers/product.controller.js.
+
+Middleware Files:
+
+Authentication Middleware: The file that contains your token verification logic (the function that checks for a valid JWT and attaches req.user). This is crucial for distinguishing between public and protected actions. Likely middleware/auth.middleware.js.
+
+Once you provide these files, I can give you a step-by-step coding guide based on this plan.
+
+ also forgot to mention
+user makes order request->admin verifies it by order id (like stock availability seller, user trustiness etc(semi manual) )->then added to cart(updates stock, status).
+
