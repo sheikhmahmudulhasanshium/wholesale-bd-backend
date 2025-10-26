@@ -30,7 +30,9 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 export class UsersController {
   constructor(private readonly usersService: UserService) {}
 
-  // --- vvvvvvv LINTER ERROR FIXED HERE vvvvvvv ---
+  // --- vvvvvvvvvv FIX APPLIED HERE vvvvvvvvvv ---
+  // REMOVED the @Roles(UserRole.ADMIN) decorator.
+  // Now, any authenticated user can access their own profile.
   @Get('me')
   @ApiOperation({ summary: 'Get the currently authenticated user profile' })
   @ApiOkResponse({
@@ -38,12 +40,10 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiUnauthorizedResponse({ description: 'Unauthorized.' })
-  // REMOVED `async` and `Promise<>` because the method is now synchronous
   getProfile(@CurrentUser() user: UserDocument): UserResponseDto {
-    // This is now a simple synchronous operation
     return this.usersService.toUserResponseDto(user);
   }
-  // --- ^^^^^^^ LINTER ERROR FIXED HERE ^^^^^^^ ---
+  // --- ^^^^^^^^^^ FIX APPLIED HERE ^^^^^^^^^^ ---
 
   @Public()
   @Get('count')
