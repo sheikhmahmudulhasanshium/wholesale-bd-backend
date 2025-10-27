@@ -1,7 +1,6 @@
 // src/products/public-products.controller.ts
 import { Controller, Get, Param, HttpStatus } from '@nestjs/common';
 import { ProductsService } from './products.service';
-// --- MODIFY THIS IMPORT to use our new public DTO ---
 import { PublicProductResponseDto } from './dto/public-product-response.dto';
 import {
   ApiTags,
@@ -13,7 +12,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 
 @ApiTags('Products (Public)')
-@Controller('products') // Stays the same to keep the URL prefix
+@Controller('products')
 export class PublicProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
@@ -22,18 +21,13 @@ export class PublicProductsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved all active products.',
-    // --- UPDATE RESPONSE TYPE ---
     type: [PublicProductResponseDto],
   })
   async findAllPublic(): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findAllActive();
-    return products.map((product) =>
-      // --- UPDATE DTO MAPPING ---
-      plainToInstance(PublicProductResponseDto, product.toJSON()),
-    );
+    return plainToInstance(PublicProductResponseDto, products);
   }
 
-  // --- ADD THIS NEW METHOD ---
   @Get('public/category/:categoryId')
   @ApiOperation({ summary: 'Retrieve products by category ID (Public)' })
   @ApiResponse({
@@ -46,12 +40,9 @@ export class PublicProductsController {
     @Param('categoryId') categoryId: string,
   ): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findByCategoryId(categoryId);
-    return products.map((product) =>
-      plainToInstance(PublicProductResponseDto, product.toJSON()),
-    );
+    return plainToInstance(PublicProductResponseDto, products);
   }
 
-  // --- ADD THIS NEW METHOD ---
   @Get('public/zone/:zoneId')
   @ApiOperation({ summary: 'Retrieve products by zone ID (Public)' })
   @ApiResponse({
@@ -64,12 +55,9 @@ export class PublicProductsController {
     @Param('zoneId') zoneId: string,
   ): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findByZoneId(zoneId);
-    return products.map((product) =>
-      plainToInstance(PublicProductResponseDto, product.toJSON()),
-    );
+    return plainToInstance(PublicProductResponseDto, products);
   }
 
-  // --- ADD THIS NEW METHOD ---
   @Get('public/seller/:sellerId')
   @ApiOperation({ summary: 'Retrieve products by seller ID (Public)' })
   @ApiResponse({
@@ -82,9 +70,7 @@ export class PublicProductsController {
     @Param('sellerId') sellerId: string,
   ): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findBySellerId(sellerId);
-    return products.map((product) =>
-      plainToInstance(PublicProductResponseDto, product.toJSON()),
-    );
+    return plainToInstance(PublicProductResponseDto, products);
   }
 
   @Get('public/count')
@@ -104,7 +90,6 @@ export class PublicProductsController {
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'Successfully retrieved the active product.',
-    // --- UPDATE RESPONSE TYPE ---
     type: PublicProductResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Product not found or is not active.' })
@@ -113,7 +98,6 @@ export class PublicProductsController {
     @Param('id') id: string,
   ): Promise<PublicProductResponseDto> {
     const product = await this.productsService.findOneActive(id);
-    // --- UPDATE DTO MAPPING ---
-    return plainToInstance(PublicProductResponseDto, product.toJSON());
+    return plainToInstance(PublicProductResponseDto, product);
   }
 }

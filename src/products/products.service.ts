@@ -4,21 +4,94 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Product, ProductDocument } from './schemas/product.schema';
-import { CreateProductDto, UpdateProductDto } from './dto/product-response.dto';
+import {
+  Product,
+  ProductDocument,
+  ProductMedia,
+} from './schemas/product.schema';
+import {
+  CreateProductDto,
+  ProductResponseDto,
+  UpdateProductDto,
+} from './dto/product-response.dto';
+import { ProductMediaPurpose } from './enums/product-media-purpose.enum';
+import { StorageService } from 'src/storage/storage.service';
+import { AddMediaFromUrlDto } from './dto/add-media-from-url.dto';
+import { UpdateMediaPropertiesDto } from './dto/update-media-properties.dto';
+import { ProductMediaDto } from './dto/product-media.dto';
+import { MediaType } from 'src/uploads/enums/media-type.enum';
+import { plainToInstance } from 'class-transformer';
+import { UserDocument, UserRole } from 'src/users/schemas/user.schema';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
+    private readonly storageService: StorageService,
   ) {}
 
-  async create(createProductDto: CreateProductDto): Promise<ProductDocument> {
-    const { name, sku } = createProductDto;
+  private _mapProductToResponse(product: ProductDocument): ProductResponseDto {
+    const productObj = product.toObject() as Product;
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { media, images: _images, ...restOfProduct } = productObj;
+
+    const sortedMedia: ProductMedia[] = (media || []).sort(
+      (a, b) => a.priority - b.priority,
+    );
+
+    const thumbnail =
+      sortedMedia.find((m) => m.purpose === ProductMediaPurpose.THUMBNAIL) ||
+      null;
+    const previews = sortedMedia.filter(
+      (m) => m.purpose === ProductMediaPurpose.PREVIEW,
+    );
+
+    const sourceObject = {
+      ...restOfProduct,
+      _id: productObj._id.toString(),
+      categoryId: productObj.categoryId.toString(),
+      zoneId: productObj.zoneId.toString(),
+      sellerId: productObj.sellerId.toString(),
+      thumbnail: thumbnail ? ProductMediaDto.fromSchema(thumbnail) : null,
+      previews: previews.map((mediaItem) =>
+        ProductMediaDto.fromSchema(mediaItem),
+      ),
+    };
+
+    return plainToInstance(ProductResponseDto, sourceObject);
+  }
+
+  private _verifyOwnership(product: ProductDocument, user: UserDocument): void {
+    if (user.role === UserRole.ADMIN) {
+      return;
+    }
+    if (product.sellerId.toString() !== user._id.toString()) {
+      throw new ForbiddenException(
+        'You do not have permission to modify this product.',
+      );
+    }
+  }
+
+  async create(
+    createProductDto: CreateProductDto,
+    user: UserDocument,
+  ): Promise<ProductDocument> {
+    if (
+      user.role === UserRole.SELLER &&
+      createProductDto.sellerId !== user._id.toString()
+    ) {
+      throw new ForbiddenException(
+        'You can only create products for your own seller account.',
+      );
+    }
+
+    const { name, sku, images } = createProductDto;
 
     const existingProductByName = await this.productModel
       .findOne({ name })
@@ -40,30 +113,35 @@ export class ProductsService {
       }
     }
 
-    try {
-      const createdProduct = new this.productModel(createProductDto);
-      return await createdProduct.save();
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'ValidationError') {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
+    const createdProduct = new this.productModel(createProductDto);
+
+    if (images && images.length > 0) {
+      createdProduct.media = images.map((url, index) => ({
+        _id: new Types.ObjectId(),
+        url,
+        purpose:
+          index === 0
+            ? ProductMediaPurpose.THUMBNAIL
+            : ProductMediaPurpose.PREVIEW,
+        priority: index,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }));
     }
+    return await createdProduct.save();
   }
 
-  async findAll(): Promise<ProductDocument[]> {
-    return this.productModel.find().exec();
+  async findAll(): Promise<ProductResponseDto[]> {
+    const products = await this.productModel.find().exec();
+    return products.map((p) => this._mapProductToResponse(p));
   }
 
-  /**
-   * Retrieves all active products. For public use.
-   * @returns An array of active product documents.
-   */
-  async findAllActive(): Promise<ProductDocument[]> {
-    return this.productModel.find({ status: 'active' }).exec();
+  async findAllActive(): Promise<ProductResponseDto[]> {
+    const products = await this.productModel.find({ status: 'active' }).exec();
+    return products.map((p) => this._mapProductToResponse(p));
   }
 
-  async findOne(id: string): Promise<ProductDocument> {
+  async findOne(id: string): Promise<ProductResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
     }
@@ -71,17 +149,10 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
-    return product;
+    return this._mapProductToResponse(product);
   }
 
-  /**
-   * Retrieves a single active product by its ID. For public use.
-   * @param id The ID of the product.
-   * @returns A product document if found and active.
-   * @throws BadRequestException if the product ID format is invalid.
-   * @throws NotFoundException if the product is not found or is not active.
-   */
-  async findOneActive(id: string): Promise<ProductDocument> {
+  async findOneActive(id: string): Promise<ProductResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
     }
@@ -89,131 +160,244 @@ export class ProductsService {
       .findOne({ _id: id, status: 'active' })
       .exec();
     if (!product) {
-      // Intentionally use NotFoundException to avoid leaking information
-      // about the existence of inactive products.
       throw new NotFoundException(
         `Product with ID "${id}" not found or is not active.`,
       );
     }
-    return product;
+    return this._mapProductToResponse(product);
   }
 
   async update(
     id: string,
     updateProductDto: UpdateProductDto,
-  ): Promise<ProductDocument> {
+    user: UserDocument,
+  ): Promise<ProductResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
     }
 
-    const { name, sku } = updateProductDto;
-
-    if (name) {
-      const existingProductByName = await this.productModel
-        .findOne({ name, _id: { $ne: id } })
-        .exec();
-      if (existingProductByName) {
-        throw new ConflictException(
-          `A product with the name "${name}" already exists.`,
-        );
-      }
+    const product = await this.productModel.findById(id);
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
 
-    if (sku) {
-      const existingProductBySku = await this.productModel
-        .findOne({ sku, _id: { $ne: id } })
-        .exec();
-      if (existingProductBySku) {
-        throw new ConflictException(
-          `A product with the SKU "${sku}" already exists.`,
-        );
-      }
-    }
+    this._verifyOwnership(product, user);
 
-    try {
-      const updatedProduct = await this.productModel
-        .findByIdAndUpdate(id, updateProductDto, {
-          new: true,
-          runValidators: true,
-        })
-        .exec();
+    // --- VVVVVVV THIS IS THE CORRECTED SECTION VVVVVVV ---
+    // FIX: Add eslint-disable comment for intentionally unused '_id' variable during destructuring.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, ...updateData } = updateProductDto;
+    // --- ^^^^^^^ THIS IS THE CORRECTED SECTION ^^^^^^^ ---
 
-      if (!updatedProduct) {
-        throw new NotFoundException(`Product with ID "${id}" not found.`);
-      }
-      return updatedProduct;
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'ValidationError') {
-        throw new BadRequestException(error.message);
-      }
-      throw error;
-    }
+    Object.assign(product, updateData);
+    const updatedProduct = await product.save();
+
+    return this._mapProductToResponse(updatedProduct);
   }
 
-  /**
-   * Retrieves products belonging to a specific category ID.
-   * @param categoryId The ID of the category.
-   * @returns An array of product documents in that category.
-   * @throws BadRequestException if the category ID format is invalid.
-   */
-  async findByCategoryId(categoryId: string): Promise<ProductDocument[]> {
+  async findByCategoryId(categoryId: string): Promise<ProductResponseDto[]> {
     if (!Types.ObjectId.isValid(categoryId)) {
       throw new BadRequestException(
         `Invalid category ID format: "${categoryId}"`,
       );
     }
-    // Mongoose will automatically cast the string categoryId to ObjectId for the query
     const products = await this.productModel
       .find({ categoryId: categoryId })
       .exec();
-    return products;
+    return products.map((p) => this._mapProductToResponse(p));
   }
 
-  /**
-   * Retrieves products available in a specific zone ID.
-   * @param zoneId The ID of the zone.
-   * @returns An array of product documents available in that zone.
-   * @throws BadRequestException if the zone ID format is invalid.
-   */
-  async findByZoneId(zoneId: string): Promise<ProductDocument[]> {
+  async findByZoneId(zoneId: string): Promise<ProductResponseDto[]> {
     if (!Types.ObjectId.isValid(zoneId)) {
       throw new BadRequestException(`Invalid zone ID format: "${zoneId}"`);
     }
     const products = await this.productModel.find({ zoneId: zoneId }).exec();
-    return products;
+    return products.map((p) => this._mapProductToResponse(p));
   }
 
-  /**
-   * Retrieves products belonging to a specific seller ID.
-   * @param sellerId The ID of the seller.
-   * @returns An array of product documents owned by that seller.
-   * @throws BadRequestException if the seller ID format is invalid.
-   */
-  async findBySellerId(sellerId: string): Promise<ProductDocument[]> {
+  async findBySellerId(sellerId: string): Promise<ProductResponseDto[]> {
     if (!Types.ObjectId.isValid(sellerId)) {
       throw new BadRequestException(`Invalid seller ID format: "${sellerId}"`);
     }
     const products = await this.productModel
       .find({ sellerId: sellerId })
       .exec();
-    return products;
+    return products.map((p) => this._mapProductToResponse(p));
   }
 
-  /**
-   * Retrieves the total count of all products.
-   * @returns The total number of products.
-   */
-  async countAllProducts(): Promise<number> {
-    return this.productModel.countDocuments().exec();
+  private async _addMedia(
+    productId: string,
+    mediaData: { url: string; fileKey?: string },
+    purpose: ProductMediaPurpose,
+    user: UserDocument,
+  ): Promise<ProductDocument> {
+    const product = await this.productModel.findById(productId);
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found.`);
+    }
+
+    this._verifyOwnership(product, user);
+
+    if (purpose === ProductMediaPurpose.THUMBNAIL) {
+      product.media.forEach((m) => {
+        if (m.purpose === ProductMediaPurpose.THUMBNAIL) {
+          m.purpose = ProductMediaPurpose.PREVIEW;
+        }
+      });
+    }
+    const newMedia: ProductMedia = {
+      _id: new Types.ObjectId(),
+      url: mediaData.url,
+      fileKey: mediaData.fileKey,
+      purpose,
+      priority: product.media.length,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    product.media.push(newMedia);
+    return product.save();
   }
 
-  async remove(id: string): Promise<void> {
+  async addMediaFromUrl(
+    productId: string,
+    dto: AddMediaFromUrlDto,
+    purpose: ProductMediaPurpose,
+    user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const updatedProduct = await this._addMedia(
+      productId,
+      { url: dto.url },
+      purpose,
+      user,
+    );
+    return this._mapProductToResponse(updatedProduct);
+  }
+
+  async addMediaFromFile(
+    productId: string,
+    file: Express.Multer.File,
+    purpose: ProductMediaPurpose,
+    user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const { url, fileKey } = await this.storageService.uploadFile(
+      file,
+      'product',
+      MediaType.IMAGE,
+    );
+    const updatedProduct = await this._addMedia(
+      productId,
+      { url, fileKey },
+      purpose,
+      user,
+    );
+    return this._mapProductToResponse(updatedProduct);
+  }
+
+  async updateMediaProperties(
+    productId: string,
+    mediaId: string,
+    dto: UpdateMediaPropertiesDto,
+    user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productModel.findById(productId);
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found.`);
+    }
+
+    this._verifyOwnership(product, user);
+
+    const mediaItem = product.media.find(
+      (m) => m._id.toHexString() === mediaId,
+    );
+    if (!mediaItem) {
+      throw new NotFoundException(
+        `Media with ID "${mediaId}" not found on this product.`,
+      );
+    }
+
+    if (
+      dto.purpose === ProductMediaPurpose.THUMBNAIL &&
+      mediaItem.purpose !== ProductMediaPurpose.THUMBNAIL
+    ) {
+      product.media.forEach((m) => {
+        if (m.purpose === ProductMediaPurpose.THUMBNAIL) {
+          m.purpose = ProductMediaPurpose.PREVIEW;
+        }
+      });
+    }
+
+    if (dto.purpose) {
+      mediaItem.purpose = dto.purpose;
+    }
+    if (dto.priority !== undefined) {
+      mediaItem.priority = dto.priority;
+    }
+
+    await product.save();
+    return this._mapProductToResponse(product);
+  }
+
+  async deleteMedia(
+    productId: string,
+    mediaId: string,
+    user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productModel.findById(productId);
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found.`);
+    }
+
+    this._verifyOwnership(product, user);
+
+    const mediaToDelete = product.media.find(
+      (m) => m._id.toHexString() === mediaId,
+    );
+    if (mediaToDelete?.fileKey) {
+      this.storageService.deleteFile(mediaToDelete.fileKey).catch((err) => {
+        console.error(
+          `Failed to delete file from storage: ${mediaToDelete.fileKey}`,
+          err,
+        );
+      });
+    }
+
+    product.media = product.media.filter(
+      (m) => m._id.toHexString() !== mediaId,
+    );
+
+    await product.save();
+    return this._mapProductToResponse(product);
+  }
+
+  async remove(id: string, user: UserDocument): Promise<void> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
     }
+    const product = await this.productModel.findById(id);
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${id}" not found.`);
+    }
+
+    this._verifyOwnership(product, user);
+
+    product.media.forEach((media) => {
+      if (media.fileKey) {
+        this.storageService.deleteFile(media.fileKey).catch((err) => {
+          console.error(
+            `Failed to delete file from storage: ${media.fileKey}`,
+            err,
+          );
+        });
+      }
+    });
+
     const result = await this.productModel.deleteOne({ _id: id }).exec();
     if (result.deletedCount === 0) {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
+  }
+
+  async countAllProducts(): Promise<number> {
+    return this.productModel.countDocuments().exec();
   }
 }

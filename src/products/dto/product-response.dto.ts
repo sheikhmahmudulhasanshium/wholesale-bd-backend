@@ -1,3 +1,4 @@
+// src/products/dto/product-response.dto.ts
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsString,
@@ -13,7 +14,8 @@ import {
   IsUrl,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
-import { Types } from 'mongoose'; // Import Types from mongoose
+import { Types } from 'mongoose';
+import { ProductMediaDto } from './product-media.dto'; // <-- IMPORT NEW DTO
 
 export class PricingTierDto {
   @ApiProperty({
@@ -64,10 +66,12 @@ export class CreateProductDto {
   description: string;
 
   @ApiProperty({
-    description: 'An array of URLs for product images',
+    description:
+      'DEPRECATED: An array of URLs for product images. Use the new media endpoints instead.',
     type: [String],
     example: ['https://example.com/samsung-a54-front.jpg'],
     required: false,
+    deprecated: true,
   })
   @IsOptional()
   @IsArray()
@@ -243,12 +247,21 @@ export class ProductResponseDto {
   })
   description: string;
 
+  // --- V MODIFIED: Replaced 'images' with structured media properties ---
   @ApiProperty({
-    description: 'An array of URLs for product images',
-    type: [String],
-    example: ['https://example.com/samsung-a54-front.jpg'],
+    description: 'The primary thumbnail image for the product.',
+    type: ProductMediaDto,
+    nullable: true,
   })
-  images: string[];
+  thumbnail: ProductMediaDto | null;
+
+  @ApiProperty({
+    description:
+      'An array of preview media items for the product, sorted by priority.',
+    type: [ProductMediaDto],
+  })
+  previews: ProductMediaDto[];
+  // --- ^ END of MODIFICATION ---
 
   @ApiProperty({
     description: 'The MongoDB ObjectId of the category this product belongs to',

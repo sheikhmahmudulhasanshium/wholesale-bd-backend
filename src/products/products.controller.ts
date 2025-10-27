@@ -1,4 +1,4 @@
-// src/products/products.controller.ts (Updated)
+// src/products/products.controller.ts
 import {
   Controller,
   Get,
@@ -10,7 +10,13 @@ import {
   HttpStatus,
   UseGuards,
   HttpCode,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  // Note: FileTypeValidator is no longer imported from @nestjs/common
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
 import {
   CreateProductDto,
@@ -25,14 +31,21 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConsumes,
+  ApiBody,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../users/schemas/user.schema';
+import { UserDocument, UserRole } from '../users/schemas/user.schema';
+import { AddMediaFromUrlDto } from './dto/add-media-from-url.dto';
+import { UpdateMediaPropertiesDto } from './dto/update-media-properties.dto';
+import { ProductMediaPurpose } from './enums/product-media-purpose.enum';
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { FileMimeTypeValidator } from './validators/file-mimetype.validator'; // <-- IMPORT THE CUSTOM VALIDATOR
 
-@ApiTags('Products (Protected)') // Updated tag for clarity in Swagger
+@ApiTags('Products (Protected)')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('products')
@@ -58,9 +71,16 @@ export class ProductsController {
   })
   async create(
     @Body() createProductDto: CreateProductDto,
+    @CurrentUser() user: UserDocument,
   ): Promise<ProductResponseDto> {
-    const product = await this.productsService.create(createProductDto);
-    return plainToInstance(ProductResponseDto, product.toJSON());
+    const productDoc = await this.productsService.create(
+      createProductDto,
+      user,
+    );
+    const mappedProduct = await this.productsService.findOne(
+      productDoc._id.toHexString(),
+    );
+    return plainToInstance(ProductResponseDto, mappedProduct);
   }
 
   @Get()
@@ -75,9 +95,7 @@ export class ProductsController {
   })
   async findAll(): Promise<ProductResponseDto[]> {
     const products = await this.productsService.findAll();
-    return products.map((product) =>
-      plainToInstance(ProductResponseDto, product.toJSON()),
-    );
+    return plainToInstance(ProductResponseDto, products);
   }
 
   @Get(':id')
@@ -94,67 +112,7 @@ export class ProductsController {
   })
   async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
     const product = await this.productsService.findOne(id);
-    return plainToInstance(ProductResponseDto, product.toJSON());
-  }
-
-  @Get('category/:categoryId')
-  @ApiOperation({ summary: 'Retrieve products by category ID (Requires Auth)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieved products for the given category ID.',
-    type: [ProductResponseDto],
-  })
-  @ApiBadRequestResponse({ description: 'Invalid category ID format.' })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid or missing token.',
-  })
-  async findProductsByCategoryId(
-    @Param('categoryId') categoryId: string,
-  ): Promise<ProductResponseDto[]> {
-    const products = await this.productsService.findByCategoryId(categoryId);
-    return products.map((product) =>
-      plainToInstance(ProductResponseDto, product.toJSON()),
-    );
-  }
-
-  @Get('zone/:zoneId')
-  @ApiOperation({ summary: 'Retrieve products by zone ID (Requires Auth)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieved products for the given zone ID.',
-    type: [ProductResponseDto],
-  })
-  @ApiBadRequestResponse({ description: 'Invalid zone ID format.' })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid or missing token.',
-  })
-  async findProductsByZoneId(
-    @Param('zoneId') zoneId: string,
-  ): Promise<ProductResponseDto[]> {
-    const products = await this.productsService.findByZoneId(zoneId);
-    return products.map((product) =>
-      plainToInstance(ProductResponseDto, product.toJSON()),
-    );
-  }
-
-  @Get('seller/:sellerId')
-  @ApiOperation({ summary: 'Retrieve products by seller ID (Requires Auth)' })
-  @ApiResponse({
-    status: HttpStatus.OK,
-    description: 'Successfully retrieved products for the given seller ID.',
-    type: [ProductResponseDto],
-  })
-  @ApiBadRequestResponse({ description: 'Invalid seller ID format.' })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized. Invalid or missing token.',
-  })
-  async findProductsBySellerId(
-    @Param('sellerId') sellerId: string,
-  ): Promise<ProductResponseDto[]> {
-    const products = await this.productsService.findBySellerId(sellerId);
-    return products.map((product) =>
-      plainToInstance(ProductResponseDto, product.toJSON()),
-    );
+    return plainToInstance(ProductResponseDto, product);
   }
 
   @Patch(':id')
@@ -177,9 +135,14 @@ export class ProductsController {
   async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
+    @CurrentUser() user: UserDocument,
   ): Promise<ProductResponseDto> {
-    const product = await this.productsService.update(id, updateProductDto);
-    return plainToInstance(ProductResponseDto, product.toJSON());
+    const product = await this.productsService.update(
+      id,
+      updateProductDto,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
   }
 
   @Delete(':id')
@@ -197,7 +160,159 @@ export class ProductsController {
   @ApiUnauthorizedResponse({
     description: 'Unauthorized. Invalid or missing token.',
   })
-  async remove(@Param('id') id: string): Promise<void> {
-    return this.productsService.remove(id);
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+  ): Promise<void> {
+    return this.productsService.remove(id, user);
+  }
+
+  // --- MEDIA MANAGEMENT ENDPOINTS ---
+
+  @Post(':id/thumbnail/upload')
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload or replace the product thumbnail' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiResponse({ status: 201, type: ProductResponseDto })
+  async uploadThumbnail(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
+          new FileMimeTypeValidator({
+            // <-- USE THE CUSTOM VALIDATOR
+            mimeType: ['image/jpeg', 'image/png', 'image/webp'],
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.addMediaFromFile(
+      id,
+      file,
+      ProductMediaPurpose.THUMBNAIL,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
+  }
+
+  @Post(':id/thumbnail/from-url')
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @ApiOperation({ summary: 'Set or replace the product thumbnail from a URL' })
+  @ApiResponse({ status: 201, type: ProductResponseDto })
+  async setThumbnailFromUrl(
+    @Param('id') id: string,
+    @Body() dto: AddMediaFromUrlDto,
+    @CurrentUser() user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.addMediaFromUrl(
+      id,
+      dto,
+      ProductMediaPurpose.THUMBNAIL,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
+  }
+
+  @Post(':id/previews/upload')
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload a new product preview image' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+    },
+  })
+  @ApiResponse({ status: 201, type: ProductResponseDto })
+  async uploadPreview(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
+          new FileMimeTypeValidator({
+            // <-- USE THE CUSTOM VALIDATOR
+            mimeType: ['image/jpeg', 'image/png', 'image/webp'],
+          }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.addMediaFromFile(
+      id,
+      file,
+      ProductMediaPurpose.PREVIEW,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
+  }
+
+  @Post(':id/previews/from-url')
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @ApiOperation({ summary: 'Add a new product preview image from a URL' })
+  @ApiResponse({ status: 201, type: ProductResponseDto })
+  async addPreviewFromUrl(
+    @Param('id') id: string,
+    @Body() dto: AddMediaFromUrlDto,
+    @CurrentUser() user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.addMediaFromUrl(
+      id,
+      dto,
+      ProductMediaPurpose.PREVIEW,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
+  }
+
+  @Patch(':id/media/:mediaId')
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @ApiOperation({ summary: 'Update media properties (purpose, priority)' })
+  @ApiResponse({ status: 200, type: ProductResponseDto })
+  async updateMediaProperties(
+    @Param('id') productId: string,
+    @Param('mediaId') mediaId: string,
+    @Body() dto: UpdateMediaPropertiesDto,
+    @CurrentUser() user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.updateMediaProperties(
+      productId,
+      mediaId,
+      dto,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
+  }
+
+  @Delete(':id/media/:mediaId')
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Delete a specific media item from a product' })
+  @ApiResponse({ status: 200, type: ProductResponseDto })
+  async deleteMedia(
+    @Param('id') productId: string,
+    @Param('mediaId') mediaId: string,
+    @CurrentUser() user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.deleteMedia(
+      productId,
+      mediaId,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
   }
 }

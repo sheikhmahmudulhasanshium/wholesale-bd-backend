@@ -1,5 +1,30 @@
+// src/products/schemas/product.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
+import { ProductMediaPurpose } from '../enums/product-media-purpose.enum';
+
+// --- V NEW: Nested Schema for Product Media ---
+@Schema({ _id: true, timestamps: true }) // _id: true gives each media item a unique ID
+export class ProductMedia {
+  _id: Types.ObjectId;
+
+  @Prop({ required: true })
+  url: string;
+
+  @Prop({ required: true, enum: ProductMediaPurpose })
+  purpose: ProductMediaPurpose;
+
+  @Prop({ default: 0 })
+  priority: number;
+
+  @Prop() // Optional: key if the file is stored in an object storage like S3/R2
+  fileKey?: string;
+
+  createdAt: Date;
+  updatedAt: Date;
+}
+export const ProductMediaSchema = SchemaFactory.createForClass(ProductMedia);
+// --- ^ END of New Nested Schema ---
 
 export class PricingTier {
   @Prop({ required: true, type: Number, min: 1 })
@@ -16,7 +41,7 @@ export type ProductDocument = Product & Document;
 
 @Schema({ timestamps: true })
 export class Product {
-  _id: Types.ObjectId; // Explicitly define _id to help TypeScript
+  _id: Types.ObjectId;
 
   @Prop({ required: true, unique: true, trim: true })
   name: string;
@@ -24,8 +49,13 @@ export class Product {
   @Prop({ required: true, trim: true })
   description: string;
 
+  // --- V MODIFIED: Replaced 'images' with the new structured 'media' array ---
   @Prop({ type: [String], default: [] })
-  images: string[];
+  images: string[]; // Kept for backward compatibility, but new logic will use 'media'
+
+  @Prop({ type: [ProductMediaSchema], default: [] })
+  media: ProductMedia[];
+  // --- ^ END of MODIFICATION ---
 
   @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
   categoryId: Types.ObjectId;
