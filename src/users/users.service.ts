@@ -1,6 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-// FIX: Import FilterQuery from mongoose
 import { Model, FilterQuery } from 'mongoose';
 import {
   User,
@@ -9,10 +14,67 @@ import {
   SellerStatus,
 } from './schemas/user.schema';
 import { UserResponseDto } from './dto/user-response.dto';
+import { UnifiedPublicProfileDto } from './dto/unified-public-profile.dto';
+import { GroupedMedia, UploadsService } from '../uploads/uploads.service';
+import { EntityModel } from '../uploads/enums/entity-model.enum';
+import { MediaPurpose } from '../uploads/enums/media-purpose.enum';
+import { Media, MediaDocument } from '../storage/schemas/media.schema';
+import { SetProfilePictureFromUrlDto } from './dto/set-profile-picture-from-url.dto';
 
 @Injectable()
 export class UserService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  private readonly logger = new Logger(UserService.name);
+
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+    @InjectModel(Media.name) private mediaModel: Model<MediaDocument>,
+    @Inject(forwardRef(() => UploadsService))
+    private readonly uploadsService: UploadsService,
+  ) {}
+
+  async setProfileOrBannerPictureFromUrl(
+    user: UserDocument,
+    dto: SetProfilePictureFromUrlDto,
+    purpose: MediaPurpose.PROFILE_PICTURE | MediaPurpose.PROFILE_BANNER,
+  ): Promise<MediaDocument> {
+    await this.mediaModel.updateMany(
+      { userId: user._id, purpose: purpose },
+      { $unset: { purpose: '' } },
+    );
+
+    const newMedia = await this.uploadsService.addLink(
+      EntityModel.USER,
+      user._id.toString(),
+      dto,
+    );
+
+    newMedia.purpose = purpose;
+    return newMedia.save();
+  }
+
+  async setProfileOrBannerPicture(
+    user: UserDocument,
+    file: Express.Multer.File,
+    purpose: MediaPurpose.PROFILE_PICTURE | MediaPurpose.PROFILE_BANNER,
+  ): Promise<MediaDocument> {
+    await this.mediaModel.updateMany(
+      { userId: user._id, purpose: purpose },
+      { $unset: { purpose: '' } },
+    );
+
+    const newMedia = await this.uploadsService.uploadFile(
+      EntityModel.USER,
+      user._id.toString(),
+      file,
+    );
+
+    newMedia.purpose = purpose;
+    return newMedia.save();
+  }
+
+  async getMyUploads(userId: string): Promise<GroupedMedia> {
+    return this.uploadsService.findByEntityId(EntityModel.USER, userId);
+  }
 
   async create(user: Partial<User>): Promise<UserDocument> {
     const newUser = new this.userModel(user);
@@ -42,41 +104,63 @@ export class UserService {
     return this.userModel.find().exec();
   }
 
-  // --- vvvvvvv ADDED THIS METHOD vvvvvvv ---
-  /**
-   * Finds a user by ID and returns only public-safe fields.
-   * A profile is considered public only if the user is an active, approved seller.
-   * @param id The user's ID.
-   * @returns A user document with a limited set of fields, or null if not found/not public.
-   */
-  async findPublicProfileById(id: string): Promise<UserDocument | null> {
-    const publicFields = [
-      'firstName',
-      'lastname',
-      'email',
-      'phone',
-      'zone',
-      'role',
-      'profilePicture',
-      'businessName',
-      'businessDescription',
-      'isTrustedUser',
-      'trustScore',
-      'reviewCount',
-      'createdAt', // Needed for "memberSince" in the DTO
-    ].join(' ');
+  async findUnifiedPublicProfileById(
+    id: string,
+  ): Promise<UnifiedPublicProfileDto | null> {
+    const user = await this.userModel.findById(id).exec();
 
-    return this.userModel
-      .findOne({
-        _id: id,
-        role: UserRole.SELLER,
-        sellerStatus: SellerStatus.APPROVED,
-        isActive: true,
-      })
-      .select(publicFields)
-      .exec();
+    if (!user || !user.isActive) {
+      return null;
+    }
+
+    let finalProfilePicUrl = user.profilePicture || null;
+    let finalBackgroundPicUrl: string | null = null;
+
+    if (!finalProfilePicUrl) {
+      try {
+        const media = await this.uploadsService.findByEntityId(
+          EntityModel.USER,
+          user._id.toString(),
+        );
+
+        const profilePic = media.images.find(
+          (img) => img.purpose === MediaPurpose.PROFILE_PICTURE,
+        );
+        if (profilePic) {
+          finalProfilePicUrl = profilePic.url;
+        }
+
+        const backgroundPic = media.images.find(
+          (img) => img.purpose === MediaPurpose.PROFILE_BANNER,
+        );
+        if (backgroundPic) {
+          finalBackgroundPicUrl = backgroundPic.url;
+        }
+      } catch (error: unknown) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        this.logger.warn(
+          `Could not fetch media for user ${id}. This is non-critical. Error: ${errorMessage}`,
+        );
+      }
+    }
+
+    const isPublicSeller =
+      user.role === UserRole.SELLER &&
+      user.sellerStatus === SellerStatus.APPROVED;
+    const isPublicCustomer = user.role === UserRole.CUSTOMER;
+    const isPublicAdmin = user.role === UserRole.ADMIN;
+
+    if (isPublicSeller || isPublicCustomer || isPublicAdmin) {
+      return UnifiedPublicProfileDto.fromUserDocument(
+        user,
+        finalProfilePicUrl,
+        finalBackgroundPicUrl,
+      );
+    }
+
+    return null;
   }
-  // --- ^^^^^^^ ADDED THIS METHOD ^^^^^^^ ---
 
   async update(id: string, updates: Partial<User>): Promise<UserDocument> {
     const user = await this.userModel
@@ -98,33 +182,25 @@ export class UserService {
 
   async listUsers(
     role?: UserRole,
-    // SUGGESTION: Rename this parameter to `sellerStatus` for clarity
     kycStatus?: SellerStatus,
     page = 1,
     limit = 10,
   ): Promise<UserDocument[]> {
-    // FIX: Replaced `any` with the correct Mongoose `FilterQuery<User>` type
     const query: FilterQuery<User> = {};
     if (role) {
       query.role = role;
     }
     if (kycStatus) {
-      // This now correctly maps to the `sellerStatus` field in the User schema
       query.sellerStatus = kycStatus;
     }
     return this.userModel
-      .find(query) // `query` is now a strongly-typed object
+      .find(query)
       .skip((page - 1) * limit)
       .limit(limit)
       .exec();
   }
 
-  async countUsers(
-    role?: UserRole,
-    // SUGGESTION: Rename this parameter to `sellerStatus` for clarity
-    kycStatus?: SellerStatus,
-  ): Promise<number> {
-    // FIX: Replaced `any` with the correct Mongoose `FilterQuery<User>` type
+  async countUsers(role?: UserRole, kycStatus?: SellerStatus): Promise<number> {
     const query: FilterQuery<User> = {};
     if (role) {
       query.role = role;
@@ -132,7 +208,6 @@ export class UserService {
     if (kycStatus) {
       query.sellerStatus = kycStatus;
     }
-    // `query` is now a strongly-typed object, satisfying the method's type requirements
     return this.userModel.countDocuments(query).exec();
   }
 
@@ -140,7 +215,6 @@ export class UserService {
     return user.save();
   }
 
-  // --- DTO Conversion Helper ---
   toUserResponseDto(user: UserDocument): UserResponseDto {
     return UserResponseDto.fromUserDocument(user);
   }

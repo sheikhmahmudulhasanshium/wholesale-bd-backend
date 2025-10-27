@@ -1,106 +1,149 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UserDocument } from '../schemas/user.schema';
+import {
+  UserDocument,
+  UserRole,
+  KycStatus,
+  SellerStatus,
+} from '../schemas/user.schema';
 
+/**
+ * Data Transfer Object for a full user profile response.
+ * This DTO includes sensitive and detailed information and should only be used
+ * in authenticated and authorized endpoints (e.g., for an admin or the user themselves).
+ */
 export class UserResponseDto {
   @ApiProperty({
     example: '65f1c4a0ef3e2bde5f269a47',
-    description: 'The unique identifier of the user',
+    description: 'The unique identifier of the user.',
   })
   _id: string;
 
   @ApiProperty({
-    example: 'test@example.com',
-    description: 'The email address of the user',
+    example: 'john.doe@example.com',
+    description: "User's email address.",
   })
   email: string;
 
-  @ApiProperty({ example: 'John', description: "User's first name" })
+  @ApiProperty({ example: 'John', description: "User's first name." })
   firstName: string;
 
-  @ApiProperty({ example: 'Doe', description: "User's last name" })
+  @ApiProperty({ example: 'Doe', description: "User's last name." })
   lastName: string;
 
   @ApiProperty({
     required: false,
-    example: '+8801712345678',
-    description: "User's phone number",
+    example: '+15551234567',
+    description: "User's phone number.",
   })
   phone?: string;
 
   @ApiProperty({
     required: false,
-    description: "URL to the user's profile picture",
+    description: "URL to the user's profile picture.",
   })
   profilePicture?: string;
 
-  @ApiProperty({ required: false, description: "User's physical address" })
+  @ApiProperty({
+    example: '123 Main St, Anytown, USA',
+    required: false,
+    description: "User's physical address.",
+  })
   address?: string;
 
   @ApiProperty({
+    example: 'North America',
     required: false,
-    example: 'Dhaka',
-    description: "User's business zone",
+    description: "User's geographical zone or region.",
   })
   zone?: string;
 
   @ApiProperty({
     example: true,
-    description: 'Indicates if the user account is active',
+    description: 'Indicates if the user account is active.',
   })
   isActive: boolean;
 
   @ApiProperty({
-    example: false,
-    description: "Indicates if the user's email has been verified",
+    example: true,
+    description: 'Indicates if the user has verified their email address.',
   })
   emailVerified: boolean;
 
   @ApiProperty({
-    example: 'seller',
-    description: 'The role of the user (e.g., admin, seller, customer)',
+    enum: UserRole,
+    example: UserRole.SELLER,
+    description: 'The role assigned to the user.',
   })
-  role: string;
+  role: UserRole;
 
   @ApiProperty({
-    example: 'pending',
-    description: 'KYC (Know Your Customer) verification status',
+    enum: KycStatus,
+    example: KycStatus.APPROVED,
+    description: 'The Know Your Customer (KYC) verification status.',
   })
-  kycStatus: string;
+  kycStatus: KycStatus;
 
   @ApiProperty({
-    example: 'approved',
-    description: 'Seller application status',
+    enum: SellerStatus,
+    example: SellerStatus.APPROVED,
+    description: "The user's status as a seller.",
   })
-  sellerStatus: string;
+  sellerStatus: SellerStatus;
 
   @ApiProperty({
     required: false,
     example: 'Doe Electronics',
-    description: "User's business name",
+    description: "The user's business name.",
   })
   businessName?: string;
 
   @ApiProperty({
+    required: false,
+    example: 'Specializing in vintage audio equipment.',
+    description: 'A description of the user/business.',
+  })
+  businessDescription?: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Indicates if the user is a trusted seller.',
+  })
+  isTrustedUser: boolean;
+
+  @ApiProperty({
     example: 85,
-    description: 'A calculated score representing user trustworthiness',
+    description: 'A calculated score representing user trustworthiness.',
   })
   trustScore: number;
 
   @ApiProperty({
-    example: true,
-    description: 'Indicates if the user is a trusted seller',
+    example: 12,
+    description: 'Total number of reviews the user has received.',
   })
-  isTrustedUser: boolean;
+  reviewCount: number;
 
-  @ApiProperty({ description: 'Timestamp of user creation' })
+  @ApiProperty({
+    example: 5,
+    description: 'Total number of submissions made by the user.',
+  })
+  submissionCount: number;
+
+  @ApiProperty({
+    example: '2023-01-15T10:00:00.000Z',
+    description: 'The date the user created their account.',
+  })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Timestamp of last user update' })
+  @ApiProperty({
+    example: '2024-03-20T12:30:00.000Z',
+    description: 'The date the user profile was last updated.',
+  })
   updatedAt: Date;
 
   @ApiProperty({
     required: false,
-    description: "Timestamp of the user's last login",
+    example: '2024-03-20T12:00:00.000Z',
+    description: 'Timestamp of the last login.',
   })
   lastLogin?: Date;
 
@@ -120,11 +163,14 @@ export class UserResponseDto {
     dto.kycStatus = userDoc.kycStatus;
     dto.sellerStatus = userDoc.sellerStatus;
     dto.businessName = userDoc.businessName;
-    dto.trustScore = userDoc.trustScore;
+    dto.businessDescription = userDoc.businessDescription;
     dto.isTrustedUser = userDoc.isTrustedUser;
+    dto.trustScore = userDoc.trustScore;
+    dto.reviewCount = userDoc.reviewCount;
+    dto.submissionCount = userDoc.submissionCount;
+    dto.lastLogin = userDoc.lastLogin;
     dto.createdAt = userDoc.createdAt;
     dto.updatedAt = userDoc.updatedAt;
-    dto.lastLogin = userDoc.lastLogin;
     return dto;
   }
 }
