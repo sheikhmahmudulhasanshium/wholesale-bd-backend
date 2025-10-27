@@ -52,6 +52,11 @@ export class UserService {
   async findPublicProfileById(id: string): Promise<UserDocument | null> {
     const publicFields = [
       'firstName',
+      'lastname',
+      'email',
+      'phone',
+      'zone',
+      'role',
       'profilePicture',
       'businessName',
       'businessDescription',
