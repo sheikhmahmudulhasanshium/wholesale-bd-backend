@@ -5,6 +5,8 @@ import {
   BadRequestException,
   ConflictException,
   ForbiddenException,
+  Logger,
+  // UnauthorizedException is no longer needed
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -26,32 +28,124 @@ import { ProductMediaDto } from './dto/product-media.dto';
 import { MediaType } from 'src/uploads/enums/media-type.enum';
 import { plainToInstance } from 'class-transformer';
 import { UserDocument, UserRole } from 'src/users/schemas/user.schema';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
+import { AxiosResponse } from 'axios';
+import * as path from 'path';
 
 @Injectable()
 export class ProductsService {
+  private readonly logger = new Logger(ProductsService.name);
+
+  // /**
+  //  * @deprecated One-time data migration script. Kept for reference.
+  //  */
+  // private readonly finalMigrationKey = 'RUN-FINAL-IMAGE-REUPLOAD-AND-CLEANUP-20251029';
+
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
     private readonly storageService: StorageService,
+    private readonly httpService: HttpService,
   ) {}
+
+  // /**
+  //  * @deprecated One-time data migration script. Kept for reference.
+  //  */
+  // async runFinalImageMigration(key: string) {
+  //   if (key !== this.finalMigrationKey) {
+  //     throw new UnauthorizedException('Invalid migration secret key.');
+  //   }
+
+  //   this.logger.warn('=== STARTING FINAL IMAGE MIGRATION & CLEANUP SCRIPT ===');
+  //   const r2PublicUrl = 'https://pub-1508a97a3d584140a7f32f1ca90490c2.r2.dev';
+
+  //   const products = await this.productModel.find().exec();
+  //   this.logger.log(`Found ${products.length} total products to scan.`);
+
+  //   let updatedCount = 0;
+  //   const failedItems: { productId: string; url: string; error: string }[] = [];
+  //   const deletedItems: { productId: string; url: string; reason: string }[] = [];
+
+  //   for (const product of products) {
+  //     let productModified = false;
+  //     const mediaItemsToKeep: ProductMedia[] = [];
+
+  //     for (const mediaItem of product.media) {
+  //       const isExternal = !mediaItem.url.startsWith(r2PublicUrl) && mediaItem.url.startsWith('http');
+
+  //       if (isExternal) {
+  //         this.logger.log(`[Product: ${product._id.toString()}] Processing external URL: ${mediaItem.url}`);
+  //         try {
+  //           const urlToFetch = new URL(mediaItem.url);
+  //           const cleanUrl = `${urlToFetch.origin}${urlToFetch.pathname}`;
+
+  //           const response = await firstValueFrom(
+  //             this.httpService.get(cleanUrl, { responseType: 'arraybuffer', timeout: 20000 })
+  //           );
+
+  //           const axiosResponse = response as AxiosResponse<ArrayBuffer>;
+  //           const contentType = axiosResponse.headers['content-type'] as string | undefined;
+  //           if (!contentType?.startsWith('image/')) throw new Error(`Not an image (${contentType})`);
+
+  //           const originalFilename = path.basename(urlToFetch.pathname) || 'migrated-image.jpg';
+  //           const buffer = Buffer.from(axiosResponse.data);
+  //           const mockFile = {
+  //             originalname: originalFilename, mimetype: contentType, size: buffer.length, buffer: buffer,
+  //           } as Express.Multer.File;
+
+  //           const { url: newUrl, fileKey } = await this.storageService.uploadFile(mockFile, 'product', MediaType.IMAGE);
+
+  //           mediaItem.url = newUrl;
+  //           mediaItem.fileKey = fileKey;
+  //           mediaItemsToKeep.push(mediaItem);
+  //           productModified = true;
+  //           this.logger.log(` -> Successfully re-uploaded to: ${newUrl}`);
+
+  //         } catch (error: unknown) {
+  //           const errorMessage = error instanceof Error ? error.message : "Unknown Error";
+  //           this.logger.error(` -> FAILED to migrate URL. It will be removed. Reason: ${errorMessage}`);
+  //           failedItems.push({ productId: product._id.toString(), url: mediaItem.url, error: errorMessage });
+  //           productModified = true;
+  //         }
+  //       } else if (mediaItem.url.startsWith(r2PublicUrl) && mediaItem.url.includes('?')) {
+  //         this.logger.warn(`[Product: ${product._id.toString()}] Deleting broken R2 URL: ${mediaItem.url}`);
+  //         deletedItems.push({ productId: product._id.toString(), url: mediaItem.url, reason: "Broken R2 URL with query parameter." });
+  //         productModified = true;
+  //       } else {
+  //         mediaItemsToKeep.push(mediaItem);
+  //       }
+  //     }
+
+  //     if (productModified) {
+  //       product.media = mediaItemsToKeep;
+  //       await product.save();
+  //       updatedCount++;
+  //     }
+  //   }
+
+  //   this.logger.warn('=== MIGRATION & CLEANUP FINISHED ===');
+  //   return {
+  //     productsScanned: products.length,
+  //     productsUpdated: updatedCount,
+  //     failedMigrationItems: failedItems,
+  //     deletedBrokenLinks: deletedItems,
+  //   };
+  // }
 
   private _mapProductToResponse(product: ProductDocument): ProductResponseDto {
     const productObj = product.toObject() as Product;
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { media, images: _images, ...restOfProduct } = productObj;
-
     const sortedMedia: ProductMedia[] = (media || []).sort(
       (a, b) => a.priority - b.priority,
     );
-
     const thumbnail =
       sortedMedia.find((m) => m.purpose === ProductMediaPurpose.THUMBNAIL) ||
       null;
     const previews = sortedMedia.filter(
       (m) => m.purpose === ProductMediaPurpose.PREVIEW,
     );
-
     const sourceObject = {
       ...restOfProduct,
       _id: productObj._id.toString(),
@@ -63,7 +157,6 @@ export class ProductsService {
         ProductMediaDto.fromSchema(mediaItem),
       ),
     };
-
     return plainToInstance(ProductResponseDto, sourceObject);
   }
 
@@ -90,9 +183,7 @@ export class ProductsService {
         'You can only create products for your own seller account.',
       );
     }
-
     const { name, sku, images } = createProductDto;
-
     const existingProductByName = await this.productModel
       .findOne({ name })
       .exec();
@@ -101,7 +192,6 @@ export class ProductsService {
         `A product with the name "${name}" already exists.`,
       );
     }
-
     if (sku) {
       const existingProductBySku = await this.productModel
         .findOne({ sku })
@@ -112,9 +202,7 @@ export class ProductsService {
         );
       }
     }
-
     const createdProduct = new this.productModel(createProductDto);
-
     if (images && images.length > 0) {
       createdProduct.media = images.map((url, index) => ({
         _id: new Types.ObjectId(),
@@ -175,23 +263,15 @@ export class ProductsService {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
     }
-
     const product = await this.productModel.findById(id);
     if (!product) {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
-
     this._verifyOwnership(product, user);
-
-    // --- VVVVVVV THIS IS THE CORRECTED SECTION VVVVVVV ---
-    // FIX: Add eslint-disable comment for intentionally unused '_id' variable during destructuring.
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { _id, ...updateData } = updateProductDto;
-    // --- ^^^^^^^ THIS IS THE CORRECTED SECTION ^^^^^^^ ---
-
     Object.assign(product, updateData);
     const updatedProduct = await product.save();
-
     return this._mapProductToResponse(updatedProduct);
   }
 
@@ -235,9 +315,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Product with ID "${productId}" not found.`);
     }
-
     this._verifyOwnership(product, user);
-
     if (purpose === ProductMediaPurpose.THUMBNAIL) {
       product.media.forEach((m) => {
         if (m.purpose === ProductMediaPurpose.THUMBNAIL) {
@@ -264,13 +342,51 @@ export class ProductsService {
     purpose: ProductMediaPurpose,
     user: UserDocument,
   ): Promise<ProductResponseDto> {
-    const updatedProduct = await this._addMedia(
-      productId,
-      { url: dto.url },
-      purpose,
-      user,
-    );
-    return this._mapProductToResponse(updatedProduct);
+    try {
+      let urlToFetch: URL;
+      try {
+        urlToFetch = new URL(dto.url);
+      } catch {
+        throw new BadRequestException('Invalid URL format provided.');
+      }
+      const cleanUrl = `${urlToFetch.origin}${urlToFetch.pathname}`;
+      this.logger.log(`Attempting to download image from URL: ${cleanUrl}`);
+      const response = await firstValueFrom(
+        this.httpService.get(cleanUrl, { responseType: 'arraybuffer' }),
+      );
+      const axiosResponse = response as AxiosResponse<ArrayBuffer>;
+      const contentType = axiosResponse.headers['content-type'] as
+        | string
+        | undefined;
+
+      if (!contentType?.startsWith('image/')) {
+        throw new BadRequestException(
+          'The provided URL does not point to a valid image.',
+        );
+      }
+      this.logger.log(`Image downloaded. Re-uploading to storage.`);
+      const originalFilename =
+        path.basename(urlToFetch.pathname) || 'external-image.jpg';
+      const buffer = Buffer.from(axiosResponse.data);
+      const mockFile = {
+        fieldname: 'file',
+        originalname: originalFilename,
+        encoding: '7bit',
+        mimetype: contentType,
+        size: buffer.length,
+        buffer: buffer,
+      } as Express.Multer.File;
+      return await this.addMediaFromFile(productId, mockFile, purpose, user);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(
+        `Failed to process image from URL: ${dto.url}. Error: ${errorMessage}`,
+      );
+      throw new BadRequestException(
+        `Could not process the image from the provided URL. Please ensure it is a direct link to a valid image.`,
+      );
+    }
   }
 
   async addMediaFromFile(
@@ -303,9 +419,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Product with ID "${productId}" not found.`);
     }
-
     this._verifyOwnership(product, user);
-
     const mediaItem = product.media.find(
       (m) => m._id.toHexString() === mediaId,
     );
@@ -314,7 +428,6 @@ export class ProductsService {
         `Media with ID "${mediaId}" not found on this product.`,
       );
     }
-
     if (
       dto.purpose === ProductMediaPurpose.THUMBNAIL &&
       mediaItem.purpose !== ProductMediaPurpose.THUMBNAIL
@@ -325,14 +438,12 @@ export class ProductsService {
         }
       });
     }
-
     if (dto.purpose) {
       mediaItem.purpose = dto.purpose;
     }
     if (dto.priority !== undefined) {
       mediaItem.priority = dto.priority;
     }
-
     await product.save();
     return this._mapProductToResponse(product);
   }
@@ -346,9 +457,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Product with ID "${productId}" not found.`);
     }
-
     this._verifyOwnership(product, user);
-
     const mediaToDelete = product.media.find(
       (m) => m._id.toHexString() === mediaId,
     );
@@ -360,11 +469,9 @@ export class ProductsService {
         );
       });
     }
-
     product.media = product.media.filter(
       (m) => m._id.toHexString() !== mediaId,
     );
-
     await product.save();
     return this._mapProductToResponse(product);
   }
@@ -377,9 +484,7 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
-
     this._verifyOwnership(product, user);
-
     product.media.forEach((media) => {
       if (media.fileKey) {
         this.storageService.deleteFile(media.fileKey).catch((err) => {
@@ -390,7 +495,6 @@ export class ProductsService {
         });
       }
     });
-
     const result = await this.productModel.deleteOne({ _id: id }).exec();
     if (result.deletedCount === 0) {
       throw new NotFoundException(`Product with ID "${id}" not found.`);

@@ -14,7 +14,6 @@ import {
   UploadedFile,
   ParseFilePipe,
   MaxFileSizeValidator,
-  // Note: FileTypeValidator is no longer imported from @nestjs/common
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProductsService } from './products.service';
@@ -33,6 +32,7 @@ import {
   ApiBearerAuth,
   ApiConsumes,
   ApiBody,
+  // ApiExcludeEndpoint is no longer needed
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -43,7 +43,8 @@ import { AddMediaFromUrlDto } from './dto/add-media-from-url.dto';
 import { UpdateMediaPropertiesDto } from './dto/update-media-properties.dto';
 import { ProductMediaPurpose } from './enums/product-media-purpose.enum';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { FileMimeTypeValidator } from './validators/file-mimetype.validator'; // <-- IMPORT THE CUSTOM VALIDATOR
+import { FileMimeTypeValidator } from './validators/file-mimetype.validator';
+// Public decorator is no longer needed for this controller
 
 @ApiTags('Products (Protected)')
 @ApiBearerAuth()
@@ -51,6 +52,16 @@ import { FileMimeTypeValidator } from './validators/file-mimetype.validator'; //
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
+
+  /**
+   * @deprecated Final one-time migration endpoint. Kept for reference.
+   */
+  // @Get('__internal/fix-images/:key')
+  // @Public()
+  // @ApiExcludeEndpoint()
+  // async runFinalImageMigration(@Param('key') key: string) {
+  //   return this.productsService.runFinalImageMigration(key);
+  // }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -167,8 +178,6 @@ export class ProductsController {
     return this.productsService.remove(id, user);
   }
 
-  // --- MEDIA MANAGEMENT ENDPOINTS ---
-
   @Post(':id/thumbnail/upload')
   @Roles(UserRole.ADMIN, UserRole.SELLER)
   @UseInterceptors(FileInterceptor('file'))
@@ -189,7 +198,6 @@ export class ProductsController {
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
           new FileMimeTypeValidator({
-            // <-- USE THE CUSTOM VALIDATOR
             mimeType: ['image/jpeg', 'image/png', 'image/webp'],
           }),
         ],
@@ -244,7 +252,6 @@ export class ProductsController {
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
           new FileMimeTypeValidator({
-            // <-- USE THE CUSTOM VALIDATOR
             mimeType: ['image/jpeg', 'image/png', 'image/webp'],
           }),
         ],
