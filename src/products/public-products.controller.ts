@@ -1,4 +1,3 @@
-// src/products/public-products.controller.ts
 import { Controller, Get, Param, HttpStatus } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { PublicProductResponseDto } from './dto/public-product-response.dto';
@@ -9,7 +8,7 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer';
+import { plainToInstance } from 'class-transformer'; // <-- Re-import this
 
 @ApiTags('Products (Public)')
 @Controller('products')
@@ -25,6 +24,7 @@ export class PublicProductsController {
   })
   async findAllPublic(): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findAllActive();
+    // FIX: Transform to the correct Public DTO to omit sensitive fields
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -39,7 +39,9 @@ export class PublicProductsController {
   async findProductsByCategoryId(
     @Param('categoryId') categoryId: string,
   ): Promise<PublicProductResponseDto[]> {
-    const products = await this.productsService.findByCategoryId(categoryId);
+    const products =
+      await this.productsService.findActiveByCategoryId(categoryId);
+    // FIX: Transform to the correct Public DTO
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -54,7 +56,8 @@ export class PublicProductsController {
   async findProductsByZoneId(
     @Param('zoneId') zoneId: string,
   ): Promise<PublicProductResponseDto[]> {
-    const products = await this.productsService.findByZoneId(zoneId);
+    const products = await this.productsService.findActiveByZoneId(zoneId);
+    // FIX: Transform to the correct Public DTO
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -69,7 +72,8 @@ export class PublicProductsController {
   async findProductsBySellerId(
     @Param('sellerId') sellerId: string,
   ): Promise<PublicProductResponseDto[]> {
-    const products = await this.productsService.findBySellerId(sellerId);
+    const products = await this.productsService.findActiveBySellerId(sellerId);
+    // FIX: Transform to the correct Public DTO
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -81,7 +85,7 @@ export class PublicProductsController {
     schema: { example: { totalProducts: 125 } },
   })
   async countProducts(): Promise<{ totalProducts: number }> {
-    const count = await this.productsService.countAllProducts();
+    const count = await this.productsService.countAllActiveProducts();
     return { totalProducts: count };
   }
 
@@ -98,6 +102,7 @@ export class PublicProductsController {
     @Param('id') id: string,
   ): Promise<PublicProductResponseDto> {
     const product = await this.productsService.findOneActive(id);
+    // FIX: Transform to the correct Public DTO
     return plainToInstance(PublicProductResponseDto, product);
   }
 }

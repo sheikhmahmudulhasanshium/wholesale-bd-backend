@@ -1,4 +1,3 @@
-// src/products/dto/product-response.dto.ts
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsString,
@@ -15,7 +14,7 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { Types } from 'mongoose';
-import { ProductMediaDto } from './product-media.dto'; // <-- IMPORT NEW DTO
+import { ProductMediaDto } from './product-media.dto';
 
 export class PricingTierDto {
   @ApiProperty({
@@ -247,12 +246,12 @@ export class ProductResponseDto {
   })
   description: string;
 
-  // --- V MODIFIED: Replaced 'images' with structured media properties ---
   @ApiProperty({
     description: 'The primary thumbnail image for the product.',
     type: ProductMediaDto,
     nullable: true,
   })
+  @Type(() => ProductMediaDto)
   thumbnail: ProductMediaDto | null;
 
   @ApiProperty({
@@ -260,8 +259,8 @@ export class ProductResponseDto {
       'An array of preview media items for the product, sorted by priority.',
     type: [ProductMediaDto],
   })
+  @Type(() => ProductMediaDto)
   previews: ProductMediaDto[];
-  // --- ^ END of MODIFICATION ---
 
   @ApiProperty({
     description: 'The MongoDB ObjectId of the category this product belongs to',
@@ -302,6 +301,7 @@ export class ProductResponseDto {
     type: [PricingTierDto],
     example: [{ minQuantity: 1, maxQuantity: 9, pricePerUnit: 45000 }],
   })
+  @Type(() => PricingTierDto)
   pricingTiers: PricingTierDto[];
 
   @ApiProperty({

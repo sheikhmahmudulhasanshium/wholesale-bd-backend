@@ -1,4 +1,3 @@
-// src/products/products.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -37,101 +36,12 @@ import * as path from 'path';
 export class ProductsService {
   private readonly logger = new Logger(ProductsService.name);
 
-  // /**
-  //  * @deprecated One-time data migration script. Kept for reference.
-  //  */
-  // private readonly finalMigrationKey = 'RUN-FINAL-IMAGE-REUPLOAD-AND-CLEANUP-20251029';
-
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
     private readonly storageService: StorageService,
     private readonly httpService: HttpService,
   ) {}
-
-  // /**
-  //  * @deprecated One-time data migration script. Kept for reference.
-  //  */
-  // async runFinalImageMigration(key: string) {
-  //   if (key !== this.finalMigrationKey) {
-  //     throw new UnauthorizedException('Invalid migration secret key.');
-  //   }
-
-  //   this.logger.warn('=== STARTING FINAL IMAGE MIGRATION & CLEANUP SCRIPT ===');
-  //   const r2PublicUrl = 'https://pub-1508a97a3d584140a7f32f1ca90490c2.r2.dev';
-
-  //   const products = await this.productModel.find().exec();
-  //   this.logger.log(`Found ${products.length} total products to scan.`);
-
-  //   let updatedCount = 0;
-  //   const failedItems: { productId: string; url: string; error: string }[] = [];
-  //   const deletedItems: { productId: string; url: string; reason: string }[] = [];
-
-  //   for (const product of products) {
-  //     let productModified = false;
-  //     const mediaItemsToKeep: ProductMedia[] = [];
-
-  //     for (const mediaItem of product.media) {
-  //       const isExternal = !mediaItem.url.startsWith(r2PublicUrl) && mediaItem.url.startsWith('http');
-
-  //       if (isExternal) {
-  //         this.logger.log(`[Product: ${product._id.toString()}] Processing external URL: ${mediaItem.url}`);
-  //         try {
-  //           const urlToFetch = new URL(mediaItem.url);
-  //           const cleanUrl = `${urlToFetch.origin}${urlToFetch.pathname}`;
-
-  //           const response = await firstValueFrom(
-  //             this.httpService.get(cleanUrl, { responseType: 'arraybuffer', timeout: 20000 })
-  //           );
-
-  //           const axiosResponse = response as AxiosResponse<ArrayBuffer>;
-  //           const contentType = axiosResponse.headers['content-type'] as string | undefined;
-  //           if (!contentType?.startsWith('image/')) throw new Error(`Not an image (${contentType})`);
-
-  //           const originalFilename = path.basename(urlToFetch.pathname) || 'migrated-image.jpg';
-  //           const buffer = Buffer.from(axiosResponse.data);
-  //           const mockFile = {
-  //             originalname: originalFilename, mimetype: contentType, size: buffer.length, buffer: buffer,
-  //           } as Express.Multer.File;
-
-  //           const { url: newUrl, fileKey } = await this.storageService.uploadFile(mockFile, 'product', MediaType.IMAGE);
-
-  //           mediaItem.url = newUrl;
-  //           mediaItem.fileKey = fileKey;
-  //           mediaItemsToKeep.push(mediaItem);
-  //           productModified = true;
-  //           this.logger.log(` -> Successfully re-uploaded to: ${newUrl}`);
-
-  //         } catch (error: unknown) {
-  //           const errorMessage = error instanceof Error ? error.message : "Unknown Error";
-  //           this.logger.error(` -> FAILED to migrate URL. It will be removed. Reason: ${errorMessage}`);
-  //           failedItems.push({ productId: product._id.toString(), url: mediaItem.url, error: errorMessage });
-  //           productModified = true;
-  //         }
-  //       } else if (mediaItem.url.startsWith(r2PublicUrl) && mediaItem.url.includes('?')) {
-  //         this.logger.warn(`[Product: ${product._id.toString()}] Deleting broken R2 URL: ${mediaItem.url}`);
-  //         deletedItems.push({ productId: product._id.toString(), url: mediaItem.url, reason: "Broken R2 URL with query parameter." });
-  //         productModified = true;
-  //       } else {
-  //         mediaItemsToKeep.push(mediaItem);
-  //       }
-  //     }
-
-  //     if (productModified) {
-  //       product.media = mediaItemsToKeep;
-  //       await product.save();
-  //       updatedCount++;
-  //     }
-  //   }
-
-  //   this.logger.warn('=== MIGRATION & CLEANUP FINISHED ===');
-  //   return {
-  //     productsScanned: products.length,
-  //     productsUpdated: updatedCount,
-  //     failedMigrationItems: failedItems,
-  //     deletedBrokenLinks: deletedItems,
-  //   };
-  // }
 
   private _mapProductToResponse(product: ProductDocument): ProductResponseDto {
     const productObj = product.toObject() as Product;
@@ -220,12 +130,15 @@ export class ProductsService {
   }
 
   async findAll(): Promise<ProductResponseDto[]> {
-    const products = await this.productModel.find().exec();
+    const products = await this.productModel.find().select('+media').exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
 
   async findAllActive(): Promise<ProductResponseDto[]> {
-    const products = await this.productModel.find({ status: 'active' }).exec();
+    const products = await this.productModel
+      .find({ status: 'active' })
+      .select('+media') // <-- FIX: Ensure media is fetched
+      .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
 
@@ -283,6 +196,22 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ categoryId: categoryId })
+      .select('+media') // <-- FIX: Ensure media is fetched for admin/internal use
+      .exec();
+    return products.map((p) => this._mapProductToResponse(p));
+  }
+
+  async findActiveByCategoryId(
+    categoryId: string,
+  ): Promise<ProductResponseDto[]> {
+    if (!Types.ObjectId.isValid(categoryId)) {
+      throw new BadRequestException(
+        `Invalid category ID format: "${categoryId}"`,
+      );
+    }
+    const products = await this.productModel
+      .find({ categoryId: categoryId, status: 'active' })
+      .select('+media') // <-- FIX: Ensure media is fetched
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -291,7 +220,21 @@ export class ProductsService {
     if (!Types.ObjectId.isValid(zoneId)) {
       throw new BadRequestException(`Invalid zone ID format: "${zoneId}"`);
     }
-    const products = await this.productModel.find({ zoneId: zoneId }).exec();
+    const products = await this.productModel
+      .find({ zoneId: zoneId })
+      .select('+media') // <-- FIX: Ensure media is fetched for admin/internal use
+      .exec();
+    return products.map((p) => this._mapProductToResponse(p));
+  }
+
+  async findActiveByZoneId(zoneId: string): Promise<ProductResponseDto[]> {
+    if (!Types.ObjectId.isValid(zoneId)) {
+      throw new BadRequestException(`Invalid zone ID format: "${zoneId}"`);
+    }
+    const products = await this.productModel
+      .find({ zoneId: zoneId, status: 'active' })
+      .select('+media') // <-- FIX: Ensure media is fetched
+      .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
 
@@ -301,6 +244,18 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ sellerId: sellerId })
+      .select('+media') // <-- FIX: Ensure media is fetched for admin/internal use
+      .exec();
+    return products.map((p) => this._mapProductToResponse(p));
+  }
+
+  async findActiveBySellerId(sellerId: string): Promise<ProductResponseDto[]> {
+    if (!Types.ObjectId.isValid(sellerId)) {
+      throw new BadRequestException(`Invalid seller ID format: "${sellerId}"`);
+    }
+    const products = await this.productModel
+      .find({ sellerId: sellerId, status: 'active' })
+      .select('+media') // <-- FIX: Ensure media is fetched
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -503,5 +458,9 @@ export class ProductsService {
 
   async countAllProducts(): Promise<number> {
     return this.productModel.countDocuments().exec();
+  }
+
+  async countAllActiveProducts(): Promise<number> {
+    return this.productModel.countDocuments({ status: 'active' }).exec();
   }
 }
