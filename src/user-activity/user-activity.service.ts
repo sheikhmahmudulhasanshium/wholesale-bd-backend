@@ -26,7 +26,6 @@ import {
 const MAX_RECENT_ITEMS = 10;
 const MAX_RECOMMENDATION_ITEMS = 5;
 
-// --- V NEW: Define a type for the aggregation result ---
 interface CategoryCountResult {
   _id: Types.ObjectId;
   count: number;
@@ -68,6 +67,24 @@ export class UserActivityService {
       recommendedForYou,
     };
   }
+
+  // --- VVVVVV NEW METHOD VVVVVV ---
+  async getActivityForUser(
+    userId: string,
+  ): Promise<UserActivityDocument | null> {
+    const userObjectId = new Types.ObjectId(userId);
+    const activity = await this.activityModel.findOne({ userId: userObjectId });
+
+    // If no activity record exists, create and return a default empty one.
+    // This ensures the frontend always receives an object.
+    if (!activity) {
+      const newActivity = new this.activityModel({ userId: userObjectId });
+      return newActivity.save();
+    }
+
+    return activity;
+  }
+  // --- ^^^^^^ END OF NEW METHOD ^^^^^^ ---
 
   async trackActivity(dto: TrackActivityDto): Promise<void> {
     try {
@@ -171,7 +188,6 @@ export class UserActivityService {
   }
 
   private async _getRecommendedProducts(activity: UserActivityDocument) {
-    // --- V FIX: Apply the type to the aggregate call ---
     const categoryCounts =
       await this.productModel.aggregate<CategoryCountResult>([
         { $match: { _id: { $in: activity.viewedProducts } } },
@@ -182,7 +198,6 @@ export class UserActivityService {
 
     if (categoryCounts.length === 0) return undefined;
 
-    // Now `categoryCounts[0]` is correctly typed, and accessing ._id is safe
     const favoriteCategoryId = categoryCounts[0]._id;
     const favoriteCategory =
       await this.categoryModel.findById(favoriteCategoryId);
