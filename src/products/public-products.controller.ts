@@ -1,4 +1,5 @@
-import { Controller, Get, Param, HttpStatus } from '@nestjs/common';
+// src/products/public-products.controller.ts
+import { Controller, Get, Param, HttpStatus, UseGuards } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { PublicProductResponseDto } from './dto/public-product-response.dto';
 import {
@@ -7,11 +8,19 @@ import {
   ApiResponse,
   ApiNotFoundResponse,
   ApiBadRequestResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
-import { plainToInstance } from 'class-transformer'; // <-- Re-import this
+import { plainToInstance } from 'class-transformer';
+import { Public } from 'src/auth/decorators/public.decorator'; // --- V NEW ---
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'; // --- V NEW ---
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator'; // --- V NEW ---
+import { UserDocument } from 'src/users/schemas/user.schema'; // --- V NEW ---
 
 @ApiTags('Products (Public)')
 @Controller('products')
+@Public() // --- V NEW: Apply Public decorator at the controller level ---
+@UseGuards(JwtAuthGuard) // --- V NEW: Apply JWT guard to attempt user resolution ---
+@ApiBearerAuth() // --- V NEW: Add Bearer Auth to Swagger for optional token ---
 export class PublicProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
@@ -24,7 +33,6 @@ export class PublicProductsController {
   })
   async findAllPublic(): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findAllActive();
-    // FIX: Transform to the correct Public DTO to omit sensitive fields
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -41,7 +49,6 @@ export class PublicProductsController {
   ): Promise<PublicProductResponseDto[]> {
     const products =
       await this.productsService.findActiveByCategoryId(categoryId);
-    // FIX: Transform to the correct Public DTO
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -57,7 +64,6 @@ export class PublicProductsController {
     @Param('zoneId') zoneId: string,
   ): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findActiveByZoneId(zoneId);
-    // FIX: Transform to the correct Public DTO
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -73,7 +79,6 @@ export class PublicProductsController {
     @Param('sellerId') sellerId: string,
   ): Promise<PublicProductResponseDto[]> {
     const products = await this.productsService.findActiveBySellerId(sellerId);
-    // FIX: Transform to the correct Public DTO
     return plainToInstance(PublicProductResponseDto, products);
   }
 
@@ -98,11 +103,12 @@ export class PublicProductsController {
   })
   @ApiNotFoundResponse({ description: 'Product not found or is not active.' })
   @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
+  // --- V MODIFIED: Added optional CurrentUser ---
   async findPublicOne(
     @Param('id') id: string,
+    @CurrentUser() user?: UserDocument, // User will be present if valid token is provided
   ): Promise<PublicProductResponseDto> {
-    const product = await this.productsService.findOneActive(id);
-    // FIX: Transform to the correct Public DTO
+    const product = await this.productsService.findOneActive(id, user); // Pass user to service
     return plainToInstance(PublicProductResponseDto, product);
   }
 }

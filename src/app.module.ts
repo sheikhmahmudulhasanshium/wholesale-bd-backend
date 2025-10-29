@@ -19,6 +19,8 @@ import configuration from './config/configuration';
 import { UploadsModule } from './uploads/uploads.module';
 import { StorageModule } from './storage/storage.module';
 import { CollectionsModule } from './collections/collections.module';
+import { SearchModule } from './search/search.module'; // --- V NEW: Import SearchModule ---
+import { UserActivityModule } from './user-activity/user-activity.module'; // --- V NEW ---
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { CollectionsModule } from './collections/collections.module';
     UploadsModule,
     StorageModule,
     CollectionsModule,
+    SearchModule, // --- V NEW: Add SearchModule to imports ---
+    UserActivityModule, // --- V NEW ---
   ],
   controllers: [AppController],
   providers: [AppService], // removed ApiKeyGuard],

@@ -32,7 +32,6 @@ import {
   ApiBearerAuth,
   ApiConsumes,
   ApiBody,
-  // ApiExcludeEndpoint is no longer needed
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -44,7 +43,7 @@ import { UpdateMediaPropertiesDto } from './dto/update-media-properties.dto';
 import { ProductMediaPurpose } from './enums/product-media-purpose.enum';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { FileMimeTypeValidator } from './validators/file-mimetype.validator';
-// Public decorator is no longer needed for this controller
+import { AddTagsDto } from './dto/add-tags.dto';
 
 @ApiTags('Products (Protected)')
 @ApiBearerAuth()
@@ -52,16 +51,6 @@ import { FileMimeTypeValidator } from './validators/file-mimetype.validator';
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
-
-  /**
-   * @deprecated Final one-time migration endpoint. Kept for reference.
-   */
-  // @Get('__internal/fix-images/:key')
-  // @Public()
-  // @ApiExcludeEndpoint()
-  // async runFinalImageMigration(@Param('key') key: string) {
-  //   return this.productsService.runFinalImageMigration(key);
-  // }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -121,8 +110,11 @@ export class ProductsController {
   @ApiUnauthorizedResponse({
     description: 'Unauthorized. Invalid or missing token.',
   })
-  async findOne(@Param('id') id: string): Promise<ProductResponseDto> {
-    const product = await this.productsService.findOne(id);
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.findOne(id, user);
     return plainToInstance(ProductResponseDto, product);
   }
 
@@ -215,6 +207,7 @@ export class ProductsController {
   }
 
   @Post(':id/thumbnail/from-url')
+  // --- V FIX: Corrected typo from 'UserTo ser' to 'UserRole.SELLER' ---
   @Roles(UserRole.ADMIN, UserRole.SELLER)
   @ApiOperation({ summary: 'Set or replace the product thumbnail from a URL' })
   @ApiResponse({ status: 201, type: ProductResponseDto })
@@ -320,6 +313,32 @@ export class ProductsController {
       mediaId,
       user,
     );
+    return plainToInstance(ProductResponseDto, product);
+  }
+
+  @Post(':id/tags')
+  @Roles(UserRole.ADMIN, UserRole.SELLER)
+  @ApiOperation({
+    summary: 'Add tags to a product (Requires Admin/Seller Role)',
+    description:
+      'Adds an array of tags to a product. Existing tags are kept, and duplicates are ignored.',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Tags have been successfully added to the product.',
+    type: ProductResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Product not found.' })
+  @ApiBadRequestResponse({ description: 'Invalid input data.' })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized or insufficient permissions.',
+  })
+  async addTags(
+    @Param('id') id: string,
+    @Body() addTagsDto: AddTagsDto,
+    @CurrentUser() user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.addTags(id, addTagsDto, user);
     return plainToInstance(ProductResponseDto, product);
   }
 }

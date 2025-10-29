@@ -3,36 +3,27 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { ProductMediaPurpose } from '../enums/product-media-purpose.enum';
 
-// --- V NEW: Nested Schema for Product Media ---
-@Schema({ _id: true, timestamps: true }) // _id: true gives each media item a unique ID
+@Schema({ _id: true, timestamps: true })
 export class ProductMedia {
   _id: Types.ObjectId;
-
   @Prop({ required: true })
   url: string;
-
   @Prop({ required: true, enum: ProductMediaPurpose })
   purpose: ProductMediaPurpose;
-
   @Prop({ default: 0 })
   priority: number;
-
-  @Prop() // Optional: key if the file is stored in an object storage like S3/R2
+  @Prop()
   fileKey?: string;
-
   createdAt: Date;
   updatedAt: Date;
 }
 export const ProductMediaSchema = SchemaFactory.createForClass(ProductMedia);
-// --- ^ END of New Nested Schema ---
 
 export class PricingTier {
   @Prop({ required: true, type: Number, min: 1 })
   minQuantity: number;
-
   @Prop({ type: Number, min: 1 })
   maxQuantity?: number;
-
   @Prop({ required: true, type: Number, min: 0 })
   pricePerUnit: number;
 }
@@ -49,13 +40,14 @@ export class Product {
   @Prop({ required: true, trim: true })
   description: string;
 
-  // --- V MODIFIED: Replaced 'images' with the new structured 'media' array ---
   @Prop({ type: [String], default: [] })
-  images: string[]; // Kept for backward compatibility, but new logic will use 'media'
+  images: string[];
 
   @Prop({ type: [ProductMediaSchema], default: [] })
   media: ProductMedia[];
-  // --- ^ END of MODIFICATION ---
+
+  @Prop({ type: [String], default: [], index: true })
+  tags: string[];
 
   @Prop({ type: Types.ObjectId, required: true, ref: 'Category' })
   categoryId: Types.ObjectId;
@@ -134,3 +126,27 @@ ProductSchema.index({ categoryId: 1 });
 ProductSchema.index({ sellerId: 1 });
 ProductSchema.index({ brand: 1, model: 1 });
 ProductSchema.index({ status: 1 });
+
+ProductSchema.index(
+  {
+    name: 'text',
+    description: 'text',
+    brand: 'text',
+    model: 'text',
+    specifications: 'text',
+    tags: 'text',
+  },
+  {
+    weights: {
+      name: 10,
+      brand: 5,
+      model: 5,
+      tags: 4,
+      specifications: 2,
+      description: 1,
+    },
+    // The name has been changed to force MongoDB to create a new, correct index.
+    name: 'ProductTextIndex_v2',
+    default_language: 'none',
+  },
+);

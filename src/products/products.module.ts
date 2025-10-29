@@ -8,6 +8,7 @@ import { Product, ProductSchema } from './schemas/product.schema';
 import { ApiKeyGuard } from '../auth/guards/api-key.guard';
 import { StorageModule } from 'src/storage/storage.module'; // <-- IMPORT STORAGE MODULE
 import { HttpModule } from '@nestjs/axios';
+import { UserActivityModule } from 'src/user-activity/user-activity.module';
 //import { MediaType } from 'src/uploads/enums/media-type.enum';
 
 @Module({
@@ -15,6 +16,7 @@ import { HttpModule } from '@nestjs/axios';
     MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
     StorageModule, // <-- ADD STORAGE MODULE TO IMPORTS
     HttpModule,
+    UserActivityModule,
   ],
   controllers: [ProductsController, PublicProductsController],
   providers: [ProductsService, ApiKeyGuard],

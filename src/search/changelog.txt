@@ -1,0 +1,180 @@
+
+Changelog: Smart Search & Discovery Implementation
+
+This update transforms our basic search functionality into an intelligent, personalized product discovery engine. It introduces features designed to increase user engagement, reduce friction, and drive sales.
+
+For the Product Owner (Business & User Impact)
+
+This section outlines the new capabilities and their benefits from a user and business perspective.
+
+Key User-Facing Features
+
+Typo Correction ("Did You Mean?")
+
+What it is: When a user misspells a product or brand and gets no results, the system now automatically suggests a corrected query (e.g., "Did you mean: samsung phone?") and shows the relevant results.
+
+User Benefit: Reduces frustration from typos. Users can find what they're looking for even if they make a spelling mistake, leading to a smoother, more successful search experience.
+
+Semantic Search via Tags
+
+What it is: The search is now "smarter" and understands synonyms. A search for "phone" will correctly find both "iPhone" and "Samsung Galaxy" products, and a search for "clothing" will find jeans, jackets, and shirts.
+
+User Benefit: Search is more intuitive and flexible. Users can use broader terms to find what they need without having to guess the exact product name.
+
+Personalized Discovery Feed
+
+What it is: A new, personalized "Discover" area (accessible via a dedicated API endpoint) that learns from user behavior.
+
+For Existing Users: It displays sections like:
+
+"Recently Viewed": A convenient list of the last few products they looked at.
+
+"Recommended for You": A smart list of popular products from their most-viewed category (e.g., "Popular in Electronics").
+
+For New Users: To ensure a great first experience, new users will see a "Trending Now" section, showcasing the most popular products on the site.
+
+User Benefit: Helps users find relevant products they might not have known to search for. It makes browsing more engaging and feels tailored to their specific interests.
+
+Business Impact
+
+Increased Conversion: By correcting typos and understanding synonyms, we remove barriers to purchase and improve product findability.
+
+Higher User Engagement: The personalized discovery feed encourages longer browsing sessions and helps users explore more of the product catalog.
+
+Improved Customer Satisfaction: A smart, helpful search and discovery experience builds trust and makes the platform feel more modern and user-friendly.
+
+Opportunities for Cross-Selling: The "Recommended for You" feature is a powerful tool to introduce users to related products, increasing the average order value.
+
+For the Frontend Developer (Technical Details & API Changes)
+
+This section details the new and updated API endpoints, request/response shapes, and authentication requirements needed to build the UI for these features.
+
+1. Enhanced Endpoint: GET /search
+
+The main product search endpoint has been significantly upgraded.
+
+Authentication: Public, but Authentication-Aware.
+
+Anonymous users can search as before.
+
+If a logged-in user includes their Authorization: Bearer <token>, their search query will be logged for personalization.
+
+Query Parameters: Unchanged (q, page, limit).
+
+New Response Field: The SearchResponseDto may now include an optional suggestion string.
+
+UI/UX Implementation:
+
+When the suggestion field is present, display it prominently to the user (e.g., "Did you mean: samsung phone? Showing results for the suggestion.").
+
+Example Response with a Suggestion:
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "data": [
+    // ...product results for "samsung phone"...
+  ],
+  "total": 57,
+  "page": 1,
+  "limit": 20,
+  "hasNextPage": true,
+  "hasPrevPage": false,
+  "suggestion": "Did you mean: samsung phone"
+}
+2. New Endpoint: GET /me/discover
+
+This is the primary endpoint for the new personalized discovery feed.
+
+Authentication: Protected. Requires a valid Authorization: Bearer <token>.
+
+Response Shape (DiscoveryResponseDto): The response contains optional sections. You must handle cases where a section might be undefined.
+
+Use Case 1: Response for an Existing User (with activity)
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "recentlyViewed": [
+    { "_id": "product_id_1", "name": "Viewed Product A", ... },
+    { "_id": "product_id_2", "name": "Viewed Product B", ... }
+  ],
+  "recommendedForYou": {
+    "title": "Popular in Electronics",
+    "items": [
+      { "_id": "product_id_3", "name": "Recommended Product C", ... },
+      { "_id": "product_id_4", "name": "Recommended Product D", ... }
+    ]
+  }
+}
+
+Use Case 2: Response for a New User (no activity)
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "trendingNow": {
+    "title": "Trending Now",
+    "items": [
+      { "_id": "product_id_5", "name": "Trending Product E", ... },
+      { "_id": "product_id_6", "name": "Trending Product F", ... }
+    ]
+  }
+}
+3. Enhanced Endpoint: GET /products/public/find/:id
+
+Authentication: Public, but Authentication-Aware.
+
+Behavior Change: If a logged-in user calls this endpoint (with their token), their view of this product will be tracked in the background. There is no change to the response shape. This happens automatically on the backend.
+
+4. New Endpoint: POST /products/:id/tags
+
+Authentication: Protected (Requires Admin or Seller role).
+
+Purpose: To add or update the searchable tags for a specific product.
+
+Request Body: {"tags": ["tag1", "tag2"]}
+
+Importance: This is the primary tool for improving the semantic quality of the search.
+
+Summary of API Changes
+Endpoint	Method	Status	Auth	Key Changes
+/search	GET	Enhanced	Public (Auth-Aware)	- Now understands synonyms via tags.<br>- May return a suggestion field for typos.
+/me/discover	GET	New	Protected	- Returns personalized sections (recentlyViewed, recommendedForYou) or a trendingNow fallback.
+/products/:id/tags	POST	New	Admin/Seller	- Allows adding/updating searchable tags on a product.
+/products/public/find/:id	GET	Enhanced	Public (Auth-Aware)	- Viewing a product while logged-in now tracks user activity asynchronously.
+/search/update-dictionary	POST	New	Admin-Only	- For backend/admin use. Re-indexes product data including new tags.
+Future Enhancements (Optional To-Do List)
+
+This section outlines potential next steps that can be built on top of the current system.
+
+Federated Search (Search for Users/Sellers):
+
+Goal: Allow users to search for not just products, but also for sellers or other users by their name or business name.
+
+Implementation: Extend the SearchService to query the users collection in parallel with the products collection. The API response would be updated to return a unified list containing items of type 'product' and 'user'.
+
+Enable Personalized Search Ranking Boost:
+
+Goal: Re-enable the feature that subtly boosts search results from a user's favorite category.
+
+Prerequisite: This requires access to the MongoDB Atlas UI to create a special "Atlas Search Index". Once that is available, the search logic can be switched back to the more advanced aggregation pipeline.
+
+More Advanced Recommendations:
+
+Goal: Improve the "Recommended for You" section.
+
+Implementation Ideas:
+
+Collaborative Filtering: Implement a "Users who viewed this also viewed..." feature.
+
+Multi-Category Recommendations: Base recommendations on the user's top 3 most-viewed categories, not just the single top one.

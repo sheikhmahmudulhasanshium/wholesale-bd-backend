@@ -1,0 +1,449 @@
+We’ll go from zero (no search system yet) to a fully featured smart search with typo correction and personalized discovery — all in logical, actionable steps.
+
+🧭 OVERALL GOAL
+
+To design and build a complete search system for your application that:
+
+Starts with a basic keyword search.
+
+Evolves into a “Did You Mean?” typo-tolerant search.
+
+Expands into a hybrid, personalized discovery experience based on user activity.
+
+⚙️ PHASE 1: Basic Search API
+🎯 Goal
+
+Build a simple, fast, and reliable search endpoint that allows users to find products or items by name, tags, or description.
+
+✅ What to Do
+
+Decide what fields users can search by (e.g., product name, tags, and description).
+
+Ensure your database supports text search — for example, use MongoDB’s text indexes for efficient searching.
+
+Create a search query structure — decide what users can type into the search bar (keywords, category filters, etc.).
+
+Design a search service that accepts a search query, performs a text search in your database, and returns matching items sorted by relevance.
+
+Implement pagination (for example, show 20 results per page).
+
+Keep it fast and lightweight — the search should respond quickly, ideally under one second.
+
+✅ Best Practices (DOs)
+
+Use text indexing for better performance.
+
+Keep the first version simple — one endpoint, one purpose.
+
+Return only essential fields in search results (like name, image, price).
+
+🚫 Avoid (DON’Ts)
+
+Don’t use complex or fuzzy matching at this stage — it will slow down your API.
+
+Don’t search through unindexed fields.
+
+Don’t mix in personalization or recommendation logic yet — focus on getting clean, fast results.
+
+🔠 PHASE 2: Add Typo Tolerance (“Did You Mean?”)
+🎯 Goal
+
+Help users when they make typing mistakes or spelling errors by automatically suggesting or re-running a corrected search.
+
+✅ What to Do
+
+Build a dictionary of valid words by scanning all existing product names and tags in your database.
+
+Store this dictionary as a separate collection or data structure that contains all unique, correctly spelled words.
+
+Create a background process that updates the dictionary periodically, such as once a day or whenever products change.
+
+When a user performs a search, check if their query matches words in the dictionary.
+
+If no results are found, look for the most similar valid words in the dictionary and suggest a corrected version.
+
+If a valid correction is found, automatically re-run the search and return results along with a “Did you mean…” message to the user.
+
+Show both original and corrected searches in your response, so users know what happened.
+
+✅ Best Practices (DOs)
+
+Keep the dictionary small and relevant — only include meaningful words.
+
+Use a similarity comparison (e.g., based on letter closeness) to find the best correction.
+
+Update the dictionary regularly but not during every request.
+
+Always inform users when a correction was applied.
+
+🚫 Avoid (DON’Ts)
+
+Don’t perform fuzzy searches directly in the database — they are slow and inefficient.
+
+Don’t rebuild the dictionary every time someone searches.
+
+Don’t correct queries without telling the user — transparency builds trust.
+
+🧠 PHASE 3: Track User Activity (Foundation for Personalization)
+🎯 Goal
+
+Start recording what users do in your app — this data will later allow you to personalize search results and recommendations.
+
+✅ What to Do
+
+Create a place to store user activity — each user should have a record of their interactions (like viewed products, liked categories, and previous search queries).
+
+Track key actions, such as:
+
+When a user views a product.
+
+When they like or save a product.
+
+When they perform a search.
+
+Use background tracking so it doesn’t slow down the main app. The activity updates should happen asynchronously.
+
+Store and update simple metrics, like:
+
+Recently viewed products (last 5–10 items)
+
+Most visited categories
+
+Recent search keywords
+
+Make sure data is anonymized or tied to user accounts securely.
+
+✅ Best Practices (DOs)
+
+Track user activity separately from your main user data.
+
+Focus on actions that show real interest (views, clicks, searches).
+
+Update user activity asynchronously using background tasks or events.
+
+Use this data later to influence what content the user sees.
+
+🚫 Avoid (DON’Ts)
+
+Don’t update user activity synchronously (it should never slow down the user interface).
+
+Don’t store unnecessary data — focus on patterns that improve discovery.
+
+Don’t count seller or admin activity; it should not affect recommendations.
+
+🌐 PHASE 4: Build the Hybrid Search & Discovery Model
+🎯 Goal
+
+Combine traditional search with a personalized discovery system that adapts to each user’s behavior and interests.
+
+✅ What to Do
+
+Keep your traditional search endpoint for users with clear intent (“running shoes size 10”).
+
+Create a separate discovery endpoint (for example, /me/discover) for personalized browsing.
+
+Use user activity data to generate personalized sections, such as:
+
+Recently viewed products
+
+Recommended for you (based on liked categories)
+
+Popular in your favorite categories
+
+Your top search keywords
+
+Enhance search ranking by considering user preferences:
+
+If a user often interacts with “electronics,” boost results from that category.
+
+If they previously searched for “handmade leather,” promote similar items.
+
+Provide fallback content for new users who have no activity history (e.g., trending or popular products).
+
+Keep personalization simple at first — category- or keyword-based boosting is enough before moving into complex algorithms.
+
+✅ Best Practices (DOs)
+
+Use both search and discovery — search for precision, discovery for exploration.
+
+Keep the system lightweight and responsive.
+
+Make recommendations explainable (“Because you liked electronics…”).
+
+Start simple; refine as data grows.
+
+🚫 Avoid (DON’Ts)
+
+Don’t replace traditional search — both modes are important.
+
+Don’t add heavy recommendation algorithms before the basics work.
+
+Don’t block or slow down normal browsing to fetch personalized data.
+
+🔁 PHASE 5: Testing, Monitoring, and Optimization
+🎯 Goal
+
+Ensure the system is fast, accurate, and improves user satisfaction over time.
+
+✅ What to Do
+
+Test search accuracy — try various query types, including correct, incorrect, and partial searches.
+
+Test typo corrections — check that “Did You Mean?” suggestions make sense.
+
+Measure performance — ensure that each request stays under your target response time.
+
+Monitor dictionary updates — confirm that your dictionary stays in sync with your product catalog.
+
+Gather feedback — monitor how often users click on suggested corrections or recommendations.
+
+Iterate — improve correction logic, ranking, and personalization as you gather real-world data.
+
+✅ Best Practices (DOs)
+
+Measure and monitor everything.
+
+Log user queries and correction success rates.
+
+Use analytics to refine thresholds for “Did You Mean?” similarity.
+
+Continuously optimize your indexes and queries for performance.
+
+🚫 Avoid (DON’Ts)
+
+Don’t release without testing real-world scenarios.
+
+Don’t ignore user behavior — let real usage guide improvements.
+
+Don’t hardcode recommendation logic — keep it adaptable.
+
+🏁 FINAL OUTCOME
+
+By following this roadmap, you’ll end up with:
+
+A fast and reliable search API that returns accurate, indexed results.
+
+A “Did You Mean?” system that gracefully handles typos and spelling mistakes.
+
+A personalized discovery experience that adapts to each user’s activity and interests.
+current codebase.
+
+🌳 Complete Project Tree (hiding major noise folders):       
+src/
+├── 📁 auth
+│   ├── 📁 decorators
+│   │   ├── 📄 current-user.decorator.ts
+│   │   ├── 📄 public.decorator.ts
+│   │   └── 📄 roles.decorator.ts
+│   ├── 📁 dto
+│   │   ├── 📄 approve-reject-seller.dto.ts
+│   │   ├── 📄 block-unblock.dto.ts
+│   │   ├── 📄 change-password.dto.ts
+│   │   ├── 📄 forgot-password.dto.ts
+│   │   ├── 📄 login.dto.ts
+│   │   ├── 📄 register.dto.ts
+│   │   ├── 📄 reset-password.dto.ts
+│   │   ├── 📄 seller-register.dto.ts
+│   │   ├── 📄 validate-otp.dto.ts
+│   │   └── 📄 verify-email.dto.ts
+│   ├── 📁 guards
+│   │   ├── 📄 api-key.guard.ts
+│   │   ├── 📄 jwt-auth.guard.ts
+│   │   └── 📄 roles.guard.ts
+│   ├── 📁 interfaces
+│   │   └── 📄 jwt-payload.interface.ts
+│   ├── 📁 strategies
+│   │   ├── 📄 google.strategy.ts
+│   │   └── 📄 jwt.strategy.ts
+│   ├── 📄 auth.controller.ts
+│   ├── 📄 auth.module.ts
+│   ├── 📄 auth.service.ts
+│   ├── 📄 how-works.md
+│   └── 📄 plan.txt
+├── 📁 carts
+│   ├── 📁 dto
+│   └── 📁 schemas
+├── 📁 categories
+│   ├── 📁 dto
+│   │   └── 📄 category-response.dto.ts
+│   ├── 📁 schemas
+│   │   └── 📄 category.schema.ts
+│   ├── 📄 categories.controller.ts
+│   ├── 📄 categories.module.ts
+│   └── 📄 categories.service.ts
+├── 📁 collections
+│   ├── 📁 dto
+│   │   ├── 📄 add-products.dto.ts
+│   │   ├── 📄 collection-product.dto.ts
+│   │   └── 📄 create-collection.dto.ts
+│   ├── 📁 schemas
+│   │   └── 📄 collection.schema.ts
+│   ├── 📄 collections.controller.ts
+│   ├── 📄 collections.module.ts
+│   ├── 📄 collections.service.ts
+│   └── 📄 plan.txt
+├── 📁 common
+│   └── 📁 filters
+│       └── 📄 http-exception.filter.ts
+├── 📁 config
+│   ├── 📄 configuration.ts
+│   └── 📄 validation.ts
+├── 📁 mail
+│   ├── 📄 mail.module.ts
+│   └── 📄 mail.service.ts
+├── 📁 metadata
+│   └── 📄 plan.txt
+├── 📁 orders
+│   ├── 📁 dto
+│   │   └── 📄 order-response.dto.ts
+│   ├── 📁 schemas
+│   │   └── 📄 order.schema.ts
+│   ├── 📄 orders.controller.ts
+│   ├── 📄 orders.module.ts
+│   ├── 📄 orders.service.ts
+│   └── 📄 plan.txt
+├── 📁 products
+│   ├── 📁 dto
+│   │   ├── 📄 add-media-from-url.dto.ts
+│   │   ├── 📄 product-media.dto.ts
+│   │   ├── 📄 product-response.dto.ts
+│   │   ├── 📄 public-product-response.dto.ts
+│   │   └── 📄 update-media-properties.dto.ts
+│   ├── 📁 enums
+│   │   └── 📄 product-media-purpose.enum.ts
+│   ├── 📁 schemas
+│   │   └── 📄 product.schema.ts
+│   ├── 📁 validators
+│   │   └── 📄 file-mimetype.validator.ts
+│   ├── 📄 products.controller.ts
+│   ├── 📄 products.module.ts
+│   ├── 📄 products.service.ts
+│   └── 📄 public-products.controller.ts
+├── 📁 search
+├── 📁 seeder
+│   └── 📄 seeder.txt
+├── 📁 storage
+│   ├── 📁 dto
+│   │   └── 📄 create-link.dto.ts
+│   ├── 📁 schemas
+│   │   └── 📄 media.schema.ts
+│   ├── 📄 plan.txt
+│   ├── 📄 storage.module.ts
+│   └── 📄 storage.service.ts
+├── 📁 uploads
+│   ├── 📁 dto
+│   │   ├── 📄 pagination-query.dto.ts
+│   │   └── 📄 update-media.dto.ts
+│   ├── 📁 enums
+│   │   ├── 📄 entity-model.enum.ts
+│   │   ├── 📄 media-purpose.enum.ts
+│   │   └── 📄 media-type.enum.ts
+│   ├── 📁 pipes
+│   │   └── 📄 parse-entity-model.pipe.ts
+│   ├── 📄 uploads.controller.ts
+│   ├── 📄 uploads.module.ts
+│   └── 📄 uploads.service.ts
+├── 📁 users
+│   ├── 📁 dto
+│   │   ├── 📄 set-profile-picture-from-url.dto.ts
+│   │   ├── 📄 unified-public-profile.dto.ts
+│   │   ├── 📄 user-public-profile.dto.ts
+│   │   └── 📄 user-response.dto.ts
+│   ├── 📁 schemas
+│   │   └── 📄 user.schema.ts
+│   ├── 📄 users.controller.ts
+│   ├── 📄 users.module.ts
+│   └── 📄 users.service.ts
+├── 📁 zones
+│   ├── 📁 dto
+│   │   └── 📄 zone-response.dto.ts
+│   ├── 📁 schemas
+│   │   └── 📄 zone.schema.ts
+│   ├── 📄 zones.controller.ts
+│   ├── 📄 zones.module.ts
+│   └── 📄 zones.service.ts
+├── 📄 app.controller.ts
+├── 📄 app.module.ts
+├── 📄 app.service.ts
+└── 📄 main.ts
+
+
+ask me which file you need to make it?
+available package
+pnpm list      
+Legend: production dependency, optional only, dev only
+
+wholesalebd-backend@0.0.1 F:\AIUB\Personal_project\Mirza Freelance\wholesale-bd.com\wholesale-bd-backend-new\wholesalebd-backend (PRIVATE)
+
+dependencies:
+@aws-sdk/client-s3 3.913.0
+@aws-sdk/s3-request-presigner 3.913.0
+@nestjs/axios 4.0.1
+@nestjs/common 11.1.7
+@nestjs/config 4.0.2
+@nestjs/core 11.1.7
+@nestjs/jwt 11.0.1
+@nestjs/mongoose 11.0.3
+@nestjs/passport 11.0.5
+@nestjs/platform-express 11.1.7
+@nestjs/swagger 11.2.1
+@nestjs/throttler 6.4.0
+@types/multer 2.0.0
+@types/qrcode 1.5.5
+@types/speakeasy 2.0.10
+axios 1.12.2
+bcryptjs 3.0.2
+class-transformer 0.5.1
+class-validator 0.14.2
+dotenv 17.2.3
+firebase-admin 13.5.0
+handlebars 4.7.8
+joi 18.0.1
+mongoose 8.19.2
+multer 2.0.2
+nodemailer 7.0.9
+otp-generator 4.0.1
+passport 0.7.0
+passport-google-oauth20 2.0.0
+passport-jwt 4.0.1
+qrcode 1.5.4
+reflect-metadata 0.2.2
+rxjs 7.8.2
+serverless-express 2.0.12
+speakeasy 2.0.0
+swagger-ui-express 5.0.1
+uuid 13.0.0
+
+devDependencies:
+@eslint/eslintrc 3.3.1
+@eslint/js 9.38.0
+@nestjs/cli 11.0.10
+@nestjs/schematics 11.0.9
+@nestjs/testing 11.1.7
+@swc/cli 0.6.0
+@swc/core 1.13.5
+@types/bcryptjs 3.0.0
+@types/express 4.17.21
+@types/jest 29.5.14
+@types/mongoose 5.11.97
+@types/node 22.18.12
+@types/nodemailer 7.0.2
+@types/otp-generator 4.0.2
+@types/passport-google-oauth20 2.0.16
+@types/passport-jwt 4.0.1
+@types/supertest 6.0.3
+eslint 9.38.0
+eslint-config-prettier 10.1.8
+eslint-plugin-prettier 5.5.4
+globals 16.4.0
+jest 29.7.0
+prettier 3.6.2
+source-map-support 0.5.21
+supertest 7.1.4
+ts-jest 29.4.5
+ts-loader 9.5.4
+ts-node 10.9.2
+tsconfig-paths 4.2.0
+typescript 5.9.3
+typescript-eslint 8.46.2
+dont force/suggest me to download package/s i wanna keep it lightweight

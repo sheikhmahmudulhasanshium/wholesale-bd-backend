@@ -1,3 +1,4 @@
+// src/products/products.service.ts
 import {
   Injectable,
   NotFoundException,
@@ -5,7 +6,6 @@ import {
   ConflictException,
   ForbiddenException,
   Logger,
-  // UnauthorizedException is no longer needed
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
@@ -31,6 +31,9 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import * as path from 'path';
+import { UserActivityService } from 'src/user-activity/user-activity.service'; // --- V NEW ---
+import { ActivityType } from 'src/user-activity/dto/track-activity.dto'; // --- V NEW ---
+import { AddTagsDto } from './dto/add-tags.dto';
 
 @Injectable()
 export class ProductsService {
@@ -41,6 +44,7 @@ export class ProductsService {
     private readonly productModel: Model<ProductDocument>,
     private readonly storageService: StorageService,
     private readonly httpService: HttpService,
+    private readonly userActivityService: UserActivityService, // --- V NEW ---
   ) {}
 
   private _mapProductToResponse(product: ProductDocument): ProductResponseDto {
@@ -137,12 +141,13 @@ export class ProductsService {
   async findAllActive(): Promise<ProductResponseDto[]> {
     const products = await this.productModel
       .find({ status: 'active' })
-      .select('+media') // <-- FIX: Ensure media is fetched
+      .select('+media')
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
 
-  async findOne(id: string): Promise<ProductResponseDto> {
+  // --- V MODIFIED: Added user param for activity tracking ---
+  async findOne(id: string, user?: UserDocument): Promise<ProductResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
     }
@@ -150,10 +155,28 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
+
+    // --- V NEW: Asynchronously track the view activity ---
+    if (user && user.role !== UserRole.ADMIN) {
+      // Don't track admin views
+      this.userActivityService
+        .trackActivity({
+          userId: user._id,
+          type: ActivityType.VIEW_PRODUCT,
+          productId: product._id.toString(),
+        })
+        .catch((err) => this.logger.error('Failed to track product view', err));
+    }
+    // --- ^ END of NEW ---
+
     return this._mapProductToResponse(product);
   }
 
-  async findOneActive(id: string): Promise<ProductResponseDto> {
+  // --- V MODIFIED: Added user param for activity tracking ---
+  async findOneActive(
+    id: string,
+    user?: UserDocument,
+  ): Promise<ProductResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
     }
@@ -165,6 +188,20 @@ export class ProductsService {
         `Product with ID "${id}" not found or is not active.`,
       );
     }
+
+    // --- V NEW: Asynchronously track the view activity ---
+    if (user && user.role !== UserRole.ADMIN) {
+      // Don't track admin views
+      this.userActivityService
+        .trackActivity({
+          userId: user._id,
+          type: ActivityType.VIEW_PRODUCT,
+          productId: product._id.toString(),
+        })
+        .catch((err) => this.logger.error('Failed to track product view', err));
+    }
+    // --- ^ END of NEW ---
+
     return this._mapProductToResponse(product);
   }
 
@@ -196,7 +233,7 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ categoryId: categoryId })
-      .select('+media') // <-- FIX: Ensure media is fetched for admin/internal use
+      .select('+media')
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -211,7 +248,7 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ categoryId: categoryId, status: 'active' })
-      .select('+media') // <-- FIX: Ensure media is fetched
+      .select('+media')
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -222,7 +259,7 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ zoneId: zoneId })
-      .select('+media') // <-- FIX: Ensure media is fetched for admin/internal use
+      .select('+media')
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -233,7 +270,7 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ zoneId: zoneId, status: 'active' })
-      .select('+media') // <-- FIX: Ensure media is fetched
+      .select('+media')
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -244,7 +281,7 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ sellerId: sellerId })
-      .select('+media') // <-- FIX: Ensure media is fetched for admin/internal use
+      .select('+media')
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -255,7 +292,7 @@ export class ProductsService {
     }
     const products = await this.productModel
       .find({ sellerId: sellerId, status: 'active' })
-      .select('+media') // <-- FIX: Ensure media is fetched
+      .select('+media')
       .exec();
     return products.map((p) => this._mapProductToResponse(p));
   }
@@ -462,5 +499,29 @@ export class ProductsService {
 
   async countAllActiveProducts(): Promise<number> {
     return this.productModel.countDocuments({ status: 'active' }).exec();
+  }
+  async addTags(
+    productId: string,
+    addTagsDto: AddTagsDto,
+    user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productModel.findById(productId);
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found.`);
+    }
+
+    this._verifyOwnership(product, user);
+
+    // Use a Set to ensure all tags are unique and handle case-insensitivity
+    const existingTags = new Set(product.tags.map((tag) => tag.toLowerCase()));
+
+    for (const newTag of addTagsDto.tags) {
+      existingTags.add(newTag.toLowerCase().trim());
+    }
+
+    product.tags = Array.from(existingTags);
+    const updatedProduct = await product.save();
+
+    return this._mapProductToResponse(updatedProduct);
   }
 }
