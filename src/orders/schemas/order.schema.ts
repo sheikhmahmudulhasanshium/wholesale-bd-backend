@@ -1,55 +1,46 @@
+// src/orders/schemas/order.schema.ts
+
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import { Document, HydratedDocument, Types } from 'mongoose';
 
-export type OrderDocument = HydratedDocument<Order>;
-
-// --- Enums for Type Safety ---
 export enum OrderStatus {
-  PENDING = 'pending',
+  PENDING_APPROVAL = 'pending_approval',
   PROCESSING = 'processing',
   READY_FOR_DISPATCH = 'ready_for_dispatch',
   SHIPPED = 'shipped',
   DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
+  REJECTED = 'rejected',
 }
 
 export enum PaymentStatus {
   PENDING = 'pending',
   PAID = 'paid',
-  FAILED = 'failed',
   REFUNDED = 'refunded',
+  FAILED = 'failed',
 }
 
-export enum PaymentMethod {
-  CASH_ON_DELIVERY = 'cash_on_delivery',
-  BANK_TRANSFER = 'bank_transfer',
-  MOBILE_BANKING = 'mobile_banking',
-  CARD = 'card',
-}
-
-// --- Nested Schemas ---
 @Schema({ _id: false })
 class OrderItem {
-  @Prop({
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true,
-  })
-  productId: string;
+  @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
+  productId: Types.ObjectId;
 
   @Prop({ required: true })
   productName: string;
 
   @Prop()
-  productImage?: string;
+  productSku?: string;
+
+  @Prop()
+  thumbnailUrl?: string;
 
   @Prop({ required: true, min: 1 })
   quantity: number;
 
-  @Prop({ required: true })
-  pricePerUnit: number;
+  @Prop({ required: true, min: 0 })
+  pricePerUnitAtOrder: number;
 
-  @Prop({ required: true })
+  @Prop({ required: true, min: 0 })
   totalPrice: number;
 }
 const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
@@ -59,11 +50,8 @@ class ShippingAddress {
   @Prop({ required: true })
   fullName: string;
 
-  @Prop({ required: true })
-  phone: string;
-
-  @Prop({ required: true })
-  address: string;
+  @Prop()
+  addressLine?: string; // More specific than just 'address'
 
   @Prop({ required: true })
   city: string;
@@ -72,66 +60,42 @@ class ShippingAddress {
   zone: string;
 
   @Prop()
-  postalCode?: string;
+  phone?: string;
 }
 const ShippingAddressSchema = SchemaFactory.createForClass(ShippingAddress);
 
-// --- Main Order Schema ---
+export type OrderDocument = HydratedDocument<Order>;
+
 @Schema({ timestamps: true })
 export class Order {
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, index: true })
   orderNumber: string;
 
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  customerId: string;
-
-  @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-  sellerId: string;
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  userId: Types.ObjectId;
 
   @Prop({ type: [OrderItemSchema], required: true })
   items: OrderItem[];
 
-  // --- Financials ---
-  @Prop({ required: true })
-  subtotal: number;
-
-  @Prop({ default: 0 })
-  shippingCost: number;
-
-  @Prop({ default: 0 })
-  tax: number;
-
-  @Prop({ required: true })
+  @Prop({ required: true, min: 0 })
   totalAmount: number;
 
-  // --- Shipping ---
   @Prop({ type: ShippingAddressSchema, required: true })
   shippingAddress: ShippingAddress;
 
-  // --- Status & Payment ---
-  @Prop({ type: String, enum: OrderStatus, default: OrderStatus.PENDING })
+  @Prop({
+    type: String,
+    enum: OrderStatus,
+    default: OrderStatus.PENDING_APPROVAL,
+  })
   status: OrderStatus;
 
   @Prop({ type: String, enum: PaymentStatus, default: PaymentStatus.PENDING })
   paymentStatus: PaymentStatus;
 
-  @Prop({
-    type: String,
-    enum: PaymentMethod,
-    default: PaymentMethod.CASH_ON_DELIVERY,
-  })
-  paymentMethod: PaymentMethod;
-
   @Prop()
-  notes?: string;
+  adminNotes?: string;
 
-  // --- Timestamps ---
-  @Prop({ type: Date })
-  deliveredAt?: Date;
-
-  @Prop({ type: Date })
-  cancelledAt?: Date;
-  // Add this inside the Order class
   createdAt: Date;
   updatedAt: Date;
 }

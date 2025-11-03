@@ -10,7 +10,6 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ZonesModule } from './zones/zones.module';
-//import { ApiKeyGuard } from './auth/guards/api-key.guard';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './users/users.module';
 import { MailModule } from './mail/mail.module';
@@ -19,8 +18,13 @@ import configuration from './config/configuration';
 import { UploadsModule } from './uploads/uploads.module';
 import { StorageModule } from './storage/storage.module';
 import { CollectionsModule } from './collections/collections.module';
-import { SearchModule } from './search/search.module'; // --- V NEW: Import SearchModule ---
-import { UserActivityModule } from './user-activity/user-activity.module'; // --- V NEW ---
+import { SearchModule } from './search/search.module';
+import { UserActivityModule } from './user-activity/user-activity.module';
+// --- V NEW: Import the ThrottlerGuard and APP_GUARD provider token ---
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { CartModule } from './carts/cart.module';
+// --- ^ END of NEW ---
 
 @Module({
   imports: [
@@ -31,37 +35,48 @@ import { UserActivityModule } from './user-activity/user-activity.module'; // --
       envFilePath: '.env',
     }),
 
-    // THIS IS THE BLOCK TO FIX
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
-      // FIX: The useFactory must return an object with the 'uri' property for Mongoose.
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('database.uri'),
       }),
       inject: [ConfigService],
     }),
 
+    // --- V MODIFIED: Add a name to the default throttler configuration ---
     ThrottlerModule.forRoot([
       {
-        ttl: 60000,
-        limit: 10,
+        name: 'default', // Name this configuration
+        ttl: 60000, // 1 minute
+        limit: 20, // 20 requests per minute from the same IP
       },
     ]),
+    // --- ^ END of MODIFIED ---
 
     AuthModule,
     UserModule,
     MailModule,
     ProductsModule,
+    CartModule, // This will be added in a later step
+
     OrdersModule,
     CategoriesModule,
     ZonesModule,
     UploadsModule,
     StorageModule,
     CollectionsModule,
-    SearchModule, // --- V NEW: Add SearchModule to imports ---
-    UserActivityModule, // --- V NEW ---
+    SearchModule,
+    UserActivityModule,
   ],
   controllers: [AppController],
-  providers: [AppService], // removed ApiKeyGuard],
+  // --- V NEW: Set the ThrottlerGuard as a global guard ---
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
+  // --- ^ END of NEW ---
 })
 export class AppModule {}

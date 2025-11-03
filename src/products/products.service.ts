@@ -1,4 +1,5 @@
 // src/products/products.service.ts
+
 import {
   Injectable,
   NotFoundException,
@@ -13,6 +14,7 @@ import {
   Product,
   ProductDocument,
   ProductMedia,
+  Review,
 } from './schemas/product.schema';
 import {
   CreateProductDto,
@@ -31,9 +33,10 @@ import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 import { AxiosResponse } from 'axios';
 import * as path from 'path';
-import { UserActivityService } from 'src/user-activity/user-activity.service'; // --- V NEW ---
-import { ActivityType } from 'src/user-activity/dto/track-activity.dto'; // --- V NEW ---
+import { UserActivityService } from 'src/user-activity/user-activity.service';
+import { ActivityType } from 'src/user-activity/dto/track-activity.dto';
 import { AddTagsDto } from './dto/add-tags.dto';
+import { CreateReviewDto } from './dto/create-review.dto';
 
 @Injectable()
 export class ProductsService {
@@ -44,8 +47,15 @@ export class ProductsService {
     private readonly productModel: Model<ProductDocument>,
     private readonly storageService: StorageService,
     private readonly httpService: HttpService,
-    private readonly userActivityService: UserActivityService, // --- V NEW ---
+    private readonly userActivityService: UserActivityService,
   ) {}
+
+  async findById(id: string): Promise<ProductDocument | null> {
+    if (!Types.ObjectId.isValid(id)) {
+      return null;
+    }
+    return this.productModel.findById(id).exec();
+  }
 
   private _mapProductToResponse(product: ProductDocument): ProductResponseDto {
     const productObj = product.toObject() as Product;
@@ -83,6 +93,55 @@ export class ProductsService {
         'You do not have permission to modify this product.',
       );
     }
+  }
+
+  async addReview(
+    productId: string,
+    createReviewDto: CreateReviewDto,
+    user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    if (!Types.ObjectId.isValid(productId)) {
+      throw new BadRequestException(
+        `Invalid product ID format: "${productId}"`,
+      );
+    }
+
+    const product = await this.productModel.findById(productId);
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found.`);
+    }
+
+    const existingReview = product.reviews.find(
+      (review) => review.userId.toString() === user._id.toString(),
+    );
+
+    if (existingReview) {
+      throw new ConflictException('You have already reviewed this product.');
+    }
+
+    const newReview: Review = {
+      _id: new Types.ObjectId(),
+      userId: user._id,
+      rating: createReviewDto.rating,
+      comment: createReviewDto.comment,
+      createdAt: new Date(),
+    };
+
+    product.reviews.push(newReview);
+
+    const totalRating = product.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0,
+    );
+    product.reviewCount = product.reviews.length;
+    product.rating =
+      product.reviewCount > 0
+        ? parseFloat((totalRating / product.reviewCount).toFixed(2))
+        : 0;
+
+    const updatedProduct = await product.save();
+
+    return this._mapProductToResponse(updatedProduct);
   }
 
   async create(
@@ -146,7 +205,6 @@ export class ProductsService {
     return products.map((p) => this._mapProductToResponse(p));
   }
 
-  // --- V MODIFIED: Added user param for activity tracking ---
   async findOne(id: string, user?: UserDocument): Promise<ProductResponseDto> {
     if (!Types.ObjectId.isValid(id)) {
       throw new BadRequestException(`Invalid product ID format: "${id}"`);
@@ -156,9 +214,7 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
 
-    // --- V NEW: Asynchronously track the view activity ---
     if (user && user.role !== UserRole.ADMIN) {
-      // Don't track admin views
       this.userActivityService
         .trackActivity({
           userId: user._id,
@@ -167,12 +223,10 @@ export class ProductsService {
         })
         .catch((err) => this.logger.error('Failed to track product view', err));
     }
-    // --- ^ END of NEW ---
 
     return this._mapProductToResponse(product);
   }
 
-  // --- V MODIFIED: Added user param for activity tracking ---
   async findOneActive(
     id: string,
     user?: UserDocument,
@@ -189,9 +243,7 @@ export class ProductsService {
       );
     }
 
-    // --- V NEW: Asynchronously track the view activity ---
     if (user && user.role !== UserRole.ADMIN) {
-      // Don't track admin views
       this.userActivityService
         .trackActivity({
           userId: user._id,
@@ -200,9 +252,37 @@ export class ProductsService {
         })
         .catch((err) => this.logger.error('Failed to track product view', err));
     }
-    // --- ^ END of NEW ---
 
     return this._mapProductToResponse(product);
+  }
+
+  async incrementViewCount(
+    productId: string,
+    user?: UserDocument,
+  ): Promise<void> {
+    if (!Types.ObjectId.isValid(productId)) {
+      throw new BadRequestException(
+        `Invalid product ID format: "${productId}"`,
+      );
+    }
+
+    const product = await this.productModel
+      .findById(productId)
+      .select('sellerId')
+      .lean();
+
+    if (!product) {
+      throw new NotFoundException(`Product with ID "${productId}" not found.`);
+    }
+
+    if (user && user._id.toString() === product.sellerId.toString()) {
+      return;
+    }
+
+    await this.productModel.updateOne(
+      { _id: productId },
+      { $inc: { viewCount: 1 } },
+    );
   }
 
   async update(
@@ -218,8 +298,12 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID "${id}" not found.`);
     }
     this._verifyOwnership(product, user);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { _id, ...updateData } = updateProductDto;
+
+    // --- V FIX: This is the guaranteed fix for the no-unused-vars rule. ---
+    const updateData = { ...updateProductDto };
+    delete updateData._id;
+    // --- ^ END of FIX ---
+
     Object.assign(product, updateData);
     const updatedProduct = await product.save();
     return this._mapProductToResponse(updatedProduct);
@@ -500,6 +584,7 @@ export class ProductsService {
   async countAllActiveProducts(): Promise<number> {
     return this.productModel.countDocuments({ status: 'active' }).exec();
   }
+
   async addTags(
     productId: string,
     addTagsDto: AddTagsDto,
@@ -512,7 +597,6 @@ export class ProductsService {
 
     this._verifyOwnership(product, user);
 
-    // Use a Set to ensure all tags are unique and handle case-insensitivity
     const existingTags = new Set(product.tags.map((tag) => tag.toLowerCase()));
 
     for (const newTag of addTagsDto.tags) {

@@ -1,4 +1,5 @@
 // src/products/products.controller.ts
+
 import {
   Controller,
   Get,
@@ -32,6 +33,7 @@ import {
   ApiBearerAuth,
   ApiConsumes,
   ApiBody,
+  ApiConflictResponse,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -44,6 +46,7 @@ import { ProductMediaPurpose } from './enums/product-media-purpose.enum';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { FileMimeTypeValidator } from './validators/file-mimetype.validator';
 import { AddTagsDto } from './dto/add-tags.dto';
+import { CreateReviewDto } from './dto/create-review.dto';
 
 @ApiTags('Products (Protected)')
 @ApiBearerAuth()
@@ -51,6 +54,38 @@ import { AddTagsDto } from './dto/add-tags.dto';
 @Controller('products')
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
+
+  // --- V NEW: Add Review Endpoint ---
+  @Post(':id/reviews')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Add a review to a product (Requires Auth)',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'The review has been successfully added.',
+    type: ProductResponseDto,
+  })
+  @ApiNotFoundResponse({ description: 'Product not found.' })
+  @ApiConflictResponse({
+    description: 'User has already reviewed this product.',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Unauthorized. Invalid or missing token.',
+  })
+  async addReview(
+    @Param('id') productId: string,
+    @Body() createReviewDto: CreateReviewDto,
+    @CurrentUser() user: UserDocument,
+  ): Promise<ProductResponseDto> {
+    const product = await this.productsService.addReview(
+      productId,
+      createReviewDto,
+      user,
+    );
+    return plainToInstance(ProductResponseDto, product);
+  }
+  // --- ^ END of NEW ---
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -207,7 +242,6 @@ export class ProductsController {
   }
 
   @Post(':id/thumbnail/from-url')
-  // --- V FIX: Corrected typo from 'UserTo ser' to 'UserRole.SELLER' ---
   @Roles(UserRole.ADMIN, UserRole.SELLER)
   @ApiOperation({ summary: 'Set or replace the product thumbnail from a URL' })
   @ApiResponse({ status: 201, type: ProductResponseDto })

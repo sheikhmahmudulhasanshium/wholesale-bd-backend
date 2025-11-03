@@ -1,5 +1,14 @@
 // src/products/public-products.controller.ts
-import { Controller, Get, Param, HttpStatus, UseGuards } from '@nestjs/common';
+
+import {
+  Controller,
+  Get,
+  Param,
+  HttpStatus,
+  UseGuards,
+  Patch,
+  HttpCode,
+} from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { PublicProductResponseDto } from './dto/public-product-response.dto';
 import {
@@ -9,20 +18,43 @@ import {
   ApiNotFoundResponse,
   ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
-import { Public } from 'src/auth/decorators/public.decorator'; // --- V NEW ---
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard'; // --- V NEW ---
-import { CurrentUser } from 'src/auth/decorators/current-user.decorator'; // --- V NEW ---
-import { UserDocument } from 'src/users/schemas/user.schema'; // --- V NEW ---
+import { Public } from 'src/auth/decorators/public.decorator';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { CurrentUser } from 'src/auth/decorators/current-user.decorator';
+import { UserDocument } from 'src/users/schemas/user.schema';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('Products (Public)')
 @Controller('products')
-@Public() // --- V NEW: Apply Public decorator at the controller level ---
-@UseGuards(JwtAuthGuard) // --- V NEW: Apply JWT guard to attempt user resolution ---
-@ApiBearerAuth() // --- V NEW: Add Bearer Auth to Swagger for optional token ---
+@Public() // Apply Public decorator at the controller level
+@UseGuards(JwtAuthGuard) // Apply JWT guard to attempt user resolution
+@ApiBearerAuth() // Add Bearer Auth to Swagger for optional token
 export class PublicProductsController {
   constructor(private readonly productsService: ProductsService) {}
+
+  // --- V NEW: Organic View Count Endpoint ---
+  @Patch('public/:productId/view')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // Override: 5 requests per IP per minute
+  @ApiOperation({
+    summary: 'Increment a product view count (Public, Rate-Limited)',
+  })
+  @ApiOkResponse({
+    description:
+      'View count incremented (or silently ignored for the seller). Always returns 200 OK.',
+  })
+  @ApiNotFoundResponse({ description: 'Product not found.' })
+  @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
+  async incrementViewCount(
+    @Param('productId') productId: string,
+    @CurrentUser() user?: UserDocument,
+  ): Promise<void> {
+    await this.productsService.incrementViewCount(productId, user);
+  }
+  // --- ^ END of NEW ---
 
   @Get('public/all')
   @ApiOperation({ summary: 'Retrieve all active products (Public)' })
@@ -103,7 +135,6 @@ export class PublicProductsController {
   })
   @ApiNotFoundResponse({ description: 'Product not found or is not active.' })
   @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
-  // --- V MODIFIED: Added optional CurrentUser ---
   async findPublicOne(
     @Param('id') id: string,
     @CurrentUser() user?: UserDocument, // User will be present if valid token is provided

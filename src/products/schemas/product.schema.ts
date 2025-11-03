@@ -1,7 +1,28 @@
 // src/products/schemas/product.schema.ts
+
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { ProductMediaPurpose } from '../enums/product-media-purpose.enum';
+
+@Schema({ timestamps: { createdAt: true, updatedAt: false } })
+export class Review {
+  _id: Types.ObjectId;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+  userId: Types.ObjectId;
+
+  @Prop({ required: true, min: 1, max: 5 })
+  rating: number;
+
+  // --- V FIX: The @Prop is now marked as not required, and the type is optional. ---
+  @Prop({ trim: true, required: false })
+  comment?: string;
+  // --- ^ END of FIX ---
+
+  @Prop({ type: Date, default: Date.now })
+  createdAt: Date;
+}
+export const ReviewSchema = SchemaFactory.createForClass(Review);
 
 @Schema({ _id: true, timestamps: true })
 export class ProductMedia {
@@ -45,6 +66,9 @@ export class Product {
 
   @Prop({ type: [ProductMediaSchema], default: [] })
   media: ProductMedia[];
+
+  @Prop({ type: [ReviewSchema], default: [] })
+  reviews: Review[];
 
   @Prop({ type: [String], default: [], index: true })
   tags: string[];
@@ -145,7 +169,6 @@ ProductSchema.index(
       specifications: 2,
       description: 1,
     },
-    // The name has been changed to force MongoDB to create a new, correct index.
     name: 'ProductTextIndex_v2',
     default_language: 'none',
   },
