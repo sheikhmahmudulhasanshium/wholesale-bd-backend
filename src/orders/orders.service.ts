@@ -1,3 +1,5 @@
+// src/orders/orders.service.ts
+
 import {
   BadRequestException,
   ForbiddenException,
@@ -27,6 +29,18 @@ import {
 import { Cart, CartDocument } from 'src/carts/schemas/cart.schema';
 import { SeedOrdersDto } from './dto/seed-orders.dto';
 import { PaginationQueryDto } from 'src/carts/dto/pagination-query.dto';
+
+// Define explicit types for the populated cart to satisfy strict linting rules
+interface PopulatedCartItem {
+  productId: ProductDocument | null;
+  quantity: number;
+}
+
+type CartForOrderCreation = {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  items: PopulatedCartItem[];
+};
 
 @Injectable()
 export class OrdersService {
@@ -207,7 +221,6 @@ export class OrdersService {
       throw new BadRequestException('Invalid ID format provided.');
     }
 
-    // --- FIX: Use `.toString()` to satisfy ESLint ---
     const cart = await this.cartModel
       .findOne({
         $or: [{ _id: id }, { userId: id }],
@@ -225,20 +238,21 @@ export class OrdersService {
       );
     }
 
-    if (cart.items.length === 0) {
+    const populatedCart = cart.toObject() as CartForOrderCreation;
+
+    if (populatedCart.items.length === 0) {
       throw new BadRequestException('The selected cart is empty.');
     }
 
-    const user = await this.userModel.findById(cart.userId);
+    const user = await this.userModel.findById(populatedCart.userId);
     if (!user) {
-      // --- FIX: Use `.toString()` to satisfy ESLint ---
       throw new NotFoundException(
-        `User associated with cart "${cart._id.toString()}" not found.`,
+        `User associated with cart "${populatedCart._id.toString()}" not found.`,
       );
     }
 
     let totalAmount = 0;
-    const orderItems = cart.items.map((item) => {
+    const orderItems = populatedCart.items.map((item) => {
       const product = item.productId;
       if (!product) {
         throw new BadRequestException(
@@ -285,7 +299,6 @@ export class OrdersService {
       shippingAddress: {
         fullName: `${user.firstName} ${user.lastName}`,
         addressLine: user.address,
-        // --- FIX: Use a fallback for the missing 'city' property ---
         city: user.zone || 'N/A',
         zone: user.zone,
         phone: user.phone,
