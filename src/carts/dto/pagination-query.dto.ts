@@ -1,3 +1,5 @@
+// src/carts/dto/pagination-query.dto.ts
+
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
@@ -5,6 +7,8 @@ import { IsEnum, IsNumber, IsOptional, Min } from 'class-validator';
 export enum SortByCartOption {
   UPDATED_AT = 'updatedAt',
   TOTAL_VALUE = 'totalValue',
+  STATUS = 'status', // <-- NEW OPTION
+  CREATED_AT = 'createdAt', // <-- NEW OPTION
 }
 
 export enum SortOrderOption {

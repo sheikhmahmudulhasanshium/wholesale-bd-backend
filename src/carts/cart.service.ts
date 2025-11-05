@@ -17,11 +17,27 @@ import { UpdateCartStatusDto } from './dto/update-cart-status.dto';
 import { User, UserDocument, UserRole } from 'src/users/schemas/user.schema';
 import { UpdateCartDto } from './dto/update-cart.dto';
 import { UpdateShippingDto } from './dto/update-shipping.dto';
-import { AddToCartDto } from './dto/add-to-cart.dto'; // Import the new DTO
+import { AddToCartDto } from './dto/add-to-cart.dto';
+import {
+  CartSearchQueryDto,
+  CartSearchSortByOption,
+  SortOrderOption,
+} from './dto/cart-search-query.dto';
+import { PaginatedRichCartResponseDto } from './dto/paginated-rich-cart-response.dto';
+
+// Define the SearchableCartItem type for the user-specific search response
+export interface SearchableCartItem {
+  seller: { _id: string; businessName: string };
+  product: { _id: string; name: string };
+  quantity: number;
+  pricing: { unitPrice: number; itemTotal: number };
+  warnings: string[];
+}
 
 export interface RichCart {
   _id: string;
   status: string;
+  createdAt: string;
   updatedAt: string;
   shippingDetails: { address: string | null; contactPhone: string | null };
   user: {
@@ -81,6 +97,7 @@ type CartWithDetails = {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
   items: CartItemDetails[];
+  createdAt: Date;
   updatedAt: Date;
   status?: CartStatus;
   shippingAddress?: string;
@@ -110,6 +127,128 @@ export class CartService {
     private readonly userService: UserService,
   ) {}
 
+  // --- THIS IS THE NEW UNIFIED SEARCH METHOD ---
+  async searchCarts(
+    user: UserDocument,
+    query: CartSearchQueryDto,
+  ): Promise<PaginatedRichCartResponseDto | SearchableCartItem[]> {
+    if (user.role === UserRole.ADMIN) {
+      // --- ADMIN LOGIC ---
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = CartSearchSortByOption.UPDATED_AT,
+        sortOrder = SortOrderOption.DESC,
+        q,
+      } = query;
+
+      // Fetch all carts and enrich them. For admin, we filter after enrichment.
+      let allRichCarts = await this.getAllCartsRich();
+
+      // Filter by search term 'q' if provided (searches user's name/email)
+      if (q) {
+        const searchTerm = q.toLowerCase().trim();
+        allRichCarts = allRichCarts.filter(
+          (cart) =>
+            cart.user.firstName.toLowerCase().includes(searchTerm) ||
+            cart.user.lastName.toLowerCase().includes(searchTerm) ||
+            cart.user.email.toLowerCase().includes(searchTerm),
+        );
+      }
+
+      // Sort in memory
+      allRichCarts.sort((a, b) => {
+        let comparison = 0;
+        switch (sortBy) {
+          case CartSearchSortByOption.TOTAL_VALUE:
+            comparison = a.summary.grandTotal - b.summary.grandTotal;
+            break;
+          case CartSearchSortByOption.STATUS:
+            comparison = a.status.localeCompare(b.status);
+            break;
+          case CartSearchSortByOption.CREATED_AT:
+            comparison =
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            break;
+          default: // UPDATED_AT
+            comparison =
+              new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+            break;
+        }
+        return sortOrder === SortOrderOption.ASC ? comparison : -comparison;
+      });
+
+      // Paginate the final result
+      const skip = (page - 1) * limit;
+      const paginatedData = allRichCarts.slice(skip, skip + limit);
+      const total = allRichCarts.length;
+
+      return {
+        data: paginatedData,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } else {
+      // --- USER (CUSTOMER/SELLER) LOGIC ---
+      const {
+        q,
+        sortBy = CartSearchSortByOption.PRODUCT_NAME,
+        sortOrder = SortOrderOption.ASC,
+      } = query;
+      const sortMultiplier = sortOrder === SortOrderOption.ASC ? 1 : -1;
+
+      const richCart = await this.getCartForUser(user);
+
+      let allItems: SearchableCartItem[] = [];
+      for (const sellerGroup of richCart.itemsBySeller) {
+        const itemsWithSeller = sellerGroup.items.map((item) => ({
+          ...item,
+          seller: {
+            _id: sellerGroup.seller._id,
+            businessName: sellerGroup.seller.businessName,
+          },
+        }));
+        allItems.push(...itemsWithSeller);
+      }
+
+      if (q) {
+        const searchTerm = q.toLowerCase().trim();
+        allItems = allItems.filter(
+          (item) =>
+            item.product.name.toLowerCase().includes(searchTerm) ||
+            item.seller.businessName.toLowerCase().includes(searchTerm),
+        );
+      }
+
+      allItems.sort((a, b) => {
+        let comparison = 0;
+        switch (sortBy) {
+          case CartSearchSortByOption.PRICE:
+            comparison = a.pricing.itemTotal - b.pricing.itemTotal;
+            break;
+          case CartSearchSortByOption.SELLER_NAME:
+            comparison = a.seller.businessName.localeCompare(
+              b.seller.businessName,
+            );
+            break;
+          case CartSearchSortByOption.WARNINGS:
+            comparison = b.warnings.length - a.warnings.length;
+            break;
+          default: // PRODUCT_NAME
+            comparison = a.product.name.localeCompare(b.product.name);
+            break;
+        }
+        return comparison * sortMultiplier;
+      });
+
+      return allItems;
+    }
+  }
+
+  // --- ALL OTHER METHODS BELOW ARE UNCHANGED ---
+
   async getCartForUser(user: UserDocument): Promise<RichCart> {
     const cart = await this.findOrCreateCartByUserId(user._id);
     const transformedCart = await this.transformCart(cart);
@@ -125,7 +264,6 @@ export class CartService {
     const cart = await this.cartModel.findById(cartId);
     if (!cart)
       throw new NotFoundException(`Cart with ID "${cartId}" not found.`);
-
     if (
       user.role !== UserRole.ADMIN &&
       cart.userId.toString() !== user._id.toString()
@@ -134,7 +272,6 @@ export class CartService {
         'You do not have permission to view this cart.',
       );
     }
-
     const transformedCart = await this.transformCart(cart);
     if (!transformedCart)
       throw new NotFoundException(
@@ -157,11 +294,9 @@ export class CartService {
   ): Promise<RichCart> {
     const { items } = addToCartDto;
     const cart = await this.findOrCreateCartByUserId(user._id);
-
     if ((cart.status as CartStatus) === CartStatus.LOCKED) {
       throw new ForbiddenException('Cannot add items to a locked cart.');
     }
-
     for (const itemDto of items) {
       const product = await this.productsService.findById(
         itemDto.productId.toString(),
@@ -171,23 +306,18 @@ export class CartService {
           `Product with ID "${itemDto.productId.toString()}" does not exist.`,
         );
       }
-
       const existingItemIndex = cart.items.findIndex(
         (i) => i.productId.toString() === itemDto.productId.toString(),
       );
-
       if (existingItemIndex > -1) {
-        // If item exists, increment the quantity
         cart.items[existingItemIndex].quantity += itemDto.quantity;
       } else {
-        // If item does not exist, add it to the cart
         cart.items.push({
           productId: itemDto.productId,
           quantity: itemDto.quantity,
         });
       }
     }
-
     const updatedCart = await cart.save();
     const transformedCart = await this.transformCart(updatedCart);
     if (!transformedCart) {
@@ -205,13 +335,11 @@ export class CartService {
   ): Promise<RichCart> {
     const { items } = updateDto;
     const cart = await this.findOrCreateCartByUserId(user._id);
-
     if ((cart.status as CartStatus) === CartStatus.LOCKED) {
       throw new ForbiddenException(
         'Cannot modify a locked cart. Please complete or cancel the checkout process.',
       );
     }
-
     for (const itemDto of items) {
       const product = await this.productsService.findById(
         itemDto.productId.toString(),
@@ -221,11 +349,9 @@ export class CartService {
           `Product with ID "${itemDto.productId.toString()}" does not exist.`,
         );
       }
-
       const existingItemIndex = cart.items.findIndex(
         (i) => i.productId.toString() === itemDto.productId.toString(),
       );
-
       if (itemDto.quantity > 0) {
         if (existingItemIndex > -1) {
           cart.items[existingItemIndex].quantity = itemDto.quantity;
@@ -241,7 +367,6 @@ export class CartService {
         }
       }
     }
-
     const updatedCart = await cart.save();
     const transformedCart = await this.transformCart(updatedCart);
     if (!transformedCart) {
@@ -263,7 +388,6 @@ export class CartService {
         'Cannot modify shipping info for a locked cart.',
       );
     }
-
     if (dto.shippingAddress) cart.shippingAddress = dto.shippingAddress;
     if (dto.contactPhone) cart.contactPhone = dto.contactPhone;
 
@@ -288,7 +412,6 @@ export class CartService {
     const cart = await this.cartModel.findById(cartId);
     if (!cart)
       throw new NotFoundException(`Cart with ID "${cartId}" not found.`);
-
     if (
       user.role !== UserRole.ADMIN &&
       cart.userId.toString() !== user._id.toString()
@@ -297,7 +420,6 @@ export class CartService {
         'You do not have permission to update this cart.',
       );
     }
-
     cart.status = updateDto.status;
     const updatedCart = await cart.save();
     const transformedCart = await this.transformCart(updatedCart);
@@ -318,7 +440,6 @@ export class CartService {
     const cart = await this.cartModel.findById(cartId);
     if (!cart)
       throw new NotFoundException(`Cart with ID "${cartId}" not found.`);
-
     if (
       user.role !== UserRole.ADMIN &&
       cart.userId.toString() !== user._id.toString()
@@ -327,7 +448,6 @@ export class CartService {
         'You do not have permission to delete this cart.',
       );
     }
-
     await this.cartModel.deleteOne({ _id: cartId });
     return {
       message: `Cart with ID "${cartId}" has been successfully deleted.`,
@@ -351,7 +471,6 @@ export class CartService {
       throw new ForbiddenException('Invalid confirmation phrase.');
     }
     this.logger.warn('--- RUNNING CART DATA CLEANUP TASKS ---');
-
     const updateResult = await this.cartModel.updateMany(
       { status: { $exists: false } },
       { $set: { status: CartStatus.ACTIVE } },
@@ -359,19 +478,17 @@ export class CartService {
     this.logger.log(
       `Task 1: Updated ${updateResult.modifiedCount} carts to add 'status: active'.`,
     );
-
     interface DuplicateGroup {
       _id: Types.ObjectId;
       count: number;
       docs: Types.ObjectId[];
     }
-    const duplicates = (await this.cartModel.aggregate([
+    const duplicates = await this.cartModel.aggregate<DuplicateGroup>([
       {
         $group: { _id: '$userId', count: { $sum: 1 }, docs: { $push: '$_id' } },
       },
       { $match: { count: { $gt: 1 } } },
-    ])) as unknown as DuplicateGroup[];
-
+    ]);
     let duplicatesRemoved = 0;
     if (duplicates.length > 0) {
       this.logger.log(
@@ -381,7 +498,6 @@ export class CartService {
       interface CartId {
         _id: Types.ObjectId;
       }
-
       for (const group of duplicates) {
         const carts = (await this.cartModel
           .find({ userId: group._id })
@@ -394,7 +510,6 @@ export class CartService {
         );
         idsToDelete.push(...cartsToDelete.map((c) => c._id));
       }
-
       if (idsToDelete.length > 0) {
         const deleteResult = await this.cartModel.deleteMany({
           _id: { $in: idsToDelete },
@@ -403,7 +518,6 @@ export class CartService {
       }
     }
     this.logger.log(`Task 2: Removed ${duplicatesRemoved} duplicate carts.`);
-
     interface LeanCartRef {
       _id: Types.ObjectId;
       userId: Types.ObjectId;
@@ -414,7 +528,6 @@ export class CartService {
       .find({}, '_id userId')
       .lean()
       .exec()) as unknown as LeanCartRef[];
-
     const orphanCartIds = allCarts
       .filter((cart) => !validUserIds.has(cart.userId.toString()))
       .map((cart) => cart._id);
@@ -426,7 +539,6 @@ export class CartService {
       orphansRemoved = deleteResult.deletedCount;
     }
     this.logger.log(`Task 3: Removed ${orphansRemoved} orphaned carts.`);
-
     this.logger.warn('--- CART CLEANUP COMPLETE ---');
     return {
       message: 'Cart cleanup tasks completed successfully.',
@@ -450,7 +562,6 @@ export class CartService {
   private async transformCart(cart: CartDocument): Promise<RichCart | null> {
     const detailedCart = cart.toObject() as CartWithDetails;
     const userIdStr = detailedCart.userId.toString();
-
     const [user, products] = await Promise.all([
       Types.ObjectId.isValid(userIdStr)
         ? this.userService.findById(userIdStr)
@@ -461,7 +572,6 @@ export class CartService {
         ),
       ),
     ]);
-
     if (!user) {
       this.logger.warn(
         `User with ID ${userIdStr} not found for cart ${detailedCart._id.toString()}. Skipping.`,
@@ -469,7 +579,6 @@ export class CartService {
       return null;
     }
     const detailedUser = user as UserWithDetails;
-
     const validProducts = products.filter(
       (p): p is ProductDocument => p !== null,
     );
@@ -489,18 +598,15 @@ export class CartService {
     const sellersMap = new Map(
       sellers.filter((s) => s !== null).map((s) => [s._id.toString(), s]),
     );
-
     for (const cartItem of detailedCart.items) {
       const product = validProducts.find(
         (p) => p._id.toString() === cartItem.productId.toString(),
       );
       if (!product) continue;
-
       const detailedProduct = product as ProductWithDetails;
       const sellerId = detailedProduct.sellerId.toString();
       const sellerDoc = sellersMap.get(sellerId) as UserWithDetails;
       if (!sellerDoc) continue;
-
       if (!itemsBySellerMap.has(sellerId)) {
         itemsBySellerMap.set(sellerId, {
           seller: {
@@ -514,14 +620,12 @@ export class CartService {
           items: [],
         });
       }
-
       const unitPrice = getUnitPriceForQuantity(
         detailedProduct.pricingTiers,
         cartItem.quantity,
       );
       const itemTotal = unitPrice * cartItem.quantity;
       const warnings: string[] = [];
-
       if (
         detailedProduct.stockQuantity !== undefined &&
         detailedProduct.stockQuantity < cartItem.quantity
@@ -530,7 +634,6 @@ export class CartService {
           'This product is currently out of stock. Please remove it to proceed with checkout for this seller.',
         );
       }
-
       if (
         detailedProduct.minimumOrderQuantity &&
         cartItem.quantity < detailedProduct.minimumOrderQuantity
@@ -539,22 +642,20 @@ export class CartService {
           `The minimum order for this item is ${detailedProduct.minimumOrderQuantity}.`,
         );
       }
-
       const enrichedItem = {
         product: { _id: detailedProduct._id, name: detailedProduct.name },
         quantity: cartItem.quantity,
         pricing: { unitPrice, itemTotal },
         warnings,
       };
-
       itemsBySellerMap.get(sellerId)?.items.push(enrichedItem);
       grandTotal += itemTotal;
       totalQuantity += cartItem.quantity;
     }
-
     return {
       _id: detailedCart._id.toString(),
       status: detailedCart.status || 'active',
+      createdAt: detailedCart.createdAt.toISOString(),
       updatedAt: detailedCart.updatedAt.toISOString(),
       shippingDetails: {
         address: detailedCart.shippingAddress || detailedUser.address || null,

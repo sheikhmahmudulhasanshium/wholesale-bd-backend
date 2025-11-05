@@ -9,6 +9,7 @@ import {
   UseGuards,
   Delete,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -17,7 +18,7 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { CartService, RichCart } from './cart.service';
+import { CartService, RichCart, SearchableCartItem } from './cart.service';
 import { UpdateCartStatusDto } from './dto/update-cart-status.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -28,7 +29,9 @@ import { UpdateCartDto } from './dto/update-cart.dto';
 import { UpdateShippingDto } from './dto/update-shipping.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { CleanupDto } from './dto/cleanup.dto';
-import { AddToCartDto } from './dto/add-to-cart.dto'; // Import the new DTO
+import { AddToCartDto } from './dto/add-to-cart.dto';
+import { CartSearchQueryDto } from './dto/cart-search-query.dto';
+import { PaginatedRichCartResponseDto } from './dto/paginated-rich-cart-response.dto';
 
 @ApiTags('Cart')
 @Controller('cart')
@@ -78,6 +81,24 @@ export class CartController {
     return await this.cartService.runCleanupTasks(cleanupDto.confirmation);
   }
 
+  @Get('search')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Search within carts (functionality varies by user role)',
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Returns a list of items for users, or a paginated list of carts for admins.',
+  })
+  async searchCarts(
+    @CurrentUser() user: UserDocument,
+    @Query() query: CartSearchQueryDto,
+  ): Promise<PaginatedRichCartResponseDto | SearchableCartItem[]> {
+    return await this.cartService.searchCarts(user, query);
+  }
+
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
@@ -124,9 +145,12 @@ export class CartController {
   @Post('items')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Add one or more items to the cart' })
+  @ApiOperation({
+    summary:
+      'Add one or more items to the cart (increments quantity if item exists)',
+  })
   @ApiResponse({
-    status: 200,
+    status: 201,
     description:
       'The item(s) were added successfully and the updated cart is returned.',
   })
@@ -145,7 +169,7 @@ export class CartController {
   @Patch()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update quantities or remove items in the cart' })
+  @ApiOperation({ summary: 'Set quantities or remove items in the cart' })
   @ApiResponse({
     status: 200,
     description: 'The cart was updated successfully.',
