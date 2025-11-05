@@ -2,8 +2,6 @@
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { User } from '../../users/schemas/user.schema';
-import { Product } from '../../products/schemas/product.schema';
 
 export enum CartStatus {
   ACTIVE = 'active',
@@ -13,7 +11,7 @@ export enum CartStatus {
 
 @Schema({ _id: false })
 export class CartItem {
-  @Prop({ type: Types.ObjectId, ref: Product.name, required: true })
+  @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
   productId: Types.ObjectId;
 
   @Prop({ type: Number, required: true, min: 1 })
@@ -23,7 +21,11 @@ export const CartItemSchema = SchemaFactory.createForClass(CartItem);
 
 @Schema({ timestamps: true, collection: 'carts' })
 export class Cart {
-  @Prop({ type: Types.ObjectId, ref: User.name, required: true })
+  // --- THIS IS THE FIX FOR DUPLICATES ---
+  // Adding `unique: true` tells MongoDB to reject any attempt to create a
+  // second cart for a userId that already has one. This permanently solves
+  // the race condition and duplicate cart issue.
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, unique: true })
   userId: Types.ObjectId;
 
   @Prop({ type: [CartItemSchema], default: [] })
@@ -42,6 +44,9 @@ export class Cart {
 
   @Prop({ type: String, default: null })
   contactPhone: string | null;
+
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type CartDocument = Cart & Document;
