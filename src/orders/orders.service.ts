@@ -28,7 +28,7 @@ import {
 } from './schemas/order-sequence.schema';
 import { Cart, CartDocument } from 'src/carts/schemas/cart.schema';
 import { SeedOrdersDto } from './dto/seed-orders.dto';
-import { PaginationQueryDto } from 'src/carts/dto/pagination-query.dto';
+import { PaginationQueryDto } from 'src/orders/dto/pagination-query.dto';
 
 // Define explicit types for the populated cart to satisfy strict linting rules
 interface PopulatedCartItem {

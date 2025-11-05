@@ -30,7 +30,7 @@ import { AdminCreateOrderDto } from './dto/admin-create-order.dto';
 import { OrderResponseDto } from './dto/order-response.dto';
 import { Public } from 'src/auth/decorators/public.decorator';
 import { SeedOrdersDto } from './dto/seed-orders.dto';
-import { PaginationQueryDto } from 'src/carts/dto/pagination-query.dto';
+import { PaginationQueryDto } from 'src/orders/dto/pagination-query.dto';
 
 @ApiTags('Orders')
 @ApiBearerAuth()
