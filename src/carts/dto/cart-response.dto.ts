@@ -1,5 +1,3 @@
-// src/cart/dto/cart-response.dto.ts
-
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { PublicProductResponseDto } from 'src/products/dto/public-product-response.dto';
@@ -19,8 +17,7 @@ class CartItemResponseDto {
   quantity: number;
 
   @ApiProperty({
-    description:
-      'The price per unit for the specified quantity, based on pricing tiers.',
+    description: 'The price per unit for the specified quantity.',
     example: 43000,
   })
   unitPrice: number;
@@ -65,8 +62,7 @@ export class CartResponseDto {
   totalQuantity: number;
 
   @ApiProperty({
-    description:
-      'The grand total price for all items in the cart, before shipping or taxes.',
+    description: 'The grand total price for all items in the cart.',
     example: 550000,
   })
   grandTotal: number;

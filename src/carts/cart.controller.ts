@@ -1,5 +1,3 @@
-// src/cart/cart.controller.ts
-
 import {
   Controller,
   Get,
@@ -11,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Query,
+  Patch,
 } from '@nestjs/common';
 import { CartService } from './cart.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -23,14 +22,18 @@ import {
   ApiBearerAuth,
   ApiNotFoundResponse,
   ApiBadRequestResponse,
-  ApiForbiddenResponse, // --- V NEW ---
+  ApiExcludeEndpoint,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AddToCartDto } from './dto/add-to-cart.dto';
 import { CartResponseDto } from './dto/cart-response.dto';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { PaginatedAdminCartResponseDto } from './dto/admin-cart-response.dto';
-import { PaginationQueryDto } from 'src/uploads/dto/pagination-query.dto';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { SeedCartsDto } from './dto/seed-carts.dto';
+import { AdminUpdateCartDto } from './dto/admin-update-cart.dto';
+import { PaginationQueryDto } from 'src/carts/dto/pagination-query.dto';
 
 @ApiTags('Cart')
 @ApiBearerAuth()
@@ -39,49 +42,118 @@ import { PaginationQueryDto } from 'src/uploads/dto/pagination-query.dto';
 export class CartController {
   constructor(private readonly cartService: CartService) {}
 
+  @ApiExcludeEndpoint()
+  @Public()
+  @Get('internal_migration/:password')
+  async wipeCarts(@Param('password') password: string) {
+    return this.cartService.runOneTimeWipe(password);
+  }
+
+  @ApiExcludeEndpoint()
+  @Public()
+  @Post('internal_migration/seed/:password')
+  @ApiBody({
+    description: 'The raw JSON array of cart objects to seed.',
+    type: [SeedCartsDto],
+  })
+  async seedCarts(
+    @Param('password') password: string,
+    @Body() seedCartsDto: SeedCartsDto[],
+  ) {
+    return this.cartService.runOneTimeSeed(password, seedCartsDto);
+  }
+
+  @Public()
+  @Get('public/count')
+  @ApiOperation({ summary: 'Get the total number of active carts' })
+  async getActiveCartsCount() {
+    return this.cartService.getActiveCartsCount();
+  }
+
+  @Patch('admin/:userId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary:
+      "Update a user's cart (add, update quantity, or remove items) (Admin Only)",
+  })
+  @ApiResponse({ status: 200, type: CartResponseDto })
+  @ApiNotFoundResponse({ description: 'User or Product not found.' })
+  @ApiBadRequestResponse({ description: 'Invalid input data.' })
+  async adminUpdateCart(
+    @Param('userId') userId: string,
+    @Body() adminUpdateCartDto: AdminUpdateCartDto,
+  ): Promise<CartResponseDto> {
+    return this.cartService.adminUpdateCart(userId, adminUpdateCartDto.items);
+  }
+
+  @Get('admin/find/:cartId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Find a specific cart by its ID (Admin Only)' })
+  @ApiResponse({ status: 200, type: CartResponseDto })
+  @ApiNotFoundResponse({ description: 'Cart with the specified ID not found.' })
+  @ApiBadRequestResponse({ description: 'Invalid Cart ID format.' })
+  async findCartById(
+    @Param('cartId') cartId: string,
+  ): Promise<CartResponseDto> {
+    return this.cartService.findCartById(cartId);
+  }
+
+  @Get('admin/:userId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Get a specific user's cart by their User ID (Admin Only)",
+  })
+  @ApiResponse({ status: 200, type: CartResponseDto })
+  @ApiNotFoundResponse({ description: 'User or their cart not found.' })
+  async getCartByUserId(
+    @Param('userId') userId: string,
+  ): Promise<CartResponseDto> {
+    return this.cartService.getCart(userId);
+  }
+
+  @Delete('admin/clear/:userId')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Clear all items from a specific user's cart (Admin Only)",
+  })
+  async adminClearCart(
+    @Param('userId') userId: string,
+  ): Promise<CartResponseDto> {
+    return this.cartService.clearCart(userId);
+  }
+
   @Get('admin/all')
   @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get all active carts (Admin Only)' })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully retrieved all carts with pagination.',
-    type: PaginatedAdminCartResponseDto,
-  })
+  @ApiOperation({ summary: 'Get all active carts with sorting (Admin Only)' })
   async findAllAdmin(
     @Query() paginationQuery: PaginationQueryDto,
   ): Promise<PaginatedAdminCartResponseDto> {
     return this.cartService.findAllAdmin(paginationQuery);
   }
 
-  @Get()
-  @ApiOperation({ summary: "Get the current user's shopping cart" })
-  @ApiResponse({
-    status: 200,
-    description: 'Successfully retrieved the cart.',
-    type: CartResponseDto,
+  // --- vvvvvv THIS IS THE FIX vvvvvv ---
+  @Public() // Make this endpoint accessible without a JWT token
+  @Get('admin/all/raw')
+  @ApiOperation({
+    summary:
+      'Get all active carts as raw DB documents (Public for Verification)',
   })
+  async findAllAdminRaw() {
+    return this.cartService.findAllAdminRaw();
+  }
+  // --- ^^^^^^ END OF FIX ^^^^^^ ---
+
+  @Get()
+  @ApiOperation({ summary: "Get the current user's personal shopping cart" })
+  @ApiResponse({ status: 200, type: CartResponseDto })
   async getCart(@CurrentUser() user: UserDocument): Promise<CartResponseDto> {
     return this.cartService.getCart(user._id);
   }
 
   @Post('items')
   @ApiOperation({
-    summary: 'Add an item to the cart or update its quantity',
+    summary: 'Add an item to the personal cart or update its quantity',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Item successfully added/updated in the cart.',
-    type: CartResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: 'Invalid input data (e.g., quantity below minimum).',
-  })
-  @ApiNotFoundResponse({ description: 'Product not found.' })
-  // --- V NEW: Add Swagger documentation for the Forbidden error ---
-  @ApiForbiddenResponse({
-    description: 'Admins are not allowed to perform this action.',
-  })
-  // --- V MODIFIED: Pass the full user object to the service ---
   async addItem(
     @CurrentUser() user: UserDocument,
     @Body() addToCartDto: AddToCartDto,
@@ -90,14 +162,7 @@ export class CartController {
   }
 
   @Delete('items/:productId')
-  @ApiOperation({ summary: 'Remove a specific item from the cart' })
-  @ApiResponse({
-    status: 200,
-    description: 'Item successfully removed from the cart.',
-    type: CartResponseDto,
-  })
-  @ApiNotFoundResponse({ description: 'Cart or item in cart not found.' })
-  @ApiBadRequestResponse({ description: 'Invalid product ID format.' })
+  @ApiOperation({ summary: 'Remove a specific item from the personal cart' })
   async removeItem(
     @CurrentUser() user: UserDocument,
     @Param('productId') productId: string,
@@ -107,12 +172,7 @@ export class CartController {
 
   @Delete()
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Clear all items from the shopping cart' })
-  @ApiResponse({
-    status: 200,
-    description: 'Cart has been successfully cleared.',
-    type: CartResponseDto,
-  })
+  @ApiOperation({ summary: 'Clear all items from the personal shopping cart' })
   async clearCart(@CurrentUser() user: UserDocument): Promise<CartResponseDto> {
     return this.cartService.clearCart(user._id);
   }

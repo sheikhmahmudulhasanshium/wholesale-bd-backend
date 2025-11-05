@@ -36,9 +36,8 @@
         .btn-primary:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 7px 20px rgba(59, 130, 246, 0.4); }
         .btn-secondary { background-image: linear-gradient(45deg, #10b981 0%, #22c55e 100%); color: var(--text-color-light); }
         .btn-quaternary { background-image: linear-gradient(45deg, #a78bfa 0%, #8b5cf6 100%); color: var(--text-color-light); }
-
         .analytics-container {
-            max-width: 700px; width: 90%; margin: 2rem auto 0 auto; padding: 1.5rem;
+            max-width: 800px; width: 90%; margin: 2rem auto 0 auto; padding: 1.5rem;
             background: var(--card-bg-color); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.18);
             border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center;
         }
@@ -50,7 +49,6 @@
         .stat-text .stat-value { font-size: 1.75rem; font-weight: 700; display: block; line-height: 1.2; }
         .stat-text .stat-label { font-size: 0.9rem; opacity: 0.8; display: block; }
         .hidden { display: none; }
-        
         footer { width: 100%; text-align: center; font-size: 0.9rem; opacity: 0.8; padding: 2rem 1rem; margin-top: auto; }
         @media (min-width: 600px) { .actions { flex-direction: row; flex-wrap: wrap; } }
     </style>
@@ -67,7 +65,7 @@
             <a href="/api" class="btn btn-secondary"><svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 12" /></svg>API Docs</a>
             <button id="show-analytics-btn" class="btn btn-quaternary">
                 <svg class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" /></svg>
-                Show Highlights
+                <span id="analytics-btn-text">Show Highlights</span>
             </button>
         </div>
     </main>
@@ -88,17 +86,10 @@
             </div>
         </div>
         <div class="analytics-stat">
-            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c.51 0 .962-.343 1.087-.835l1.858-6.491a1.125 1.125 0 0 0-.21-1.228A1.125 1.125 0 0 0 17.55 5.25H4.087a1.125 1.125 0 0 0-1.087.835L1.95 10.334a1.125 1.125 0 0 0 .101 1.002 1.125 1.125 0 0 0 .825.43h3.693Z" /></svg>
             <div class="stat-text">
-                <span id="total-categories-count" class="stat-value">...</span>
-                <span class="stat-label">Total Categories</span>
-            </div>
-        </div>
-        <div class="analytics-stat">
-            <svg class="stat-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
-            <div class="stat-text">
-                <span id="total-zones-count" class="stat-value">...</span>
-                <span class="stat-label">Total Zones</span>
+                <span id="active-carts-count" class="stat-value">...</span>
+                <span class="stat-label">Active Carts</span>
             </div>
         </div>
         <div class="analytics-stat">
@@ -119,57 +110,47 @@
 
     <footer><p>&copy; 2024 Wholesale BD &bull; All Rights Reserved</p></footer>
     
-    <!-- =================== SCRIPT UPDATED FOR ROBUSTNESS =================== -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const showAnalyticsBtn = document.getElementById('show-analytics-btn');
             const analyticsSection = document.getElementById('analytics-section');
+            const analyticsBtnText = document.getElementById('analytics-btn-text');
 
-            /**
-             * A robust function to fetch data from a single endpoint and update the UI.
-             * @param {string} url - The API endpoint to fetch.
-             * @param {HTMLElement} element - The span element to update with the count.
-             * @param {string} dataKey - The key in the JSON response that holds the count.
-             */
             async function fetchStat(url, element, dataKey) {
                 try {
                     const response = await fetch(url);
-                    if (!response.ok) {
-                        // This will catch 404s, 500s, etc.
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    if (!response.ok) { throw new Error(`HTTP error! status: ${response.status}`); }
                     const data = await response.json();
                     element.textContent = data[dataKey] ?? 'Error';
                 } catch (error) {
                     console.error(`Failed to fetch ${url}:`, error);
-                    element.textContent = 'N/A'; // Set to N/A on failure
+                    element.textContent = 'N/A';
                 }
             }
 
             function fetchAllAnalyticsData() {
-                // Fetch each statistic individually. One failure will not stop the others.
                 fetchStat('/api/v1/users/count', document.getElementById('total-users-count'), 'totalUsers');
-                // 👇 --- FIX IS HERE --- 👇
                 fetchStat('/api/v1/products/public/count', document.getElementById('total-products-count'), 'totalProducts');
-                // 👆 --- END OF FIX --- 👆
-                fetchStat('/api/v1/categories/count', document.getElementById('total-categories-count'), 'totalCategories');
-                fetchStat('/api/v1/zones/count', document.getElementById('total-zones-count'), 'totalZones');
-
-                // Special handling for the orders endpoint which returns multiple values
-                fetchStat('/api/v1/orders/analytics', document.getElementById('total-orders-count'), 'total');
-                fetchStat('/api/v1/orders/analytics', document.getElementById('pending-orders-count'), 'pending');
+                fetchStat('/api/v1/cart/public/count', document.getElementById('active-carts-count'), 'totalActiveCarts');
+                fetchStat('/api/v1/orders/public/analytics', document.getElementById('total-orders-count'), 'total');
+                fetchStat('/api/v1/orders/public/analytics', document.getElementById('pending-orders-count'), 'pending');
             }
             
+            // --- vvvvvv THIS IS THE UPDATED LOGIC vvvvvv ---
             showAnalyticsBtn.addEventListener('click', () => {
-                if (analyticsSection.classList.contains('hidden')) {
-                    analyticsSection.classList.remove('hidden');
+                const isHidden = analyticsSection.classList.toggle('hidden');
+
+                if (isHidden) {
+                    analyticsBtnText.textContent = 'Show Highlights';
+                } else {
+                    analyticsBtnText.textContent = 'Hide Highlights';
+                    analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }
-                analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
+            // --- ^^^^^^ END OF UPDATED LOGIC ^^^^^^ ---
             
             fetchAllAnalyticsData();
         });
     </script>
-    <!-- =================== END OF SCRIPT UPDATE =================== -->
 </body>
 </html>

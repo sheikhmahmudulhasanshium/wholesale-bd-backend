@@ -1,5 +1,3 @@
-// src/cart/cart.module.ts
-
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CartController } from './cart.controller';
@@ -11,7 +9,6 @@ import { Product, ProductSchema } from 'src/products/schemas/product.schema';
   imports: [
     MongooseModule.forFeature([
       { name: Cart.name, schema: CartSchema },
-      // We need ProductModel in CartService to validate products
       { name: Product.name, schema: ProductSchema },
     ]),
   ],

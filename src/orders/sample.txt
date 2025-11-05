@@ -1,0 +1,277 @@
+
+
+// orders/sample.txt
+// This file contains the definitive API blueprints for the orders module.
+// 1. "Detailed View": The full response for a single order (e.g., GET /api/v1/orders/:id).
+// 2. "List View": The summarized response for the admin dashboard (e.g., GET /api/v1/orders/admin/all).
+
+// -------------------------------------------------------------------------------------------
+// --- 1. Detailed View Sample (For GET /orders/:id or GET /orders/admin/all?view=detailed) ---
+// -------------------------------------------------------------------------------------------
+{
+"data": [
+{
+"order_scenario": "The Ultimate Order: Delivered, Paid, Seller-to-Seller Purchase, Discounted, and Fully Reviewed",
+"_id": "ORDER_ID_001",
+"orderNumber": "WBD-2024-101",
+"createdAt": "2024-02-05T12:30:00.000Z",
+"updatedAt": "2024-02-15T20:15:00.000Z",
+"status": "delivered",
+"isTestData": false,
+"statusHistory": [
+{"status": "pending_approval", "timestamp": "2024-02-05T12:30:00.000Z", "updatedBy": "system", "notes": "Order placed by customer."},
+{"status": "processing", "timestamp": "2024-02-05T14:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ad", "notes": "Admin approved order."},
+{"status": "shipped", "timestamp": "2024-02-06T18:00:00.000Z", "updatedBy": "seller:68f4529b0b588f71ad0fa1ae", "notes": "Tracking number added."},
+{"status": "delivered", "timestamp": "2024-02-07T14:20:00.000Z", "updatedBy": "system", "notes": "Marked as delivered by courier API."}
+],
+"customer": { "_id": "68f4529b0b588f71ad0fa1af", "firstName": "Fatima", "lastName": "Khatun", "email": "seller2@example.com", "phone": "+8801722222222", "role": "seller" },
+"seller": { "_id": "68f4529b0b588f71ad0fa1ae", "businessName": "Rahman Electronics Ltd", "isTrustedUser": true },
+"financials": { "subtotal": 115000, "shippingFee": 200, "tax": {"ratePercentage": 15, "amount": 17250}, "discount": {"code": "WINTER2024", "amount": 5550}, "grandTotal": 126900, "platformFee": {"ratePercentage": 10, "amount": 10945}, "sellerPayout": 98505 },
+"paymentDetails": { "method": "card", "type": "full_payment", "status": "paid", "transactionId": "CARD_TRX_XYZ98765", "paidAt": "2024-02-05T12:35:00.000Z" },
+"items": [
+{ "productId": "68f4529b0b588f71ad0fa1b2", "productName": "Samsung Galaxy A54 5G", "quantity": 2, "pricePerUnitAtOrder": 45000, "totalPrice": 90000, "review": {"reviewId": "REVIEW_ID_789", "rating": 5, "comment": "Excellent phone, works perfectly. Genuine product.", "submittedAt": "2024-02-15T20:15:00.000Z"} },
+{ "productId": "68f4529b0b588f71ad0fa1b4", "productName": "Wireless Bluetooth Earbuds", "quantity": 10, "pricePerUnitAtOrder": 2500, "totalPrice": 25000, "review": {"reviewId": "REVIEW_ID_790", "rating": 3, "comment": "The sound quality is average, but good for the price.", "submittedAt": "2024-02-15T20:15:00.000Z"} }
+],
+"sellerServiceReview": { "reviewId": "SERVICE_REVIEW_ID_ABC", "rating": 4, "comment": "Seller was communicative and packaging was secure. Shipping took one day longer than expected.", "submittedAt": "2024-02-15T20:15:00.000Z" },
+"deliveryDetails": { "shippingAddress": {"fullName": "Fatima Khatun", "addressLine": "Agrabad, Chittagong", "city": "Chittagong", "zone": "Chittagong", "phone": "+8801722222222"}, "courier": "SA Paribahan", "trackingNumber": "SAP-554433", "shippedAt": "2024-02-06T18:00:00.000Z", "deliveredAt": "2024-02-07T14:20:00.000Z" },
+"refundDetails": {"status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null},
+"notes": {"customerNote": "Please use extra bubble wrap for the phones.", "adminNote": "Seller is a trusted partner, approved for expedited shipping."}
+},
+{
+"order_scenario": "Standard Customer Order: Pending Admin Approval, Unpaid (Cash on Delivery)",
+"_id": "ORDER_ID_002",
+"orderNumber": "WBD-2024-102",
+"createdAt": "2024-02-18T11:00:00.000Z",
+"updatedAt": "2024-02-18T11:00:00.000Z",
+"status": "pending_approval",
+"isTestData": false,
+"statusHistory": [{"status": "pending_approval", "timestamp": "2024-02-18T11:00:00.000Z", "updatedBy": "system", "notes": "Order placed by customer."}],
+"customer": {"_id": "68fa75267b4d70860d45f289", "firstName": "CiRQL", "lastName": "Team", "role": "customer"},
+"seller": {"_id": "68f4529b0b588f71ad0fa1af", "businessName": "Khatun Fashion House", "isTrustedUser": true},
+"financials": {"subtotal": 45000, "shippingFee": 150, "tax": {"ratePercentage": 0, "amount": 0}, "discount": {"code": "NEWUSER10", "amount": 4500}, "grandTotal": 40650, "platformFee": null, "sellerPayout": null},
+"paymentDetails": {"method": "cash_on_delivery", "type": "cash_on_delivery", "status": "pending", "transactionId": null, "paidAt": null},
+"items": [{"productId": "68f4529b0b588f71ad0fa1b7", "productName": "Premium Cotton T-Shirts", "quantity": 100, "pricePerUnitAtOrder": 450, "totalPrice": 45000, "review": null}],
+"sellerServiceReview": null,
+"deliveryDetails": {"shippingAddress": {"fullName": "CiRQL Team", "addressLine": "123 Tech Park", "city": "Dhaka", "zone": "Dhaka", "phone": "+880123456789"}, "courier": null, "trackingNumber": null, "shippedAt": null, "deliveredAt": null},
+"refundDetails": {"status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null},
+"notes": {"customerNote": "Need mixed colors, please.", "adminNote": "Awaiting seller stock confirmation."}
+},
+{
+"order_scenario": "Returned Order: Product Damaged, Partial Refund Processed",
+"_id": "ORDER_ID_003",
+"orderNumber": "WBD-2024-103",
+"createdAt": "2024-02-20T09:30:00.000Z",
+"updatedAt": "2024-02-25T16:00:00.000Z",
+"status": "partially_refunded",
+"isTestData": false,
+"statusHistory": [
+{"status": "pending_approval", "timestamp": "2024-02-20T09:30:00.000Z", "updatedBy": "system", "notes": "Order placed by customer."},
+{"status": "shipped", "timestamp": "2024-02-21T12:00:00.000Z", "updatedBy": "seller:68f4529b0b588f71ad0fa1b0", "notes": "Order shipped."},
+{"status": "delivered", "timestamp": "2024-02-22T13:00:00.000Z", "updatedBy": "system", "notes": "Order delivered."},
+{"status": "partially_refunded", "timestamp": "2024-02-25T16:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ad", "notes": "Partial refund processed for damaged item."}
+],
+"customer": {"_id": "68f4529b0b588f71ad0fa1ac", "firstName": "System", "lastName": "Administrator", "role": "admin"},
+"seller": {"_id": "68f4529b0b588f71ad0fa1b0", "businessName": "Hasan Agro Products", "isTrustedUser": true},
+"financials": {"subtotal": 58000, "shippingFee": 300, "tax": {"ratePercentage": 5, "amount": 2900}, "discount": {"code": null, "amount": 0}, "grandTotal": 61200, "platformFee": {"ratePercentage": 8, "amount": 4640}, "sellerPayout": 53360},
+"paymentDetails": {"method": "mobile_banking", "type": "full_payment", "status": "partially_refunded", "transactionId": "MB_TRX_456789", "paidAt": "2024-02-20T09:32:00.000Z"},
+"items": [
+{"productId": "68f4529b0b588f71ad0fa1bc", "productName": "Premium Basmati Rice", "quantity": 200, "pricePerUnitAtOrder": 80, "totalPrice": 16000, "review": null},
+{"productId": "68f4529b0b588f71ad0fa1bd", "productName": "Organic Honey", "quantity": 100, "pricePerUnitAtOrder": 420, "totalPrice": 42000, "review": null}
+],
+"sellerServiceReview": {"reviewId": "SERVICE_REVIEW_ID_DEF", "rating": 2, "comment": "One item was damaged and the refund process was slow.", "submittedAt": "2024-02-26T10:00:00.000Z"},
+"deliveryDetails": {"shippingAddress": {"fullName": "System Administrator", "addressLine": "Wari, Dhaka", "city": "Dhaka", "zone": "Dhaka", "phone": "+8801700000000"}, "courier": "eCourier", "trackingNumber": "ECOURIER_3", "shippedAt": "2024-02-21T12:00:00.000Z", "deliveredAt": "2024-02-22T13:00:00.000Z"},
+"refundDetails": {"status": "completed", "items": [{"productId": "68f4529b0b588f71ad0fa1bd", "quantity": 50}], "reason": "Half of the honey jars were leaking.", "refundedAmount": 21000, "processedAt": "2024-02-25T16:00:00.000Z"},
+"notes": {"customerNote": null, "adminNote": "Customer provided photos of damage. Partial refund for honey approved."}
+},
+{
+"order_scenario": "In Transit: Shipped but Not Yet Delivered",
+"_id": "ORDER_ID_004",
+"orderNumber": "WBD-2024-104",
+"createdAt": "2024-02-26T15:00:00.000Z",
+"updatedAt": "2024-02-28T18:00:00.000Z",
+"status": "shipped",
+"isTestData": false,
+"statusHistory": [
+{"status": "pending_approval", "timestamp": "2024-02-26T15:00:00.000Z", "updatedBy": "system", "notes": "Order placed by customer."},
+{"status": "processing", "timestamp": "2024-02-27T10:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ad", "notes": "Order approved."},
+{"status": "shipped", "timestamp": "2024-02-28T18:00:00.000Z", "updatedBy": "seller:68f4529b0b588f71ad0fa1ae", "notes": "Package handed to courier."}
+],
+"customer": {"_id": "6909a50b97b2cbfa8963ad80", "firstName": "Study", "lastName": "Hore", "role": "customer"},
+"seller": {"_id": "68f4529b0b588f71ad0fa1ae", "businessName": "Rahman Electronics Ltd", "isTrustedUser": true},
+"financials": {"subtotal": 25000, "shippingFee": 150, "tax": {"ratePercentage": 15, "amount": 3750}, "discount": {"code": null, "amount": 0}, "grandTotal": 28900, "platformFee": {"ratePercentage": 10, "amount": 2500}, "sellerPayout": 22500},
+"paymentDetails": {"method": "card", "type": "full_payment", "status": "paid", "transactionId": "CARD_TRX_DEF456", "paidAt": "2024-02-26T15:02:00.000Z"},
+"items": [{"productId": "68f4529b0b588f71ad0fa1b4", "productName": "Wireless Bluetooth Earbuds", "quantity": 10, "pricePerUnitAtOrder": 2500, "totalPrice": 25000, "review": null}],
+"sellerServiceReview": null,
+"deliveryDetails": {"shippingAddress": {"fullName": "Study Hore", "addressLine": "456 University Rd", "city": "Chittagong", "zone": "Chittagong", "phone": "+880987654321"}, "courier": "SA Paribahan", "trackingNumber": "SAP_4", "shippedAt": "2024-02-28T18:00:00.000Z", "deliveredAt": null},
+"refundDetails": {"status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null},
+"notes": {"customerNote": null, "adminNote": "Shipment is on its way to Chittagong hub."}
+},
+{
+"order_scenario": "TEST DATA: Processing: Installment Payment, Partially Paid",
+"_id": "ORDER_ID_005",
+"orderNumber": "WBD-2024-105",
+"createdAt": "2024-03-01T12:00:00.000Z",
+"updatedAt": "2024-03-02T10:00:00.000Z",
+"status": "processing",
+"isTestData": true,
+"statusHistory": [
+{"status": "pending_approval", "timestamp": "2024-03-01T12:00:00.000Z", "updatedBy": "system", "notes": "Order placed by customer."},
+{"status": "processing", "timestamp": "2024-03-02T10:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ac", "notes": "First installment confirmed, order approved for processing."}
+],
+"customer": {"_id": "68f4529b0b588f71ad0fa1af", "firstName": "Fatima", "lastName": "Khatun", "role": "seller"},
+"seller": {"_id": "68f4529b0b588f71ad0fa1b0", "businessName": "Hasan Agro Products", "isTrustedUser": true},
+"financials": {"subtotal": 16000, "shippingFee": 200, "tax": {"ratePercentage": 5, "amount": 800}, "discount": {"code": null, "amount": 0}, "grandTotal": 17000, "platformFee": {"ratePercentage": 8, "amount": 1280}, "sellerPayout": 14720},
+"paymentDetails": {"method": "bank_transfer", "type": "installment", "status": "partially_paid", "transactionId": "BANK_TRX_GHI789", "paidAt": "2024-03-01T12:05:00.000Z"},
+"items": [{"productId": "68f4529b0b588f71ad0fa1bc", "productName": "Premium Basmati Rice", "quantity": 200, "pricePerUnitAtOrder": 80, "totalPrice": 16000, "review": null}],
+"sellerServiceReview": null,
+"deliveryDetails": {"shippingAddress": {"fullName": "Fatima Khatun", "addressLine": "Agrabad, Chittagong", "city": "Chittagong", "zone": "Chittagong", "phone": "+8801722222222"}, "courier": null, "trackingNumber": null, "shippedAt": null, "deliveredAt": null},
+"refundDetails": {"status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null},
+"notes": {"customerNote": "This is for restocking my own shop.", "adminNote": "Seller-to-seller transaction. First installment of 8500 BDT received."}
+}
+],
+"total": 5,
+"page": 1,
+"limit": 10,
+"totalPages": 1
+}
+
+// -------------------------------------------------------------------------
+// --- 2. List View Sample (For GET /orders/admin/all) ---
+// -------------------------------------------------------------------------
+{
+"data": [
+{
+"order_scenario": "The Ultimate Order: Delivered, Paid, Seller-to-Seller Purchase, Discounted, and Fully Reviewed",
+"_id": "ORDER_ID_001",
+"orderNumber": "WBD-2024-101",
+"createdAt": "2024-02-15T10:00:00.000Z",
+"status": "delivered",
+"isTestData": false,
+"customer": { "_id": "68f4529b0b588f71ad0fa1af" },
+"seller": { "businessName": "Rahman Electronics Ltd" },
+"itemCount": 2, "grandTotal": 126900, "paymentStatus": "paid"
+},
+{
+"order_scenario": "Standard Customer Order: Pending Admin Approval, Unpaid (Cash on Delivery)",
+"_id": "ORDER_ID_002",
+"orderNumber": "WBD-2024-102",
+"createdAt": "2024-02-18T11:00:00.000Z",
+"status": "pending_approval",
+"isTestData": false,
+"customer": { "_id": "68fa75267b4d70860d45f289" },
+"seller": { "businessName": "Khatun Fashion House" },
+"itemCount": 1, "grandTotal": 40650, "paymentStatus": "pending"
+},
+{
+"order_scenario": "Returned Order: Product Damaged, Partial Refund Processed",
+"_id": "ORDER_ID_003",
+"orderNumber": "WBD-2024-103",
+"createdAt": "2024-02-20T09:30:00.000Z",
+"status": "partially_refunded",
+"isTestData": false,
+"customer": { "_id": "68f4529b0b588f71ad0fa1ac" },
+"seller": { "businessName": "Hasan Agro Products" },
+"itemCount": 2, "grandTotal": 61200, "paymentStatus": "partially_refunded"
+},
+{
+"order_scenario": "In Transit: Shipped but Not Yet Delivered",
+"_id": "ORDER_ID_004",
+"orderNumber": "WBD-2024-104",
+"createdAt": "2024-02-26T15:00:00.000Z",
+"status": "shipped",
+"isTestData": false,
+"customer": { "_id": "6909a50b97b2cbfa8963ad80" },
+"seller": { "businessName": "Rahman Electronics Ltd" },
+"itemCount": 1, "grandTotal": 28900, "paymentStatus": "paid"
+},
+{
+"order_scenario": "TEST DATA: Processing: Installment Payment, Partially Paid",
+"_id": "ORDER_ID_005",
+"orderNumber": "WBD-2024-105",
+"createdAt": "2024-03-01T12:00:00.000Z",
+"status": "processing",
+"isTestData": true,
+"customer": { "_id": "68f4529b0b588f71ad0fa1af" },
+"seller": { "businessName": "Hasan Agro Products" },
+"itemCount": 1, "grandTotal": 17000, "paymentStatus": "partially_paid"
+}
+],
+"total": 5,
+"page": 1,
+"limit": 10,
+"totalPages": 1
+}
+Excellent. Let's summarize the final, agreed-upon plan, step by step, without the sample data. This will serve as our blueprint for the implementation.
+
+Finalized Plan: Carts & Orders Data Migration
+
+Here is the step-by-step summary of the internal migration process we have designed.
+
+Step 1: Objective & Scope
+
+Goal: Create a secure, one-time internal process to completely wipe and then re-seed the carts and orders database collections.
+
+Strict Scope: The operation will be guaranteed to only affect the carts and orders collections. No other collections (like users, products, etc.) will be read from or written to during this process.
+
+Step 2: API Endpoint Implementation
+
+Two primary POST endpoints will be created on a dedicated internal route:
+
+POST /api/v1/internal/migrate/carts
+
+POST /api/v1/internal/migrate/orders
+
+An optional combined endpoint, POST /api/v1/internal/migrate/all, can be included for convenience.
+
+Step 3: Security Protocol (Internal Key)
+
+The endpoints will be protected against unauthorized use.
+
+Key Storage: A secret migration key (a strong, random string) will be hard-coded as a constant directly within the backend service code. This avoids any changes to .env files or external configuration.
+
+Authentication: To execute the migration, a request must be sent with a JSON body containing the secret key:
+
+code
+JSON
+download
+content_copy
+expand_less
+{ "migration_key": "the-secret-key-from-the-code" }
+
+Validation: The server will compare the key from the request body to the hard-coded constant. If they do not match, it will immediately return a 403 Forbidden error and halt the process.
+
+Step 4: The Migration Execution Logic
+
+Upon successful authentication, the server will perform the following sequence:
+
+Wipe: It will execute a deleteMany({}) command on the specified collection (carts or orders), removing all existing documents.
+
+Parse: It will read and parse the JSON data from our finalized and corrected sample .txt files.
+
+Seed: It will use an insertMany() command to populate the now-empty collection with the fresh, clean data from the files.
+
+Step 5: Response & Feedback
+
+After the operation, the API will return a clear JSON response indicating the outcome.
+
+On Success: A 200 OK response will be sent, detailing what was done:
+
+code
+JSON
+download
+content_copy
+expand_less
+{
+  "status": "success",
+  "message": "Migration for 'carts' completed successfully.",
+  "documentsDeleted": 54, // The actual count
+  "documentsSeeded": 2    // The actual count
+}
+
+On Failure: A 500 Internal Server Error response with a descriptive error message will be returned if any step of the process fails.
+
+Final Step: Proceed to Implementation
+
+This five-step plan covers the entire strategy. If this summary accurately reflects our agreement and you are ready to proceed, please confirm.
+
+Once you confirm, I will provide the necessary backend code (e.g., for a Node.js/Express environment) to implement these endpoints and logic.

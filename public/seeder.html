@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Internal Data Seeder</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f7f9; color: #333; margin: 0; padding: 2rem; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h1, h2 { color: #1e3a8a; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem; }
+        .section { margin-bottom: 2rem; }
+        label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+        input[type="text"], textarea { width: 100%; padding: 0.75rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 1rem; box-sizing: border-box; font-family: Consolas, monospace; }
+        textarea { height: 300px; resize: vertical; }
+        button, .button { display: inline-block; padding: 0.75rem 1.5rem; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; text-decoration: none; text-align: center; transition: background-color 0.2s; }
+        .btn-action { background-color: #1e3a8a; color: white; }
+        .btn-action:hover { background-color: #1c3473; }
+        .btn-danger { background-color: #dc2626; color: white; }
+        .btn-danger:hover { background-color: #b91c1c; }
+        .controls { display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem; }
+        #response-output { margin-top: 1.5rem; background-color: #1e293b; color: #f8fafc; padding: 1rem; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; font-family: Consolas, monospace; max-height: 400px; overflow-y: auto; }
+        .success { color: #22c55e; }
+        .error { color: #ef4444; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Internal Data Seeder</h1>
+
+        <div class="section">
+            <label for="password">Step 1: Enter Migration Password</label>
+            <input type="text" id="password" value="run-wbd-migration-now">
+        </div>
+
+        <div class="section">
+            <h2>Step 2: Wipe Existing Data</h2>
+            <div class="controls">
+                <button id="wipe-orders-btn" class="btn-danger">Wipe ALL Orders</button>
+                <button id="wipe-carts-btn" class="btn-danger">Wipe ALL Carts</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Step 3: Seed New Data</h2>
+
+            <!-- ORDERS SEEDER (UPDATED WITH VALID IDs) -->
+            <div>
+                <h3>Seed Orders Collection</h3>
+                <p>The JSON data is pre-filled. Just click the button.</p>
+                <textarea id="orders-payload">{
+  "data": [
+    {
+      "order_scenario": "The Ultimate Order: Delivered, Paid, Seller-to-Seller Purchase, Discounted, and Fully Reviewed",
+      "_id": "68f4529b0b588f71ad0fa1c1",
+      "orderNumber": "WBD-2024-101", "createdAt": "2024-02-05T12:30:00.000Z", "updatedAt": "2024-02-15T20:15:00.000Z", "status": "delivered", "isTestData": false,
+      "statusHistory": [
+        { "status": "pending_approval", "timestamp": "2024-02-05T12:30:00.000Z", "updatedBy": "system", "notes": "Order placed by customer." }, { "status": "processing", "timestamp": "2024-02-05T14:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ad", "notes": "Admin approved order." }, { "status": "shipped", "timestamp": "2024-02-06T18:00:00.000Z", "updatedBy": "seller:68f4529b0b588f71ad0fa1ae", "notes": "Tracking number added." }, { "status": "delivered", "timestamp": "2024-02-07T14:20:00.000Z", "updatedBy": "system", "notes": "Marked as delivered by courier API." }
+      ],
+      "customer": { "_id": "68f4529b0b588f71ad0fa1af", "firstName": "Fatima", "lastName": "Khatun", "email": "seller2@example.com", "phone": "+8801722222222", "role": "seller" }, "seller": { "_id": "68f4529b0b588f71ad0fa1ae", "businessName": "Rahman Electronics Ltd", "isTrustedUser": true },
+      "financials": { "subtotal": 115000, "shippingFee": 200, "tax": { "ratePercentage": 15, "amount": 17250 }, "discount": { "code": "WINTER2024", "amount": 5550 }, "grandTotal": 126900, "platformFee": { "ratePercentage": 10, "amount": 10945 }, "sellerPayout": 98505 },
+      "paymentDetails": { "method": "card", "type": "full_payment", "status": "paid", "transactionId": "CARD_TRX_XYZ98765", "paidAt": "2024-02-05T12:35:00.000Z" },
+      "items": [
+        { "productId": "68f4529b0b588f71ad0fa1b2", "productName": "Samsung Galaxy A54 5G", "quantity": 2, "pricePerUnitAtOrder": 45000, "totalPrice": 90000, "review": { "reviewId": "REVIEW_ID_789", "rating": 5, "comment": "Excellent phone, works perfectly. Genuine product.", "submittedAt": "2024-02-15T20:15:00.000Z" } },
+        { "productId": "68f4529b0b588f71ad0fa1b4", "productName": "Wireless Bluetooth Earbuds", "quantity": 10, "pricePerUnitAtOrder": 2500, "totalPrice": 25000, "review": { "reviewId": "REVIEW_ID_790", "rating": 3, "comment": "The sound quality is average, but good for the price.", "submittedAt": "2024-02-15T20:15:00.000Z" } }
+      ],
+      "sellerServiceReview": { "reviewId": "SERVICE_REVIEW_ID_ABC", "rating": 4, "comment": "Seller was communicative and packaging was secure. Shipping took one day longer than expected.", "submittedAt": "2024-02-15T20:15:00.000Z" }, "deliveryDetails": { "shippingAddress": { "fullName": "Fatima Khatun", "addressLine": "Agrabad, Chittagong", "city": "Chittagong", "zone": "Chittagong", "phone": "+8801722222222" }, "courier": "SA Paribahan", "trackingNumber": "SAP-554433", "shippedAt": "2024-02-06T18:00:00.000Z", "deliveredAt": "2024-02-07T14:20:00.000Z" },
+      "refundDetails": { "status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null }, "notes": { "customerNote": "Please use extra bubble wrap for the phones.", "adminNote": "Seller is a trusted partner, approved for expedited shipping." }
+    },
+    {
+      "order_scenario": "Standard Customer Order: Pending Admin Approval, Unpaid (Cash on Delivery)", "_id": "68f4529b0b588f71ad0fa1c2", "orderNumber": "WBD-2024-102", "createdAt": "2024-02-18T11:00:00.000Z", "updatedAt": "2024-02-18T11:00:00.000Z", "status": "pending_approval", "isTestData": false,
+      "statusHistory": [{ "status": "pending_approval", "timestamp": "2024-02-18T11:00:00.000Z", "updatedBy": "system", "notes": "Order placed by customer." }], "customer": { "_id": "68fa75267b4d70860d45f289", "firstName": "CiRQL", "lastName": "Team", "role": "customer" }, "seller": { "_id": "68f4529b0b588f71ad0fa1af", "businessName": "Khatun Fashion House", "isTrustedUser": true },
+      "financials": { "subtotal": 45000, "shippingFee": 150, "tax": { "ratePercentage": 0, "amount": 0 }, "discount": { "code": "NEWUSER10", "amount": 4500 }, "grandTotal": 40650, "platformFee": null, "sellerPayout": null }, "paymentDetails": { "method": "cash_on_delivery", "type": "cash_on_delivery", "status": "pending", "transactionId": null, "paidAt": null },
+      "items": [{ "productId": "68f4529b0b588f71ad0fa1b7", "productName": "Premium Cotton T-Shirts", "quantity": 100, "pricePerUnitAtOrder": 450, "totalPrice": 45000, "review": null }], "sellerServiceReview": null,
+      "deliveryDetails": { "shippingAddress": { "fullName": "CiRQL Team", "addressLine": "123 Tech Park", "city": "Dhaka", "zone": "Dhaka", "phone": "+880123456789" }, "courier": null, "trackingNumber": null, "shippedAt": null, "deliveredAt": null }, "refundDetails": { "status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null }, "notes": { "customerNote": "Need mixed colors, please.", "adminNote": "Awaiting seller stock confirmation." }
+    },
+    {
+      "order_scenario": "Returned Order: Product Damaged, Partial Refund Processed", "_id": "68f4529b0b588f71ad0fa1c3", "orderNumber": "WBD-2024-103", "createdAt": "2024-02-20T09:30:00.000Z", "updatedAt": "2024-02-25T16:00:00.000Z", "status": "partially_refunded", "isTestData": false,
+      "statusHistory": [
+        { "status": "pending_approval", "timestamp": "2024-02-20T09:30:00.000Z", "updatedBy": "system", "notes": "Order placed by customer." }, { "status": "shipped", "timestamp": "2024-02-21T12:00:00.000Z", "updatedBy": "seller:68f4529b0b588f71ad0fa1b0", "notes": "Order shipped." }, { "status": "delivered", "timestamp": "2024-02-22T13:00:00.000Z", "updatedBy": "system", "notes": "Order delivered." }, { "status": "partially_refunded", "timestamp": "2024-02-25T16:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ad", "notes": "Partial refund processed for damaged item." }
+      ],
+      "customer": { "_id": "68f4529b0b588f71ad0fa1ac", "firstName": "System", "lastName": "Administrator", "role": "admin" }, "seller": { "_id": "68f4529b0b588f71ad0fa1b0", "businessName": "Hasan Agro Products", "isTrustedUser": true },
+      "financials": { "subtotal": 58000, "shippingFee": 300, "tax": { "ratePercentage": 5, "amount": 2900 }, "discount": { "code": null, "amount": 0 }, "grandTotal": 61200, "platformFee": { "ratePercentage": 8, "amount": 4640 }, "sellerPayout": 53360 }, "paymentDetails": { "method": "mobile_banking", "type": "full_payment", "status": "partially_refunded", "transactionId": "MB_TRX_456789", "paidAt": "2024-02-20T09:32:00.000Z" },
+      "items": [
+        { "productId": "68f4529b0b588f71ad0fa1bc", "productName": "Premium Basmati Rice", "quantity": 200, "pricePerUnitAtOrder": 80, "totalPrice": 16000, "review": null }, { "productId": "68f4529b0b588f71ad0fa1bd", "productName": "Organic Honey", "quantity": 100, "pricePerUnitAtOrder": 420, "totalPrice": 42000, "review": null }
+      ],
+      "sellerServiceReview": { "reviewId": "SERVICE_REVIEW_ID_DEF", "rating": 2, "comment": "One item was damaged and the refund process was slow.", "submittedAt": "2024-02-26T10:00:00.000Z" }, "deliveryDetails": { "shippingAddress": { "fullName": "System Administrator", "addressLine": "Wari, Dhaka", "city": "Dhaka", "zone": "Dhaka", "phone": "+8801700000000" }, "courier": "eCourier", "trackingNumber": "ECOURIER_3", "shippedAt": "2024-02-21T12:00:00.000Z", "deliveredAt": "2024-02-22T13:00:00.000Z" },
+      "refundDetails": { "status": "completed", "items": [{ "productId": "68f4529b0b588f71ad0fa1bd", "quantity": 50 }], "reason": "Half of the honey jars were leaking.", "refundedAmount": 21000, "processedAt": "2024-02-25T16:00:00.000Z" }, "notes": { "customerNote": null, "adminNote": "Customer provided photos of damage. Partial refund for honey approved." }
+    },
+    {
+      "order_scenario": "In Transit: Shipped but Not Yet Delivered", "_id": "68f4529b0b588f71ad0fa1c4", "orderNumber": "WBD-2024-104", "createdAt": "2024-02-26T15:00:00.000Z", "updatedAt": "2024-02-28T18:00:00.000Z", "status": "shipped", "isTestData": false,
+      "statusHistory": [
+        { "status": "pending_approval", "timestamp": "2024-02-26T15:00:00.000Z", "updatedBy": "system", "notes": "Order placed by customer." }, { "status": "processing", "timestamp": "2024-02-27T10:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ad", "notes": "Order approved." }, { "status": "shipped", "timestamp": "2024-02-28T18:00:00.000Z", "updatedBy": "seller:68f4529b0b588f71ad0fa1ae", "notes": "Package handed to courier." }
+      ],
+      "customer": { "_id": "6909a50b97b2cbfa8963ad80", "firstName": "Study", "lastName": "Hore", "role": "customer" }, "seller": { "_id": "68f4529b0b588f71ad0fa1ae", "businessName": "Rahman Electronics Ltd", "isTrustedUser": true },
+      "financials": { "subtotal": 25000, "shippingFee": 150, "tax": { "ratePercentage": 15, "amount": 3750 }, "discount": { "code": null, "amount": 0 }, "grandTotal": 28900, "platformFee": { "ratePercentage": 10, "amount": 2500 }, "sellerPayout": 22500 }, "paymentDetails": { "method": "card", "type": "full_payment", "status": "paid", "transactionId": "CARD_TRX_DEF456", "paidAt": "2024-02-26T15:02:00.000Z" },
+      "items": [{ "productId": "68f4529b0b588f71ad0fa1b4", "productName": "Wireless Bluetooth Earbuds", "quantity": 10, "pricePerUnitAtOrder": 2500, "totalPrice": 25000, "review": null }], "sellerServiceReview": null,
+      "deliveryDetails": { "shippingAddress": { "fullName": "Study Hore", "addressLine": "456 University Rd", "city": "Chittagong", "zone": "Chittagong", "phone": "+880987654321" }, "courier": "SA Paribahan", "trackingNumber": "SAP_4", "shippedAt": "2024-02-28T18:00:00.000Z", "deliveredAt": null }, "refundDetails": { "status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null }, "notes": { "customerNote": null, "adminNote": "Shipment is on its way to Chittagong hub." }
+    },
+    {
+      "order_scenario": "TEST DATA: Processing: Installment Payment, Partially Paid", "_id": "68f4529b0b588f71ad0fa1c5", "orderNumber": "WBD-2024-105", "createdAt": "2024-03-01T12:00:00.000Z", "updatedAt": "2024-03-02T10:00:00.000Z", "status": "processing", "isTestData": true,
+      "statusHistory": [
+        { "status": "pending_approval", "timestamp": "2024-03-01T12:00:00.000Z", "updatedBy": "system", "notes": "Order placed by customer." }, { "status": "processing", "timestamp": "2024-03-02T10:00:00.000Z", "updatedBy": "admin:68f4529b0b588f71ad0fa1ac", "notes": "First installment confirmed, order approved for processing." }
+      ],
+      "customer": { "_id": "68f4529b0b588f71ad0fa1af", "firstName": "Fatima", "lastName": "Khatun", "role": "seller" }, "seller": { "_id": "68f4529b0b588f71ad0fa1b0", "businessName": "Hasan Agro Products", "isTrustedUser": true },
+      "financials": { "subtotal": 16000, "shippingFee": 200, "tax": { "ratePercentage": 5, "amount": 800 }, "discount": { "code": null, "amount": 0 }, "grandTotal": 17000, "platformFee": { "ratePercentage": 8, "amount": 1280 }, "sellerPayout": 14720 }, "paymentDetails": { "method": "bank_transfer", "type": "installment", "status": "partially_paid", "transactionId": "BANK_TRX_GHI789", "paidAt": "2024-03-01T12:05:00.000Z" },
+      "items": [{ "productId": "68f4529b0b588f71ad0fa1bc", "productName": "Premium Basmati Rice", "quantity": 200, "pricePerUnitAtOrder": 80, "totalPrice": 16000, "review": null }], "sellerServiceReview": null,
+      "deliveryDetails": { "shippingAddress": { "fullName": "Fatima Khatun", "addressLine": "Agrabad, Chittagong", "city": "Chittagong", "zone": "Chittagong", "phone": "+8801722222222" }, "courier": null, "trackingNumber": null, "shippedAt": null, "deliveredAt": null }, "refundDetails": { "status": "none", "items": [], "reason": null, "refundedAmount": 0, "processedAt": null },
+      "notes": { "customerNote": "This is for restocking my own shop.", "adminNote": "Seller-to-seller transaction. First installment of 8500 BDT received." }
+    }
+  ]
+}</textarea>
+                <button id="seed-orders-btn" class="btn-action">Seed Orders</button>
+            </div>
+
+            <!-- CARTS SEEDER (UPDATED WITH VALID IDs) -->
+            <div style="margin-top: 2rem;">
+                <h3>Seed Carts Collection</h3>
+                <p>The JSON data is pre-filled. Just click the button.</p>
+                <textarea id="carts-payload">[
+  {
+    "cart_scenario": "A customer's active cart with items from multiple sellers, including one unavailable item.",
+    "_id": "68f4529b0b588f71ad0fa1d1",
+    "updatedAt": "2024-03-05T10:20:00.000Z",
+    "user": { "_id": "68fa75267b4d70860d45f289", "firstName": "CiRQL", "lastName": "Team", "role": "customer" },
+    "itemsBySeller": [
+      {
+        "seller": { "_id": "68f4529b0b588f71ad0fa1ae", "businessName": "Rahman Electronics Ltd" },
+        "items": [
+          { "product": { "_id": "68f4529b0b588f71ad0fa1b2", "name": "Samsung Galaxy A54 5G" }, "quantity": 2, "pricing": { "unitPrice": 45000, "itemTotal": 90000 }, "warnings": [] }
+        ]
+      },
+      {
+        "seller": { "_id": "68f4529b0b588f71ad0fa1af", "businessName": "Khatun Fashion House" },
+        "items": [
+          { "product": { "_id": "68f4529b0b588f71ad0fa1b7", "name": "Premium Cotton T-Shirts" }, "quantity": 100, "pricing": { "unitPrice": 450, "itemTotal": 45000 }, "warnings": [] },
+          { "product": { "_id": "68f4529b0b588f71ad0fa1ba", "name": "Winter Jackets" }, "quantity": 25, "pricing": { "unitPrice": 2500, "itemTotal": 62500 }, "warnings": ["This product is currently out of stock. Please remove it to proceed with checkout for this seller."] }
+        ]
+      }
+    ],
+    "summary": { "totalUniqueItems": 3, "totalQuantity": 127, "grandTotal": 197500 }
+  },
+  {
+    "cart_scenario": "A seller who is buying items from another seller.",
+    "_id": "68f4529b0b588f71ad0fa1d2",
+    "updatedAt": "2024-03-05T09:45:00.000Z",
+    "user": { "_id": "68f4529b0b588f71ad0fa1af", "firstName": "Fatima", "lastName": "Khatun", "role": "seller" },
+    "itemsBySeller": [
+       {
+        "seller": { "_id": "68f4529b0b588f71ad0fa1b0", "businessName": "Hasan Agro Products" },
+        "items": [ { "product": { "_id": "68f4529b0b588f71ad0fa1bc", "name": "Premium Basmati Rice" }, "quantity": 200, "pricing": { "unitPrice": 80, "itemTotal": 16000 }, "warnings": [] } ]
+       }
+    ],
+    "summary": { "totalUniqueItems": 1, "totalQuantity": 200, "grandTotal": 16000 }
+  }
+]</textarea>
+                <button id="seed-carts-btn" class="btn-action">Seed Carts</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Results</h2>
+            <div id="response-output">Awaiting action...</div>
+        </div>
+    </div>
+
+    <script>
+        function displayResponse(data, status) {
+            const outputDiv = document.getElementById('response-output');
+            outputDiv.innerHTML = JSON.stringify(data, null, 2);
+            outputDiv.className = status === 200 || status === 201 ? 'success' : 'error';
+        }
+        async function makeRequest(url, options = {}) {
+            const outputDiv = document.getElementById('response-output');
+            outputDiv.textContent = 'Sending request...';
+            outputDiv.className = '';
+            try {
+                const response = await fetch(url, options);
+                const responseData = await response.json();
+                displayResponse(responseData, response.status);
+            } catch (err) {
+                displayResponse({ error: 'Network or server error', message: err.message }, 500);
+            }
+        }
+        document.getElementById('wipe-orders-btn').addEventListener('click', () => {
+            const password = document.getElementById('password').value;
+            if (!password) { alert('Password is required!'); return; }
+            if (confirm('Are you SURE you want to delete ALL orders? This cannot be undone.')) {
+                makeRequest(`/api/v1/orders/internal_migration/${password}`);
+            }
+        });
+        document.getElementById('wipe-carts-btn').addEventListener('click', () => {
+            const password = document.getElementById('password').value;
+            if (!password) { alert('Password is required!'); return; }
+            if (confirm('Are you SURE you want to delete ALL carts? This cannot be undone.')) {
+                makeRequest(`/api/v1/cart/internal_migration/${password}`);
+            }
+        });
+        document.getElementById('seed-orders-btn').addEventListener('click', () => {
+            const password = document.getElementById('password').value;
+            if (!password) { alert('Password is required!'); return; }
+            const payload = document.getElementById('orders-payload').value;
+            try { JSON.parse(payload); } catch(e) { alert('Invalid JSON in Orders Payload!'); return; }
+            const options = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload };
+            makeRequest(`/api/v1/orders/internal_migration/seed/${password}`, options);
+        });
+        document.getElementById('seed-carts-btn').addEventListener('click', () => {
+            const password = document.getElementById('password').value;
+            if (!password) { alert('Password is required!'); return; }
+            const payload = document.getElementById('carts-payload').value;
+            try { JSON.parse(payload); } catch(e) { alert('Invalid JSON in Carts Payload!'); return; }
+            const options = { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: payload };
+            makeRequest(`/api/v1/cart/internal_migration/seed/${password}`, options);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,5 +1,3 @@
-// src/cart/dto/add-to-cart.dto.ts
-
 import { ApiProperty } from '@nestjs/swagger';
 import { IsInt, IsMongoId, Min } from 'class-validator';
 

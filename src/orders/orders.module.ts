@@ -11,7 +11,7 @@ import { Product, ProductSchema } from 'src/products/schemas/product.schema';
 import {
   OrderSequence,
   OrderSequenceSchema,
-} from './dto/order-sequence.schema';
+} from './schemas/order-sequence.schema';
 import { Cart, CartSchema } from 'src/carts/schemas/cart.schema';
 
 @Module({

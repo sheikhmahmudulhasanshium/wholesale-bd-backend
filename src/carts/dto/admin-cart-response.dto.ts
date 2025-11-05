@@ -1,5 +1,3 @@
-// src/cart/dto/admin-cart-response.dto.ts
-
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 
@@ -26,7 +24,7 @@ class AdminCartItemDto {
 }
 
 export class AdminCartResponseDto {
-  @ApiProperty({ example: '69f1c4a0ef3e2bde5f269a48' })
+  @ApiProperty({ example: '69f4a0ef3e2bde5f269a48' })
   _id: string;
 
   @ApiProperty({
@@ -45,6 +43,14 @@ export class AdminCartResponseDto {
 
   @ApiProperty({ example: '2025-10-19T08:58:48.807Z' })
   updatedAt: Date;
+
+  // --- vvvvvv THIS IS THE FIX vvvvvv ---
+  @ApiProperty({
+    description: 'The calculated total value of all items in the cart.',
+    example: 197500,
+  })
+  totalValue: number;
+  // --- ^^^^^^ END OF FIX ^^^^^^ ---
 }
 
 export class PaginatedAdminCartResponseDto {

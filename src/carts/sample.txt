@@ -1,0 +1,125 @@
+
+
+
+// cart/sample.txt
+// This file contains the definitive API blueprints for the cart module.
+// 1. "Detailed View": The full response for a single user's cart (e.g., GET /api/v1/cart).
+// 2. "List View": The summarized response for the admin dashboard (e.g., GET /api/v1/cart/admin/all).
+
+// ----------------------------------------------------------------------------------------------------------------
+// --- 1. Detailed View Sample (For GET /cart) ---
+// This sample represents a customer's active cart with items from TWO different sellers.
+// It also shows how the API gracefully handles an item that has become unavailable.
+// ----------------------------------------------------------------------------------------------------------------
+{
+"cart_scenario": "A customer's active cart with items from multiple sellers, including one unavailable item.",
+"_id": "CART_ID_123",
+"updatedAt": "2024-03-05T10:20:00.000Z",
+"user": {
+"_id": "68fa75267b4d70860d45f289",
+"firstName": "CiRQL",
+"lastName": "Team",
+"role": "customer"
+},
+"itemsBySeller": [
+{
+"seller": {
+"_id": "68f4529b0b588f71ad0fa1ae",
+"businessName": "Rahman Electronics Ltd"
+},
+"items": [
+{
+"product": {
+"_id": "68f4529b0b588f71ad0fa1b2",
+"name": "Samsung Galaxy A54 5G",
+"thumbnailUrl": "https://pub-1508a97a3d584140a7f32f1ca90490c2.r2.dev/product/images/be2f6c0f-e0b5-4d09-a97c-e0acefd3ea19.jpg"
+},
+"quantity": 2,
+"pricing": {
+"unitPrice": 45000,
+"itemTotal": 90000
+},
+"warnings": []
+}
+],
+"subtotal": 90000
+},
+{
+"seller": {
+"_id": "68f4529b0b588f71ad0fa1af",
+"businessName": "Khatun Fashion House"
+},
+"items": [
+{
+"product": {
+"_id": "68f4529b0b588f71ad0fa1b7",
+"name": "Premium Cotton T-Shirts",
+"thumbnailUrl": "https://pub-1508a97a3d584140a7f32f1ca90490c2.r2.dev/product/images/14415679-0f56-41ed-8d66-e0bf6c3d3195.webp"
+},
+"quantity": 100,
+"pricing": {
+"unitPrice": 450,
+"itemTotal": 45000
+},
+"warnings": []
+},
+{
+"product": {
+"_id": "68f4529b0b588f71ad0fa1ba",
+"name": "Winter Jackets",
+"thumbnailUrl": "https://pub-1508a97a3d584140a7f32f1ca90490c2.r2.dev/product/images/d30cf551-2d89-4486-9c6f-dc9cbecc2719.png"
+},
+"quantity": 25,
+"pricing": {
+"unitPrice": 2500,
+"itemTotal": 62500
+},
+"warnings": [
+"This product is currently out of stock. Please remove it to proceed with checkout for this seller."
+]
+}
+],
+"subtotal": 107500
+}
+],
+"summary": {
+"totalUniqueItems": 3,
+"totalQuantity": 127,
+"grandTotal": 197500
+}
+}
+
+// ---------------------------------------------------------------------------------------------------
+// --- 2. List View Sample (For GET /cart/admin/all) ---
+// This sample represents the admin's overview of all active (non-empty) carts in the system.
+// ---------------------------------------------------------------------------------------------------
+{
+"data": [
+{
+"cart_scenario": "A standard customer's active multi-seller cart.",
+"_id": "CART_ID_123",
+"updatedAt": "2024-03-05T10:20:00.000Z",
+"user": {
+"_id": "68fa75267b4d70860d45f289"
+},
+"itemCount": 3,
+"totalValue": 197500,
+"sellerCount": 2
+},
+{
+"cart_scenario": "A seller who is buying items from another seller.",
+"_id": "CART_ID_456",
+"updatedAt": "2024-03-05T09:45:00.000Z",
+"user": {
+"_id": "68f4529b0b588f71ad0fa1af"
+},
+"itemCount": 1,
+"totalValue": 16000,
+"sellerCount": 1
+}
+],
+"total": 2,
+"page": 1,
+"limit": 10,
+"totalPages": 1
+}

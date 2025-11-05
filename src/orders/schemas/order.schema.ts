@@ -1,7 +1,5 @@
-// src/orders/schemas/order.schema.ts
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export enum OrderStatus {
   PENDING_APPROVAL = 'pending_approval',
@@ -11,6 +9,9 @@ export enum OrderStatus {
   DELIVERED = 'delivered',
   CANCELLED = 'cancelled',
   REJECTED = 'rejected',
+  // --- vvvvv THIS IS THE FIX vvvvv ---
+  PARTIALLY_REFUNDED = 'partially_refunded',
+  // --- ^^^^^ THIS IS THE FIX ^^^^^ ---
 }
 
 export enum PaymentStatus {
@@ -18,28 +19,25 @@ export enum PaymentStatus {
   PAID = 'paid',
   REFUNDED = 'refunded',
   FAILED = 'failed',
+  // --- vvvvv THIS IS THE FIX vvvvv ---
+  PARTIALLY_PAID = 'partially_paid',
+  // --- ^^^^^ THIS IS THE FIX ^^^^^ ---
 }
 
 @Schema({ _id: false })
 class OrderItem {
   @Prop({ type: Types.ObjectId, ref: 'Product', required: true })
   productId: Types.ObjectId;
-
   @Prop({ required: true })
   productName: string;
-
   @Prop()
   productSku?: string;
-
   @Prop()
   thumbnailUrl?: string;
-
   @Prop({ required: true, min: 1 })
   quantity: number;
-
   @Prop({ required: true, min: 0 })
   pricePerUnitAtOrder: number;
-
   @Prop({ required: true, min: 0 })
   totalPrice: number;
 }
@@ -49,16 +47,12 @@ const OrderItemSchema = SchemaFactory.createForClass(OrderItem);
 class ShippingAddress {
   @Prop({ required: true })
   fullName: string;
-
   @Prop()
-  addressLine?: string; // More specific than just 'address'
-
+  addressLine?: string;
   @Prop({ required: true })
   city: string;
-
   @Prop({ required: true })
   zone: string;
-
   @Prop()
   phone?: string;
 }
@@ -71,7 +65,13 @@ export class Order {
   @Prop({ required: true, unique: true, index: true })
   orderNumber: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+    alias: 'customerId',
+  })
   userId: Types.ObjectId;
 
   @Prop({ type: [OrderItemSchema], required: true })
