@@ -18,7 +18,7 @@
   <img src="https://raw.githubusercontent.com/sheikhmahmudulhasanshium/wholesale-bd-backend/refs/heads/main/public/preview-2.png" width="48%" />
 </p>
 
-> 🔗 **Live Backend (API):** [https://wholesale-bd-backend.vercel.app](https://wholesale-bd-backend.vercel.app)  
+> 🔗 **Live Backend (API):** [Railway.app](https://wholesalebd-backend-production-new.up.railway.app/)  
 > 🔗 **Live Frontend (Web App):** [https://wholesale-bd-web-app.vercel.app](https://wholesale-bd-web-app.vercel.app)
 
 ---
