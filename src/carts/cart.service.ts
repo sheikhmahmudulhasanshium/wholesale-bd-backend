@@ -109,11 +109,21 @@ function getUnitPriceForQuantity(
   quantity: number,
 ): number {
   if (!tiers || tiers.length === 0) return 0;
-  const sortedTiers = [...tiers].sort((a, b) => b.minQuantity - a.minQuantity);
-  for (const tier of sortedTiers) {
-    if (quantity >= tier.minQuantity) return tier.pricePerUnit;
+
+  const sortedTiers = [...tiers].sort((a, b) => a.minQuantity - b.minQuantity);
+
+  // --- VVVVVV THIS IS THE FIX VVVVVV ---
+  let activePrice: number | null = null;
+  // --- ^^^^^^ END OF FIX ^^^^^^ ---
+
+  for (let i = sortedTiers.length - 1; i >= 0; i--) {
+    if (quantity >= sortedTiers[i].minQuantity) {
+      activePrice = sortedTiers[i].pricePerUnit;
+      break;
+    }
   }
-  return 0;
+
+  return activePrice !== null ? activePrice : sortedTiers[0].pricePerUnit;
 }
 
 @Injectable()
@@ -134,6 +144,7 @@ export class CartService {
   ): Promise<PaginatedRichCartResponseDto | SearchableCartItem[]> {
     if (user.role === UserRole.ADMIN) {
       // --- ADMIN LOGIC ---
+
       const {
         page = 1,
         limit = 10,
@@ -141,11 +152,12 @@ export class CartService {
         sortOrder = SortOrderOption.DESC,
         q,
       } = query;
-
       // Fetch all carts and enrich them. For admin, we filter after enrichment.
+
       let allRichCarts = await this.getAllCartsRich();
 
       // Filter by search term 'q' if provided (searches user's name/email)
+
       if (q) {
         const searchTerm = q.toLowerCase().trim();
         allRichCarts = allRichCarts.filter(
@@ -155,8 +167,8 @@ export class CartService {
             cart.user.email.toLowerCase().includes(searchTerm),
         );
       }
-
       // Sort in memory
+
       allRichCarts.sort((a, b) => {
         let comparison = 0;
         switch (sortBy) {
@@ -177,8 +189,8 @@ export class CartService {
         }
         return sortOrder === SortOrderOption.ASC ? comparison : -comparison;
       });
-
       // Paginate the final result
+
       const skip = (page - 1) * limit;
       const paginatedData = allRichCarts.slice(skip, skip + limit);
       const total = allRichCarts.length;
@@ -246,7 +258,6 @@ export class CartService {
       return allItems;
     }
   }
-
   // --- ALL OTHER METHODS BELOW ARE UNCHANGED ---
 
   async getCartForUser(user: UserDocument): Promise<RichCart> {
