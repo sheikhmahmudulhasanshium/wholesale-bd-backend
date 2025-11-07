@@ -59,6 +59,21 @@ export class ProductsService {
 
   private _mapProductToResponse(product: ProductDocument): ProductResponseDto {
     const productObj = product.toObject() as Product;
+
+    // --- V FIX: Handle regularUnitPrice fallback for older documents ---
+    if (typeof productObj.regularUnitPrice !== 'number') {
+      if (productObj.pricingTiers?.length > 0) {
+        // Find the tier with the absolute minimum quantity to set as the regular price
+        productObj.regularUnitPrice = [...productObj.pricingTiers].sort(
+          (a, b) => a.minQuantity - b.minQuantity,
+        )[0].pricePerUnit;
+      } else {
+        // A sensible default if no tiers exist for some reason
+        productObj.regularUnitPrice = 0;
+      }
+    }
+    // --- ^ END of FIX ---
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { media, images: _images, ...restOfProduct } = productObj;
     const sortedMedia: ProductMedia[] = (media || []).sort(
@@ -299,10 +314,8 @@ export class ProductsService {
     }
     this._verifyOwnership(product, user);
 
-    // --- V FIX: This is the guaranteed fix for the no-unused-vars rule. ---
     const updateData = { ...updateProductDto };
     delete updateData._id;
-    // --- ^ END of FIX ---
 
     Object.assign(product, updateData);
     const updatedProduct = await product.save();

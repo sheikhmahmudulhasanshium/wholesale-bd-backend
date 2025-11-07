@@ -1,3 +1,4 @@
+// src/products/dto/product-response.dto.ts
 import { ApiProperty, PartialType } from '@nestjs/swagger';
 import {
   IsString,
@@ -99,6 +100,18 @@ export class CreateProductDto {
   })
   @IsMongoId()
   sellerId: string;
+
+  // --- V NEW: Regular Unit Price ---
+  @ApiProperty({
+    description:
+      'The regular, non-discounted price per unit. Used as a baseline for calculating discounts.',
+    example: 50000,
+    minimum: 0,
+  })
+  @IsNumber()
+  @Min(0)
+  regularUnitPrice: number;
+  // --- ^ END of NEW ---
 
   @ApiProperty({
     description: 'An array of pricing tiers based on quantity',
@@ -295,6 +308,15 @@ export class ProductResponseDto {
     { toPlainOnly: true },
   )
   sellerId: string;
+
+  // --- V NEW: Regular Unit Price ---
+  @ApiProperty({
+    description:
+      'The regular, non-discounted price per unit. Used as a baseline for calculating discounts.',
+    example: 50000,
+  })
+  regularUnitPrice: number;
+  // --- ^ END of NEW ---
 
   @ApiProperty({
     description: 'An array of pricing tiers based on quantity',

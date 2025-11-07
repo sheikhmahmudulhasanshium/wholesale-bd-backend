@@ -14,10 +14,8 @@ export class Review {
   @Prop({ required: true, min: 1, max: 5 })
   rating: number;
 
-  // --- V FIX: The @Prop is now marked as not required, and the type is optional. ---
   @Prop({ trim: true, required: false })
   comment?: string;
-  // --- ^ END of FIX ---
 
   @Prop({ type: Date, default: Date.now })
   createdAt: Date;
@@ -81,6 +79,11 @@ export class Product {
 
   @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
   sellerId: Types.ObjectId;
+
+  // --- V NEW: Regular Unit Price ---
+  @Prop({ required: true, type: Number, min: 0 })
+  regularUnitPrice: number;
+  // --- ^ END of NEW ---
 
   @Prop({ type: [PricingTier], required: true })
   pricingTiers: PricingTier[];
