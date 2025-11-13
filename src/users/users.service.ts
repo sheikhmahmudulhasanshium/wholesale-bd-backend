@@ -1,9 +1,12 @@
+// src/users/users.service.ts
+
 import {
   Injectable,
   NotFoundException,
   Logger,
   Inject,
   forwardRef,
+  BadRequestException, // --- V NEW ---
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, FilterQuery } from 'mongoose';
@@ -31,6 +34,62 @@ export class UserService {
     @Inject(forwardRef(() => UploadsService))
     private readonly uploadsService: UploadsService,
   ) {}
+
+  // --- V ALL NEW/MODIFIED METHODS FOR ADMIN ACTIONS ---
+
+  async manualVerify(userId: string): Promise<UserDocument> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID "${userId}" not found.`);
+    }
+    if (user.emailVerified) {
+      throw new BadRequestException('User is already verified.');
+    }
+    user.emailVerified = true;
+    return this.save(user);
+  }
+
+  async updateRole(userId: string, newRole: UserRole): Promise<UserDocument> {
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID "${userId}" not found.`);
+    }
+    if (user.role === newRole) {
+      throw new BadRequestException(`User already has the role '${newRole}'.`);
+    }
+
+    user.role = newRole;
+    if (
+      newRole === UserRole.SELLER &&
+      user.sellerStatus !== SellerStatus.APPROVED
+    ) {
+      user.sellerStatus = SellerStatus.APPROVED;
+      user.sellerApprovedAt = new Date();
+    }
+    return this.save(user);
+  }
+
+  async delete(id: string, adminUser: UserDocument): Promise<void> {
+    if (id === adminUser._id.toString()) {
+      throw new BadRequestException('Admins cannot delete their own accounts.');
+    }
+    const userToDelete = await this.findById(id);
+    if (!userToDelete) {
+      throw new NotFoundException(`User with ID "${id}" not found.`);
+    }
+    await this.userModel.deleteOne({ _id: id }).exec();
+    this.logger.warn(
+      `ADMIN ACTION: Admin ${adminUser.email} permanently deleted user ${userToDelete.email} (ID: ${id}).`,
+    );
+  }
+
+  async listUsers(
+    filter: FilterQuery<UserDocument> = {},
+  ): Promise<UserDocument[]> {
+    return this.userModel.find(filter).sort({ createdAt: -1 }).exec();
+  }
+
+  // --- ^ END OF NEW/MODIFIED METHODS ---
 
   async setProfileOrBannerPictureFromUrl(
     user: UserDocument,
@@ -108,28 +167,24 @@ export class UserService {
     id: string,
   ): Promise<UnifiedPublicProfileDto | null> {
     const user = await this.userModel.findById(id).exec();
-
     if (!user || !user.isActive) {
       return null;
     }
 
     let finalProfilePicUrl = user.profilePicture || null;
     let finalBackgroundPicUrl: string | null = null;
-
     if (!finalProfilePicUrl) {
       try {
         const media = await this.uploadsService.findByEntityId(
           EntityModel.USER,
           user._id.toString(),
         );
-
         const profilePic = media.images.find(
           (img) => img.purpose === MediaPurpose.PROFILE_PICTURE,
         );
         if (profilePic) {
           finalProfilePicUrl = profilePic.url;
         }
-
         const backgroundPic = media.images.find(
           (img) => img.purpose === MediaPurpose.PROFILE_BANNER,
         );
@@ -144,13 +199,11 @@ export class UserService {
         );
       }
     }
-
     const isPublicSeller =
       user.role === UserRole.SELLER &&
       user.sellerStatus === SellerStatus.APPROVED;
     const isPublicCustomer = user.role === UserRole.CUSTOMER;
     const isPublicAdmin = user.role === UserRole.ADMIN;
-
     if (isPublicSeller || isPublicCustomer || isPublicAdmin) {
       return UnifiedPublicProfileDto.fromUserDocument(
         user,
@@ -158,7 +211,6 @@ export class UserService {
         finalBackgroundPicUrl,
       );
     }
-
     return null;
   }
 
@@ -170,34 +222,6 @@ export class UserService {
       throw new NotFoundException(`User with ID ${id} not found.`);
     }
     return user;
-  }
-
-  async delete(id: string): Promise<any> {
-    const result = await this.userModel.deleteOne({ _id: id }).exec();
-    if (result.deletedCount === 0) {
-      throw new NotFoundException(`User with ID ${id} not found.`);
-    }
-    return { message: 'User deleted successfully' };
-  }
-
-  async listUsers(
-    role?: UserRole,
-    kycStatus?: SellerStatus,
-    page = 1,
-    limit = 10,
-  ): Promise<UserDocument[]> {
-    const query: FilterQuery<User> = {};
-    if (role) {
-      query.role = role;
-    }
-    if (kycStatus) {
-      query.sellerStatus = kycStatus;
-    }
-    return this.userModel
-      .find(query)
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .exec();
   }
 
   async countUsers(role?: UserRole, kycStatus?: SellerStatus): Promise<number> {

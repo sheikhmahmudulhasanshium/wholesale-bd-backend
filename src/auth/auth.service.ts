@@ -75,7 +75,6 @@ export class AuthService {
     return { message: `Successfully verified email for user: ${email}` };
   }
 
-  // --- V NEW: Method to Update User Role (called by an Admin) ---
   async updateUserRole(
     userId: string,
     newRole: UserRole,
@@ -85,7 +84,6 @@ export class AuthService {
       throw new NotFoundException(`User with ID "${userId}" not found.`);
     }
 
-    // Avoid unnecessary database write if the role is the same
     if (user.role === newRole) {
       throw new BadRequestException(
         `User is already assigned the role of '${newRole}'.`,
@@ -94,7 +92,6 @@ export class AuthService {
 
     user.role = newRole;
 
-    // Business logic: If a user is promoted to seller, approve them automatically.
     if (
       newRole === UserRole.SELLER &&
       user.sellerStatus !== SellerStatus.APPROVED
@@ -110,7 +107,6 @@ export class AuthService {
 
     return this.userService.toUserResponseDto(updatedUser);
   }
-  // --- ^ END of NEW ---
 
   async register(
     registerDto: RegisterDto,
@@ -543,25 +539,26 @@ export class AuthService {
     return { user: this.userService.toUserResponseDto(newUser), token };
   }
 
+  // --- V THIS IS THE CORRECTED SECTION ---
   async listUsers(role?: UserRole): Promise<UserResponseDto[]> {
-    const users = await this.userService.listUsers(role);
+    const filter = role ? { role } : {};
+    const users = await this.userService.listUsers(filter);
     return users.map((user) => this.userService.toUserResponseDto(user));
   }
 
   async listSellers(): Promise<UserResponseDto[]> {
-    const sellers = await this.userService.listUsers(UserRole.SELLER);
-    return sellers.map((seller) => this.userService.toUserResponseDto(seller));
+    const users = await this.userService.listUsers({ role: UserRole.SELLER });
+    return users.map((seller) => this.userService.toUserResponseDto(seller));
   }
 
   async listPendingSellers(): Promise<UserResponseDto[]> {
-    const pendingSellers = await this.userService.listUsers(
-      UserRole.SELLER,
-      SellerStatus.PENDING,
-    );
-    return pendingSellers.map((seller) =>
-      this.userService.toUserResponseDto(seller),
-    );
+    const users = await this.userService.listUsers({
+      role: UserRole.SELLER,
+      sellerStatus: SellerStatus.PENDING,
+    });
+    return users.map((seller) => this.userService.toUserResponseDto(seller));
   }
+  // --- ^ END OF CORRECTED SECTION ---
 
   async approveSeller(id: string): Promise<UserResponseDto> {
     const user = await this.userService.findById(id);

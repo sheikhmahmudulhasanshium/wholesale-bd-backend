@@ -1,3 +1,5 @@
+// src/users/users.controller.ts
+
 import {
   Controller,
   Get,
@@ -11,6 +13,10 @@ import {
   MaxFileSizeValidator,
   FileTypeValidator,
   Body,
+  Put, // --- V NEW ---
+  Delete, // --- V NEW ---
+  HttpCode, // --- V NEW ---
+  HttpStatus, // --- V NEW ---
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -28,7 +34,7 @@ import { UserService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole, UserDocument } from './schemas/user.schema';
+import { UserRole, UserDocument, SellerStatus } from './schemas/user.schema';
 import { Public } from '../auth/decorators/public.decorator';
 import { UnifiedPublicProfileDto } from './dto/unified-public-profile.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
@@ -36,6 +42,7 @@ import { Media, MediaDocument } from 'src/storage/schemas/media.schema';
 import { GroupedMedia } from 'src/uploads/uploads.service';
 import { MediaPurpose } from 'src/uploads/enums/media-purpose.enum';
 import { SetProfilePictureFromUrlDto } from './dto/set-profile-picture-from-url.dto';
+import { UpdateRoleDto } from '../auth/dto/update-role.dto'; // --- V NEW ---
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -43,6 +50,85 @@ import { SetProfilePictureFromUrlDto } from './dto/set-profile-picture-from-url.
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UserService) {}
+
+  // --- V ALL NEW ADMIN ENDPOINTS ---
+
+  @Get('admin/all')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Get a list of all users' })
+  @ApiOkResponse({ type: [UserResponseDto] })
+  async adminFindAll(): Promise<UserResponseDto[]> {
+    const users = await this.usersService.listUsers();
+    return users.map((user) => this.usersService.toUserResponseDto(user));
+  }
+
+  @Get('admin/unverified')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Get all users with unverified emails' })
+  @ApiOkResponse({ type: [UserResponseDto] })
+  async findUnverifiedUsers(): Promise<UserResponseDto[]> {
+    const users = await this.usersService.listUsers({ emailVerified: false });
+    return users.map((user) => this.usersService.toUserResponseDto(user));
+  }
+
+  @Get('admin/inactive')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Get all inactive (blocked) users' })
+  @ApiOkResponse({ type: [UserResponseDto] })
+  async findInactiveUsers(): Promise<UserResponseDto[]> {
+    const users = await this.usersService.listUsers({ isActive: false });
+    return users.map((user) => this.usersService.toUserResponseDto(user));
+  }
+
+  @Get('admin/pending-sellers')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: 'Admin: Get all sellers with pending applications' })
+  @ApiOkResponse({ type: [UserResponseDto] })
+  async findPendingSellers(): Promise<UserResponseDto[]> {
+    const users = await this.usersService.listUsers({
+      role: UserRole.SELLER,
+      sellerStatus: SellerStatus.PENDING,
+    });
+    return users.map((user) => this.usersService.toUserResponseDto(user));
+  }
+
+  @Put('admin/:id/verify')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: "Admin: Manually verify a user's email" })
+  @ApiOkResponse({ type: UserResponseDto })
+  async manualVerify(@Param('id') userId: string): Promise<UserResponseDto> {
+    const updatedUser = await this.usersService.manualVerify(userId);
+    return this.usersService.toUserResponseDto(updatedUser);
+  }
+
+  @Put('admin/:id/change-role')
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({ summary: "Admin: Change a user's role" })
+  @ApiOkResponse({ type: UserResponseDto })
+  async updateUserRole(
+    @Param('id') userId: string,
+    @Body() updateRoleDto: UpdateRoleDto,
+  ): Promise<UserResponseDto> {
+    const updatedUser = await this.usersService.updateRole(
+      userId,
+      updateRoleDto.role,
+    );
+    return this.usersService.toUserResponseDto(updatedUser);
+  }
+
+  @Delete('admin/:id')
+  @Roles(UserRole.ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Admin: Permanently delete a user' })
+  @ApiOkResponse({ description: 'User deleted successfully.' })
+  async deleteUser(
+    @Param('id') userId: string,
+    @CurrentUser() adminUser: UserDocument,
+  ): Promise<void> {
+    await this.usersService.delete(userId, adminUser);
+  }
+
+  // --- ^ END OF NEW ADMIN ENDPOINTS ---
 
   @Post('me/profile-picture/from-url')
   @ApiOperation({
@@ -107,7 +193,7 @@ export class UsersController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }), // 5 MB
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
           new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|webp)$/ }),
         ],
       }),
@@ -144,7 +230,7 @@ export class UsersController {
     @UploadedFile(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }), // 10 MB
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }),
           new FileTypeValidator({ fileType: /^image\/(jpeg|png|gif|webp)$/ }),
         ],
       }),
@@ -191,21 +277,6 @@ export class UsersController {
     return { totalUsers: count };
   }
 
-  @Get()
-  @Roles(UserRole.ADMIN)
-  @ApiOperation({ summary: 'Get a list of all users (Requires Admin Role)' })
-  @ApiOkResponse({
-    description: 'An array of user records.',
-    type: [UserResponseDto],
-  })
-  @ApiUnauthorizedResponse({
-    description: 'Unauthorized or insufficient permissions.',
-  })
-  async findAll(): Promise<UserResponseDto[]> {
-    const users = await this.usersService.findAll();
-    return users.map((user) => UserResponseDto.fromUserDocument(user));
-  }
-
   @Public()
   @Get(':id')
   @ApiOperation({ summary: 'Get a unified public user profile by ID (Public)' })
@@ -222,7 +293,6 @@ export class UsersController {
   ): Promise<UnifiedPublicProfileDto> {
     const userProfile =
       await this.usersService.findUnifiedPublicProfileById(id);
-
     if (!userProfile) {
       throw new NotFoundException('Public profile not found or is private.');
     }
