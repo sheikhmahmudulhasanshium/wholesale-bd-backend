@@ -40,7 +40,8 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { BlockUserDto } from './dto/block-unblock.dto';
 import { ConfigService } from '@nestjs/config';
-import { ManualVerifyDto } from './dto/manual-verify.dto'; // --- V NEW: Import DTO ---
+import { ManualVerifyDto } from './dto/manual-verify.dto';
+import { UpdateRoleDto } from './dto/update-role.dto'; // --- V NEW: Import DTO ---
 
 interface RequestWithUser extends Request {
   user: UserDocument;
@@ -92,9 +93,7 @@ export class AuthController {
   @Get('google')
   @ApiOperation({ summary: 'Initiate Google OAuth login' })
   @UseGuards(AuthGuard('google'))
-  async googleAuth() {
-    // This route will redirect to Google for authentication
-  }
+  async googleAuth() {}
 
   @Get('google/callback')
   @ApiOperation({ summary: 'Google OAuth callback URL' })
@@ -102,13 +101,11 @@ export class AuthController {
   googleAuthRedirect(@Req() req: RequestWithUser, @Res() res: Response) {
     const { token } = this.authService.googleLogin(req);
     const frontendUrl = this.configService.get<string>('frontendUrl');
-
     if (!frontendUrl) {
       return res
         .status(500)
         .send('Configuration error: Frontend URL is not set.');
     }
-
     res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
   }
 
@@ -218,16 +215,11 @@ export class AuthController {
 
   // --- Lower Priority Endpoints (Admin Specific) ---
 
-  // --- V NEW: Secure Admin Endpoint to Manually Verify a User ---
   @Post('admin/manual-verify')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  @ApiOperation({
-    summary: "Admin: Manually verify a user's email address.",
-    description:
-      'This is an administrative tool to fix accounts with email verification issues.',
-  })
+  @ApiOperation({ summary: "Admin: Manually verify a user's email address." })
   @ApiResponse({
     status: 200,
     description: 'User email verified successfully.',
@@ -236,6 +228,34 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async manualVerifyUser(@Body() manualVerifyDto: ManualVerifyDto) {
     return this.authService.manualVerifyUser(manualVerifyDto.email);
+  }
+
+  // --- V NEW: Secure Admin Endpoint to Update User Role ---
+  @Put('admin/user/:id/role')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Admin: Update a user's role.",
+    description:
+      "This is an administrative tool to change a user's role (e.g., promote a customer to a seller).",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User role updated successfully.',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid role or user already has the role.',
+  })
+  @HttpCode(HttpStatus.OK)
+  async updateUserRole(
+    @Param('id') userId: string,
+    @Body() updateRoleDto: UpdateRoleDto,
+  ) {
+    return this.authService.updateUserRole(userId, updateRoleDto.role);
   }
   // --- ^ END of NEW ---
 

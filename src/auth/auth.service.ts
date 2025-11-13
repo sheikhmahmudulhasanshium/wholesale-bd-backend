@@ -40,8 +40,6 @@ const PASSWORD_RESET_TOKEN_TTL = 60 * 60 * 1000; // 1 hour
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
-  // Store OTPs and reset tokens in-memory for simplicity.
-  // In a real-world, distributed application, use Redis or a database.
   private otpStore: Map<
     string,
     { otp: string; expiresAt: number; userId?: string }
@@ -63,26 +61,56 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
-  // --- V NEW: Method to Manually Verify a User (called by an Admin) ---
   async manualVerifyUser(email: string): Promise<{ message: string }> {
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new NotFoundException(`User with email "${email}" not found.`);
     }
-
     if (user.emailVerified) {
       return { message: `User ${email} is already verified.` };
     }
-
     user.emailVerified = true;
     await this.userService.save(user);
     this.logger.log(`ADMIN ACTION: Manually verified email for user: ${email}`);
-
     return { message: `Successfully verified email for user: ${email}` };
   }
-  // --- ^ END of NEW ---
 
-  // --- Highest Priority Endpoints ---
+  // --- V NEW: Method to Update User Role (called by an Admin) ---
+  async updateUserRole(
+    userId: string,
+    newRole: UserRole,
+  ): Promise<UserResponseDto> {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with ID "${userId}" not found.`);
+    }
+
+    // Avoid unnecessary database write if the role is the same
+    if (user.role === newRole) {
+      throw new BadRequestException(
+        `User is already assigned the role of '${newRole}'.`,
+      );
+    }
+
+    user.role = newRole;
+
+    // Business logic: If a user is promoted to seller, approve them automatically.
+    if (
+      newRole === UserRole.SELLER &&
+      user.sellerStatus !== SellerStatus.APPROVED
+    ) {
+      user.sellerStatus = SellerStatus.APPROVED;
+      user.sellerApprovedAt = new Date();
+    }
+
+    const updatedUser = await this.userService.save(user);
+    this.logger.log(
+      `ADMIN ACTION: Changed role for user ${user.email} (ID: ${userId}) to ${newRole}.`,
+    );
+
+    return this.userService.toUserResponseDto(updatedUser);
+  }
+  // --- ^ END of NEW ---
 
   async register(
     registerDto: RegisterDto,
@@ -110,15 +138,14 @@ export class AuthService {
       lowerCaseAlphabets: false,
     });
     const expiresAt = Date.now() + OTP_TTL;
-    // FIX: Use a double-cast to `unknown` then `UserDocument` to satisfy strict linting.
 
     const newUser = (await this.userService.create({
       email,
       password: hashedPassword,
       firstName,
       lastName,
-      emailVerified: false, // Must be verified via OTP
-      role: UserRole.CUSTOMER, // Default role
+      emailVerified: false,
+      role: UserRole.CUSTOMER,
       authProviders: ['email'],
     })) as unknown as UserDocument;
 
@@ -224,8 +251,6 @@ export class AuthService {
       user.lastLogin = new Date();
       await this.userService.save(user);
     } else {
-      // FIX: Use a double-cast here as well.
-
       user = (await this.userService.create(
         oauthUser,
       )) as unknown as UserDocument;
@@ -368,8 +393,6 @@ export class AuthService {
     };
   }
 
-  // --- Medium Priority Endpoints ---
-
   async changePassword(
     userId: string,
     changePasswordDto: ChangePasswordDto,
@@ -480,8 +503,6 @@ export class AuthService {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    // FIX: Use a double-cast here.
-
     const newUser = (await this.userService.create({
       email,
       password: hashedPassword,
@@ -521,8 +542,6 @@ export class AuthService {
 
     return { user: this.userService.toUserResponseDto(newUser), token };
   }
-
-  // --- Lower Priority Endpoints (Admin) ---
 
   async listUsers(role?: UserRole): Promise<UserResponseDto[]> {
     const users = await this.userService.listUsers(role);
