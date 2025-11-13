@@ -1,3 +1,5 @@
+// src/auth/auth.service.ts
+
 import {
   Injectable,
   ConflictException,
@@ -61,6 +63,25 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
+  // --- V NEW: Method to Manually Verify a User (called by an Admin) ---
+  async manualVerifyUser(email: string): Promise<{ message: string }> {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new NotFoundException(`User with email "${email}" not found.`);
+    }
+
+    if (user.emailVerified) {
+      return { message: `User ${email} is already verified.` };
+    }
+
+    user.emailVerified = true;
+    await this.userService.save(user);
+    this.logger.log(`ADMIN ACTION: Manually verified email for user: ${email}`);
+
+    return { message: `Successfully verified email for user: ${email}` };
+  }
+  // --- ^ END of NEW ---
+
   // --- Highest Priority Endpoints ---
 
   async register(
@@ -89,8 +110,8 @@ export class AuthService {
       lowerCaseAlphabets: false,
     });
     const expiresAt = Date.now() + OTP_TTL;
-
     // FIX: Use a double-cast to `unknown` then `UserDocument` to satisfy strict linting.
+
     const newUser = (await this.userService.create({
       email,
       password: hashedPassword,
@@ -204,6 +225,7 @@ export class AuthService {
       await this.userService.save(user);
     } else {
       // FIX: Use a double-cast here as well.
+
       user = (await this.userService.create(
         oauthUser,
       )) as unknown as UserDocument;
@@ -443,7 +465,6 @@ export class AuthService {
         existingUser.businessDescription = businessDescription;
         existingUser.zone = zone;
         existingUser.sellerAppliedAt = new Date();
-        // FIX: Use a double-cast here.
         const updatedUser = (await this.userService.save(
           existingUser,
         )) as unknown as UserDocument;
@@ -460,6 +481,7 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     // FIX: Use a double-cast here.
+
     const newUser = (await this.userService.create({
       email,
       password: hashedPassword,

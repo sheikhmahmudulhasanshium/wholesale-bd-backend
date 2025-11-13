@@ -40,6 +40,7 @@ import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { BlockUserDto } from './dto/block-unblock.dto';
 import { ConfigService } from '@nestjs/config';
+import { ManualVerifyDto } from './dto/manual-verify.dto'; // --- V NEW: Import DTO ---
 
 interface RequestWithUser extends Request {
   user: UserDocument;
@@ -95,7 +96,6 @@ export class AuthController {
     // This route will redirect to Google for authentication
   }
 
-  // --- *** THIS IS THE CORRECTED FUNCTION (async keyword removed) *** ---
   @Get('google/callback')
   @ApiOperation({ summary: 'Google OAuth callback URL' })
   @UseGuards(AuthGuard('google'))
@@ -104,16 +104,13 @@ export class AuthController {
     const frontendUrl = this.configService.get<string>('frontendUrl');
 
     if (!frontendUrl) {
-      // Gracefully handle missing configuration
       return res
         .status(500)
         .send('Configuration error: Frontend URL is not set.');
     }
 
-    // Redirect the user's browser to the frontend callback page with the token
     res.redirect(`${frontendUrl}/auth/callback?token=${token}`);
   }
-  // --- *** END OF CORRECTED FUNCTION *** ---
 
   @Get('profile')
   @ApiBearerAuth()
@@ -220,6 +217,27 @@ export class AuthController {
   }
 
   // --- Lower Priority Endpoints (Admin Specific) ---
+
+  // --- V NEW: Secure Admin Endpoint to Manually Verify a User ---
+  @Post('admin/manual-verify')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiOperation({
+    summary: "Admin: Manually verify a user's email address.",
+    description:
+      'This is an administrative tool to fix accounts with email verification issues.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User email verified successfully.',
+  })
+  @ApiResponse({ status: 404, description: 'User not found.' })
+  @HttpCode(HttpStatus.OK)
+  async manualVerifyUser(@Body() manualVerifyDto: ManualVerifyDto) {
+    return this.authService.manualVerifyUser(manualVerifyDto.email);
+  }
+  // --- ^ END of NEW ---
 
   @Get('admin/users')
   @ApiBearerAuth()
